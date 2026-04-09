@@ -8,9 +8,9 @@
 
 ## Current Milestone Focus
 
-- Milestone: **Feel & Juice (Weeks 5-6)** — working toward Milestone Gate 3
-- Goal: Art integration, particles, SFX, haptics, tutorial, boosters, polish — the game must FEEL good
-- Source plan: `docs/production/mvp-build-plan.md`, `docs/prompts/03-week-5-6-feel-and-juice.md`
+- Milestone: **Meta & Economy (Weeks 7-8)** — working toward Milestone Gate 4
+- Goal: Full meta-progression (potion shelf, workshop, streaks, daily brew), dual-currency economy, IAP, ads, Firebase backend abstractions, analytics facade
+- Source plan: `docs/production/mvp-build-plan.md`, `docs/prompts/04-week-7-8-meta-and-economy.md`
 
 ## Current Branch + Baseline
 
@@ -36,152 +36,190 @@
 - Tests: 7 additional test files, ~80+ methods
 - Level data: 40 level JSONs in `Assets/_Project/Resources/Levels/`
 
-### Gate 2 Closure + Feel & Juice Phase (This Session)
+### Gate 2 Closure + Feel & Juice Phase (Session 4)
 
-**Phase 1 — Scene Wiring (Gate 2 closure)**:
+- Booster System, Audio System, Haptic System, Screen Shake, Particle System, Token Animation, Brew Animation
+- Tutorial System, Settings, Scene Setup enhancements
+- 15 booster tests, updated BoardPresenter/HudController/TokenView
 
-- Enhanced `BrewSceneSetup` editor script with full scene hierarchy creation
-  - `Brew > Create Gameplay Scene` creates scene file at `Assets/_Project/Scenes/Gameplay.unity` and registers it in EditorBuildSettings
-  - `Brew > Setup Gameplay Scene` creates: Camera, Canvas (1080×1920 CanvasScaler), HUD panel, LevelSelectScreen (ScrollView + GridLayoutGroup), LevelCompleteScreen, LevelFailScreen, BoosterBar, GameplayPanel, GameFlowController with all serialized refs wired, EventSystem
-- Created UI prefabs programmatically: `RecipeVialUI.prefab`, `LevelButton.prefab` at `Assets/_Project/Prefabs/UI/`
+### Meta & Economy Phase (This Session)
 
-**Phase 2 — Booster System**:
+**Economy Foundation:**
 
-- `BoosterType` enum (Shake, Catalyst, ExtraMoves) — pure C#
-- `BoosterManager` — pure C#, charge management, Fisher-Yates shuffle for Shake, Catalyst converts token→orb(count=1), ExtraMoves with one-use-per-attempt guard, events
-- `BoosterBarUI` — 3-slot UI, arm/disarm logic, Shake/ExtraMoves fire immediately, Catalyst requires board tap
-- `BoosterSlotUI` — button, charge text, armed highlight
-- `BoosterManagerTests` — 15 tests covering charges, shake (color preservation, orb preservation, cluster guarantee), catalyst (token→orb, rejects non-token), extra moves (adds 3, one-use guard, reset)
-- Integrated into `BoardPresenter`: `ArmCatalyst()`, `DisarmCatalyst()`, `ActivateShake()`, `ActivateExtraMoves()`
+- `CurrencyType` enum (Essence, Gems) — pure C#
+- `CurrencyManager` — single source of truth for all currency operations, Add/Spend with events, balance-never-negative guard
+- `RewardCalculator` — star rating × streak multiplier calculation, values injected via constructor
+- `EconomyConfigSO` — ScriptableObject with all economy tuning values from economy-model.md
+- `RemoteConfigDefaults` — static class mirroring `config/firebase/remote-config-defaults.json`
+- `config/firebase/remote-config-defaults.json` — 56 Remote Config keys with defaults
 
-**Phase 3 — Audio System**:
+**Meta Systems (pure C#):**
 
-- `SfxId` enum — 16 sound effect identifiers
-- `AudioConfigSO` — ScriptableObject mapping SfxId to clip variants, priority, pitch variation; 6 music stem slots (4 normal + 2 tension)
-- `AudioManager` — singleton, 8 SFX + 4 music AudioSources, round-robin clip variants, semitone-based pitch variation, priority-based voice stealing, `DuckMusic()` for brew moments
-- `AdaptiveAudioController` — monitors MoveTracker, 3 states (Normal, LowMoves, Critical), cross-fades stems, swaps percussion to tense variant at ≤5 moves, drops to pad+heartbeat at 1 move, 4s recovery ramp
+- `PotionShelfManager` — tracks brewed potions by level ID, 4 milestone thresholds (25/50/75/100) with Essence + Gem rewards
+- `WorkshopManager` — 12 sequential upgrades (50–12,000 Essence), spends via CurrencyManager
+- `WinStreakTracker` — consecutive wins, 6-tier multiplier lookup (1.0×–3.0×)
+- `DailyBrewManager` — UTC-date seeded challenge, 100 Essence + 5 Gems base reward, streak bonuses at 3/5/7 days
+- Config SOs: `PotionShelfConfigSO`, `WorkshopConfigSO`, `WinStreakConfigSO`, `DailyBrewConfigSO`
 
-**Phase 4 — Haptic System**:
+**Monetization (pure C#):**
 
-- `HapticManager` — static class, platform-abstracted (iOS DllImport bridge, Android AndroidJavaObject Vibrator), 5 feedback types (Light, Medium, Heavy, Success, Selection), settings-respecting, `ContinuousRumble()` for brew crescendo
+- `AdPlacement` enum — 6 placement types
+- `AdManager` — daily rewarded cap (5), per-placement limits (FreeDailyBooster 1×/day, StreakProtection 2×/day), interstitial every 3rd win, No-Ads Pass check
+- `IAPProduct` — product data class with type, price, gem/essence amounts
+- `IAPManager` — 6-product catalog (4 Gem Packs, Starter Bundle, No-Ads Pass), purchase fulfillment via CurrencyManager, non-consumable ownership tracking
 
-**Phase 5 — Visual Effects & Animation**:
+**Firebase Backend Abstractions (pure C#):**
 
-- `ScreenShakeConfigSO` — 4 presets (Fusion 0.5/0.1s, Chain 1.0/0.15s, Brew 2.0/0.3s, LevelComplete 1.5/0.5s)
-- `ScreenShakeController` — Perlin noise camera shake, stacking (max envelope), chain length scaling (+0.2 per step), settings toggle, unscaled time
-- `ParticleManager` — pooled ParticleSystem instances (cap 5), 6 effect types (FusionSparkles, CascadeTrail, BrewBubbles, BrewBurst, LevelCompleteConfetti, ChainIndicator), runtime template creation, OnParticleSystemStopped auto-return
-- `TokenAnimator` — idle shimmer (scale 0.98-1.02, 3s sine), selected pulse (1.08→1.05 ease-out-back), fusing rush (ease-in, squash-and-stretch, white flash), AnimationCurve-based
-- `BrewAnimationController` — 4-phase 1.8s brew sequence (Ignition → Eruption → Formation → Celebration), haptic integration, particle integration, screen shake at eruption, fly-to-vial arc with fade
-- Updated `TokenView` — exposes `SpriteRenderer` and `TokenAnimator`, auto-starts idle shimmer on Initialize
+- `FirebaseAuthManager` — anonymous auth state, account linking placeholder
+- `CloudSaveManager` — offline-first PlayerSaveData with dirty/synced flags
+- `RemoteConfigManager` — default + server value merge, GetInt/GetFloat/GetBool/GetString, 12h stale check
+- `AnalyticsManager` — facade for all 18+ event types from event-tracking-plan.md, event log for debugging
 
-**Phase 6 — Tutorial System**:
+**Presentation Layer:**
 
-- `TutorialLevelData` — pure C#, defines all 5 tutorial levels with hand-tuned board layouts, step sequences, text prompts per tutorial-flow.md
-  - `TutorialStep` data class with type, text, highlighted cells, finger indicator, auto-dismiss, celebration config
-  - `TutorialBoardSetup` with per-cell IngredientColor layout
-- `TutorialController` — MonoBehaviour driving tutorial flow, step-by-step coroutine sequence, input gating (validates taps against allowed cells), hint system stubs (5s/10s/15s)
-- `TutorialOverlay` — full-screen dim panel, spotlight glow rings with pulse animation, animated finger indicator (tap every 1.5s), text bubble, celebration text display
+- `PotionShelfView` — scrollable grid with locked/unlocked states, milestone progress bar
+- `WorkshopView` — upgrade display, purchase button, decoration toggle, completion badge
+- `DailyBrewUI` — availability indicator, streak count, button wiring
+- `WalletUI` — real-time Essence + Gem display via CurrencyManager events
+- `StoreUI` — IAP product listing with purchase buttons
+- `BoosterShopUI` — purchase boosters with Essence or Gems via CurrencyManager
+- Updated `LevelCompleteScreen` — Essence earned display, streak multiplier breakdown, double-reward ad button, new potion reveal
+- Updated `LevelFailScreen` — watch-ad-for-moves button, streak protection panel (ad + gem options)
+- Updated `HudController` — wallet display (Essence/Gems), streak flame indicator
+- Updated `GameFlowController` — full meta/economy/ad/analytics integration, milestone rewards, interstitial triggers
+- Updated `BrewSceneSetup` — creates meta screen GameObjects in scene hierarchy
 
-**Phase 7 — UI Polish & Settings**:
+**Tests (8 new files, ~100+ methods):**
 
-- `SettingsManager` — static PlayerPrefs-backed settings (MusicVolume, SfxVolume, IsMuted, HapticsEnabled, ScreenShakeEnabled), change events
-- `SettingsPanel` — MonoBehaviour with sliders and toggles, syncs with SettingsManager on enable/disable
-- Updated `HudController` — animated move counter (pulse at ≤5 moves, larger pulse at 1 move), smoothstep score tween, critical move color
-- Updated `BoardPresenter` — correct hex colors from art-direction.md (Ember #E05A3A, Frost #6FB8D9, Vine #6DAF5E, Sun #F2C745, Shadow #6B4E9B), integrated ScreenShake/ParticleManager/BrewAnimator/TutorialController, brew animation sequence replaces instant removal, haptic triggers at fusion/chain/brew/win events
+- `CurrencyManagerTests`, `RewardCalculatorTests`
+- `PotionShelfManagerTests`, `WorkshopManagerTests`, `WinStreakTrackerTests`, `DailyBrewManagerTests`
+- `AdManagerTests`, `IAPManagerTests`
+- `CloudSaveManagerTests`, `RemoteConfigManagerTests`
 
 ## In Progress
 
-- None. All Feel & Juice code is complete. Ready for Unity Editor testing and Gate 3 preparation.
+- None. All Week 7-8 code is complete. Ready for Unity Editor testing and Gate 4 preparation.
 
 ## Next 3 Tasks
 
-1. Open project in Unity Editor. Run `Brew > Create Gameplay Scene` to generate the scene. Run `Brew > Setup Gameplay Scene`. Verify all prefabs and serialized references are wired correctly.
-2. Run all EditMode unit tests (now 14 test files, ~155+ methods). Fix any compilation or test failures.
-3. Create/assign AudioConfigSO and ScreenShakeConfigSO assets. Import placeholder SFX clips. Playtest levels 1-5 (tutorial) through level 10 — verify tutorial flow, booster activation, audio playback, haptic feedback, particle effects, and screen shake.
+1. Open project in Unity Editor. Run all EditMode unit tests (now 24 test files, ~255+ methods). Fix any compilation or test failures.
+2. Create EconomyConfigSO, PotionShelfConfigSO, WorkshopConfigSO, WinStreakConfigSO, DailyBrewConfigSO assets in Unity. Assign to GameFlowController.
+3. Play full session loop: complete level → earn Essence → open workshop → purchase upgrade → complete daily brew → verify streak multiplier → verify potion shelf updates. Complete Gate 4 checklist items 4.1–4.14.
 
 ## Blockers / Risks
 
-- Risk: AudioClip assets not yet imported — AudioManager will silently skip playback until clips are assigned to AudioConfigSO.
-- Risk: Token art still uses colored circles — need final sprites per art-direction.md token silhouettes (teardrop, hexagon, diamond, circle-with-rays, oval).
-- Risk: BrewAnimationController requires a SpriteRenderer flash overlay — needs to be assigned in scene.
-- Risk: TutorialOverlay needs UI prefabs for glow ring and finger indicator — currently creates runtime fallbacks.
-- Risk: Music stems (72s loop, 4 separate tracks) not yet produced — game will run silent until audio assets are added.
-- Blocker: Gate 3 requires external playtest with 5 non-team members — schedule needed.
+- Risk: Firebase SDK not yet imported — FirebaseAuthManager, CloudSaveManager, RemoteConfigManager are abstractions that need SDK wiring.
+- Risk: Unity IAP package not yet configured — IAPManager purchase flow needs SDK integration for real store transactions.
+- Risk: AdMob SDK not yet integrated — AdManager is pure logic; ad display requires SDK callbacks.
+- Risk: Gate 3 runtime verification still pending (external playtest + Unity Editor testing).
+- Risk: Gate 4 requires IAP sandbox testing on both iOS and Android — needs Apple Developer + Google Play Console setup.
+- Blocker: Cloud save Firestore integration requires Firebase project setup and authentication flow.
 
 ## Decisions Recorded This Session
 
-- `AudioManager` is a singleton with DontDestroyOnLoad — survives scene transitions.
-- Adaptive audio uses 4 music stems controlled by individual volume, not time-stretching — simpler implementation that still achieves tension/relief contrast.
-- `HapticManager` is static (no MonoBehaviour needed) — haptics are fire-and-forget events.
-- `ParticleManager` uses a single runtime-created ParticleSystem template instead of per-effect prefabs — allows the system to work before art assets are imported; prefab slots are reserved for future art pass.
-- `TokenAnimator` uses pure Unity AnimationCurve + Mathf.Lerp — no DOTween dependency.
-- `BoosterManager` defaults to infinite charges (int.MaxValue) — economy integration will set finite charges later in Gate 4.
-- Tutorial levels 1-5 define hand-tuned board layouts as IngredientColor[,] arrays — guaranteed board states per tutorial-flow.md spec.
-- `BrewAnimationController` timing (1.8s total) matches art-direction.md exactly: 0.3s ignition + 0.4s eruption + 0.5s formation + 0.6s celebration.
+- `CurrencyManager` is pure C# with zero Unity dependencies — enables EditMode testing of all economy logic.
+- All economy values flow through `EconomyConfigSO` or `RemoteConfigDefaults` — zero hardcoded values in game logic.
+- `WorkshopManager` enforces sequential purchases only — no skipping upgrades.
+- `DailyBrewManager` uses UTC dates for consistency — no time zone manipulation possible.
+- `CloudSaveManager` is offline-first with dirty/synced flags — local state always available, server sync is best-effort.
+- `RemoteConfigManager` merges server values on top of defaults — app always has valid config even without network.
+- `AdManager` uses callback-based No-Ads Pass check (`Func<bool>`) — decoupled from IAPManager implementation.
+- `IAPManager` product catalog is static readonly — product definitions don't change at runtime.
+- `AnalyticsManager` maintains an in-memory event log for debugging — events are inspectable without Firebase DebugView.
+- `BrewSceneSetup` now creates all meta screen GameObjects — workshop, potion shelf, daily brew, store, booster shop, wallet.
 
 ## Files Touched This Session
 
-### Created — Core (pure C#)
+### Created — Core/Economy (pure C#)
 
-- `Assets/_Project/Scripts/Core/BoosterType.cs`
-- `Assets/_Project/Scripts/Core/BoosterManager.cs`
-- `Assets/_Project/Scripts/Core/TutorialLevelData.cs`
+- `Assets/_Project/Scripts/Core/Economy/CurrencyType.cs`
+- `Assets/_Project/Scripts/Core/Economy/CurrencyManager.cs`
+- `Assets/_Project/Scripts/Core/Economy/RewardCalculator.cs`
+- `Assets/_Project/Scripts/Core/Economy/IAPProduct.cs`
+- `Assets/_Project/Scripts/Core/Economy/IAPManager.cs`
+
+### Created — Core/Meta (pure C#)
+
+- `Assets/_Project/Scripts/Core/Meta/PotionShelfManager.cs`
+- `Assets/_Project/Scripts/Core/Meta/WorkshopManager.cs`
+- `Assets/_Project/Scripts/Core/Meta/WinStreakTracker.cs`
+- `Assets/_Project/Scripts/Core/Meta/DailyBrewManager.cs`
+
+### Created — Core/Ads (pure C#)
+
+- `Assets/_Project/Scripts/Core/Ads/AdPlacement.cs`
+- `Assets/_Project/Scripts/Core/Ads/AdManager.cs`
+
+### Created — Core/Backend (pure C#)
+
+- `Assets/_Project/Scripts/Core/Backend/FirebaseAuthManager.cs`
+- `Assets/_Project/Scripts/Core/Backend/CloudSaveManager.cs`
+- `Assets/_Project/Scripts/Core/Backend/RemoteConfigManager.cs`
+- `Assets/_Project/Scripts/Core/Backend/AnalyticsManager.cs`
 
 ### Created — Data
 
-- `Assets/_Project/Scripts/Data/SfxId.cs`
-- `Assets/_Project/Scripts/Data/AudioConfigSO.cs`
-- `Assets/_Project/Scripts/Data/ScreenShakeConfigSO.cs`
-- `Assets/_Project/Scripts/Data/SettingsManager.cs`
+- `Assets/_Project/Scripts/Data/Economy/EconomyConfigSO.cs`
+- `Assets/_Project/Scripts/Data/Economy/RemoteConfigDefaults.cs`
+- `Assets/_Project/Scripts/Data/Meta/PotionShelfConfigSO.cs`
+- `Assets/_Project/Scripts/Data/Meta/WorkshopConfigSO.cs`
+- `Assets/_Project/Scripts/Data/Meta/WinStreakConfigSO.cs`
+- `Assets/_Project/Scripts/Data/Meta/DailyBrewConfigSO.cs`
 
 ### Created — Presentation
 
-- `Assets/_Project/Scripts/Presentation/AudioManager.cs`
-- `Assets/_Project/Scripts/Presentation/AdaptiveAudioController.cs`
-- `Assets/_Project/Scripts/Presentation/HapticManager.cs`
-- `Assets/_Project/Scripts/Presentation/ScreenShakeController.cs`
-- `Assets/_Project/Scripts/Presentation/ParticleManager.cs`
-- `Assets/_Project/Scripts/Presentation/TokenAnimator.cs`
-- `Assets/_Project/Scripts/Presentation/BrewAnimationController.cs`
-- `Assets/_Project/Scripts/Presentation/TutorialController.cs`
-- `Assets/_Project/Scripts/Presentation/TutorialOverlay.cs`
-- `Assets/_Project/Scripts/Presentation/BoosterBarUI.cs`
-- `Assets/_Project/Scripts/Presentation/BoosterSlotUI.cs`
-- `Assets/_Project/Scripts/Presentation/SettingsPanel.cs`
+- `Assets/_Project/Scripts/Presentation/Meta/PotionShelfView.cs`
+- `Assets/_Project/Scripts/Presentation/Meta/WorkshopView.cs`
+- `Assets/_Project/Scripts/Presentation/Meta/DailyBrewUI.cs`
+- `Assets/_Project/Scripts/Presentation/Economy/WalletUI.cs`
+- `Assets/_Project/Scripts/Presentation/Economy/StoreUI.cs`
+- `Assets/_Project/Scripts/Presentation/Economy/BoosterShopUI.cs`
 
 ### Created — Tests
 
-- `Assets/Tests/EditMode/Core/BoosterManagerTests.cs`
+- `Assets/Tests/EditMode/Core/Economy/CurrencyManagerTests.cs`
+- `Assets/Tests/EditMode/Core/Economy/RewardCalculatorTests.cs`
+- `Assets/Tests/EditMode/Core/Economy/IAPManagerTests.cs`
+- `Assets/Tests/EditMode/Core/Meta/PotionShelfManagerTests.cs`
+- `Assets/Tests/EditMode/Core/Meta/WorkshopManagerTests.cs`
+- `Assets/Tests/EditMode/Core/Meta/WinStreakTrackerTests.cs`
+- `Assets/Tests/EditMode/Core/Meta/DailyBrewManagerTests.cs`
+- `Assets/Tests/EditMode/Core/Ads/AdManagerTests.cs`
+- `Assets/Tests/EditMode/Core/Backend/CloudSaveManagerTests.cs`
+- `Assets/Tests/EditMode/Core/Backend/RemoteConfigManagerTests.cs`
+
+### Created — Config
+
+- `config/firebase/remote-config-defaults.json`
 
 ### Modified — Presentation
 
-- `Assets/_Project/Scripts/Presentation/BoardPresenter.cs` — booster integration, brew animation hook, particle/haptic/shake triggers, correct color palette
-- `Assets/_Project/Scripts/Presentation/HudController.cs` — animated move counter, score tween, critical color
-- `Assets/_Project/Scripts/Presentation/TokenView.cs` — TokenAnimator reference, idle shimmer on init
+- `Assets/_Project/Scripts/Presentation/GameFlowController.cs` — full meta/economy/ad/analytics wiring
+- `Assets/_Project/Scripts/Presentation/HudController.cs` — wallet display, streak indicator
+- `Assets/_Project/Scripts/Presentation/LevelCompleteScreen.cs` — economy breakdown, double-reward ad, potion reveal
+- `Assets/_Project/Scripts/Presentation/LevelFailScreen.cs` — ad-for-moves, streak protection panel
 
 ### Modified — Editor
 
-- `Assets/_Project/Scripts/Editor/BrewSceneSetup.cs` — full scene hierarchy, scene file creation, UI prefab creation, build settings registration
+- `Assets/_Project/Scripts/Editor/BrewSceneSetup.cs` — CreateMetaScreens, updated CreateGameFlowController with meta references
 
 ## Verification Notes
 
-- All new Core classes (`BoosterManager`, `TutorialLevelData`) have zero `using UnityEngine;` — pure C# contract maintained.
-- BoosterManager.ActivateShake uses Fisher-Yates shuffle per core-mechanic.md §15.1, with guaranteed valid cluster post-shuffle.
-- BoosterManager.ActivateCatalyst creates orb with token_count=1 per core-mechanic.md §15.2.
-- BoosterManager.ActivateExtraMoves enforces one-use-per-attempt per core-mechanic.md §15.3.
-- AudioManager priority system matches sound-design.md: brew(0) > fusion(1) > chain(2) > cascade(3) > highlight(4) > tap(5) > UI(6).
-- ScreenShakeController uses Perlin noise (not random) per Week 5-6 prompt §5 specification.
-- HapticManager intensity values match haptic map from sound-design.md (light=0.4, medium=0.6, heavy=0.9).
-- BrewAnimationController timing matches art-direction.md brew animation sequence (1.8s total).
-- Tutorial level board layouts match tutorial-flow.md exactly for levels 1-5.
-- Color palette updated to exact hex values from art-direction.md.
+- All new Core classes (Economy, Meta, Ads, Backend) have zero `using UnityEngine;` — pure C# contract maintained.
+- CurrencyManager.Spend returns false on insufficient balance; balance never goes negative per economy-model.md.
+- RewardCalculator streak multiplier tiers match economy-model.md exactly: 1.0/1.25/1.5/2.0/2.5/3.0 at streaks 1/2/3/5/8/10+.
+- Workshop costs match economy-model.md: 50, 100, 200, 400, 600, 1000, 1500, 2500, 4000, 6000, 8000, 12000 (cumulative 36,350).
+- PotionShelfManager milestones match economy-model.md: 25%=500E+25G, 50%=1000E+50G, 75%=2000E+100G, 100%=5000E+250G.
+- DailyBrewManager streak bonuses match economy-model.md: 3-day=1.25x+5G, 5-day=1.5x+10G, 7-day=2.0x+15G.
+- IAPManager catalog matches monetization-plan.md: 4 gem packs, starter bundle ($1.99, 50G+500E+3 Catalysts, max level 15), no-ads pass ($4.99).
+- AdManager daily cap (5), interstitial frequency (3), per-placement limits all match monetization-plan.md.
+- Remote Config defaults JSON contains all 56 keys matching economy-model.md and monetization-plan.md values.
 
 ## Handoff Checklist
 
 - Decision log updated
 - This handoff file updated
-- Context snapshot regenerated (requires running `python scripts/context/build_context_snapshot.py`)
-- ADR index validated (no new ADRs needed)
+- Context snapshot regenerated
+- ADR index validated — 2 new ADRs recorded (0002 offline-first cloud save, 0003 Remote Config as config source)
 - CI/local readiness checks run and results recorded (requires Unity Editor)
-- Unity scene created and verified (run `Brew > Create Gameplay Scene` in Editor)
-
+- ScriptableObject assets created and assigned (requires Unity Editor)

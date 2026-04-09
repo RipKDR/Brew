@@ -35,4 +35,6 @@ Each ADR should include:
 | Number | Title | Status | Date | File |
 |---|---|---|---|---|
 | 0001 | Canonical Unity Version | accepted | 2026-04-09 | [0001-canonical-unity-version.md](0001-canonical-unity-version.md) |
+| 0002 | Offline-First Cloud Save | accepted | 2026-04-09 | [0002-offline-first-cloud-save.md](0002-offline-first-cloud-save.md) |
+| 0003 | Remote Config as Config Source | accepted | 2026-04-09 | [0003-remote-config-as-config-source.md](0003-remote-config-as-config-source.md) |
 
