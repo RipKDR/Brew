@@ -42,18 +42,21 @@
 ## Code Inventory
 
 ### Core Layer (pure C#, zero Unity deps) — 18 files
+
 - Enums: IngredientColor, CellContentType, BoardPhase, LevelOutcome
 - Data types: CellContent, GridCoord, RecipeTarget, LevelConfig, RecipeProgress, FusionResult, ChainFusionResult, GravityStep
 - Logic: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver
 - Game systems: MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator
 
 ### Data Layer — 4 files
+
 - BoardConfigSO (ScriptableObject)
 - LevelLoader (JSON parser)
 - PlayerProgress + LevelStarEntry (save data)
 - LocalSaveManager (persistence)
 
 ### Presentation Layer — 10 files
+
 - BoardPresenter, InputController, TokenView
 - HudController, RecipeVialUI
 - LevelCompleteScreen, LevelFailScreen
@@ -61,20 +64,25 @@
 - GameFlowController
 
 ### Utilities — 1 file
-- ObjectPool<T>
+
+- ObjectPool
 
 ### Editor — 1 file
+
 - BrewSceneSetup
 
 ### Tests — 13 files, ~140+ methods
+
 - Core: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver, MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, LevelConfig
 - Data: LevelLoader, PlayerProgress, LevelDataIntegration
 
 ## ADR Summary
 
-| Number | Title | Status | Date |
-|---|---|---|---|
-| 0001 | Canonical Unity Version | accepted | 2026-04-09 |
+
+| Number | Title                   | Status   | Date       |
+| ------ | ----------------------- | -------- | ---------- |
+| 0001   | Canonical Unity Version | accepted | 2026-04-09 |
+
 
 ## Changelog (Unreleased)
 

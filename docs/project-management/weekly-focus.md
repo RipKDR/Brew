@@ -12,15 +12,15 @@ Complete context system readiness so implementation work can start with determin
 
 ## Must Complete This Week
 
-- [ ] Context continuity artifacts fully in place and cross-linked.
-- [ ] Context snapshot generation script runs cleanly.
-- [ ] Context validation checks pass locally and in CI.
-- [ ] All core docs aligned on canonical engine/version/tooling truth.
+- Context continuity artifacts fully in place and cross-linked.
+- Context snapshot generation script runs cleanly.
+- Context validation checks pass locally and in CI.
+- All core docs aligned on canonical engine/version/tooling truth.
 
 ## Secondary Work
 
-- [ ] Add one-command prep check instructions to README.
-- [ ] Confirm mvp-build-plan references remain current.
+- Add one-command prep check instructions to README.
+- Confirm mvp-build-plan references remain current.
 
 ## Risks to Watch
 

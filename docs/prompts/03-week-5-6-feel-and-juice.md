@@ -23,6 +23,7 @@ You are continuing the build of **Brew**, a mobile puzzle game (Unity 6 / C#). T
 ### 1. Token Art Integration
 
 Replace placeholder colored circles with proper ingredient token sprites. The 5 types per `art-direction.md`:
+
 - **Ember** (red, `#E05A3A`) — flame/teardrop silhouette
 - **Frost** (blue, `#6FB8D9`) — snowflake/hexagon silhouette
 - **Vine** (green, `#6DAF5E`) — leaf/organic curve silhouette
@@ -30,6 +31,7 @@ Replace placeholder colored circles with proper ingredient token sprites. The 5 
 - **Shadow** (purple, `#6B4E9B`) — crescent/wisp silhouette
 
 Each token must have a **distinct silhouette** — players should be able to identify types by shape alone, not just color (accessibility requirement). Implement three animation states:
+
 - **Idle:** Subtle shimmer/breathing animation (scale oscillation 0.98–1.02 over 2s, ease-in-out)
 - **Selected/highlighted:** Pulse with glow ring when player touches a valid cluster
 - **Fusing:** Tokens rush toward the merge point (ease-in curve, 150ms per `core-mechanic.md` §4.1)
@@ -37,6 +39,7 @@ Each token must have a **distinct silhouette** — players should be able to ide
 ### 2. Brew Orb Art Integration
 
 Implement 3 visual tiers for orbs, each per ingredient color (15 variants total):
+
 - **Small (token_count 3-4):** Gentle inner glow, slow pulse (1.5s cycle)
 - **Medium (token_count 5):** Brighter glow, faster pulse (1.0s cycle), subtle particle emission (2-3 sparkles/sec)
 - **Large (token_count 6+, about to brew):** Intense glow, rapid pulse (0.5s cycle), heavy particle emission (8-10 sparkles/sec), audible hum
@@ -56,6 +59,7 @@ Total sequence: 1.5-2.0 seconds. This must feel **magical**. Reference `art-dire
 ### 4. Particle Systems
 
 Implement ALL particle effects using **object pooling** (never Instantiate during gameplay — use the project's `ObjectPool<T>` from `Scripts/Utilities/`):
+
 - **Fusion sparkles:** Burst at merge point, 15-20 particles, 0.3s lifetime, ingredient color
 - **Cascade trails:** Streak following falling tokens during gravity, short-lived (0.2s)
 - **Brew bubbles and steam:** Rising from orb during crescendo, transitioning to sparkle burst
@@ -67,6 +71,7 @@ Cap simultaneous particle systems at 5 to protect low-end device performance. Us
 ### 5. Screen Shake
 
 Implement via a configurable `ScreenShakeConfig` ScriptableObject in `ScriptableObjects/Config/`:
+
 - **Fusion:** Subtle (intensity 0.5, duration 0.1s)
 - **Chain fusion:** Medium (intensity 1.0, duration 0.15s, increases with chain length)
 - **Brew:** Large (intensity 2.0, duration 0.3s)
@@ -77,6 +82,7 @@ Use Perlin noise for organic shake, not random. Provide a user toggle in Setting
 ### 6. Haptic Feedback
 
 Implement per `sound-design.md` haptic section:
+
 - **Token tap:** Light impact (iOS: `UIImpactFeedbackGenerator(.light)`, Android: 10ms vibration)
 - **Fusion:** Medium impact (iOS: `.medium`, Android: 25ms)
 - **Chain fusion:** Medium impact, one per chain step
@@ -92,6 +98,7 @@ Provide a user toggle in Settings. Default ON for devices with haptic engines, O
 ### 1. Sound Integration
 
 Implement ALL SFX from `sound-design.md` SFX catalog. Build an `AudioManager` in `Scripts/Presentation/` with pooled AudioSources (minimum 8 concurrent). Key sounds:
+
 - `sfx_token_tap` — soft ceramic tink on wood
 - `sfx_fusion` — whoosh + sparkle, with subtle pitch variation per instance (±50 cents random)
 - `sfx_chain` — ascending chime sequence, pitch rises per chain step (+2 semitones each)
@@ -110,6 +117,7 @@ Integrate the workshop ambient loop per `sound-design.md`: 72 seconds, seamless 
 ### 3. Adaptive Audio
 
 When the player is on their last 5 moves, add a subtle tension layer to the music:
+
 - A low sustained pad fades in underneath the main loop
 - Percussion gains a slightly faster rhythmic element
 - SFX for fusions become slightly more reverberant (longer tail)
@@ -127,6 +135,7 @@ Implement the tutorial per `docs/game-design/tutorial-flow.md` **EXACTLY**. Five
 - **Level 5 — "Master Brewer":** 6×6 grid, 4 colors, 2 recipe targets. Full gameplay with move limit.
 
 Tutorial UX rules (from the spec — non-negotiable):
+
 - **One sentence max** per prompt. No paragraphs.
 - **Dim and spotlight:** Board dims to 30% brightness, target area at 100% with pulsing glow ring.
 - **Finger indicator:** Translucent animated hand tapping every 1.5s until the player acts.
@@ -147,6 +156,7 @@ Build a booster bar UI: 3 slots below or beside the board. Show remaining charge
 ### 6. UI Polish
 
 Implement the full HUD per `art-direction.md` UI section:
+
 - **Moves remaining:** Top-left, large and readable. Pulses red on last 5 moves.
 - **Recipe vials:** Top-right, one per target. Fill animation on brew. "Complete!" stamp when full.
 - **Score:** Top-center, running tally with animated increment.
@@ -168,18 +178,19 @@ Reference `docs/production/milestone-gates.md`, Gate 3. The test:
 This is tested by having someone who has never seen the game play it cold, with zero instructions from you. You observe silently. If they don't naturally want to continue after 5 levels, this milestone **FAILS**.
 
 Specific pass criteria:
-- [ ] Tutorial: all 5 levels implemented, each teaches one concept
-- [ ] Tutorial completion: ≥ 4/5 external testers complete without asking for help
-- [ ] Continued play: ≥ 3/5 testers voluntarily continue past tutorial without prompting
-- [ ] Art: all placeholder art replaced with final or near-final sprites
-- [ ] Particles: all effects (fusion, brew, cascade, celebration) fire correctly
-- [ ] Sound: all core SFX integrated, no missing sounds, no volume spikes
-- [ ] Haptics: fusion, chain, and brew trigger appropriate feedback
-- [ ] Boosters: all 3 function correctly, accessible from booster bar
-- [ ] Performance: no crashes in 15 minutes of continuous play; 60fps on iPhone SE 2nd gen
-- [ ] Qualitative: at least 1 tester spontaneously expresses positive reaction during chain or brew
-- [ ] Music: ambient loop plays, creates cozy atmosphere, loops seamlessly
-- [ ] Adaptive audio: tension layer engages in last 5 moves
+
+- Tutorial: all 5 levels implemented, each teaches one concept
+- Tutorial completion: ≥ 4/5 external testers complete without asking for help
+- Continued play: ≥ 3/5 testers voluntarily continue past tutorial without prompting
+- Art: all placeholder art replaced with final or near-final sprites
+- Particles: all effects (fusion, brew, cascade, celebration) fire correctly
+- Sound: all core SFX integrated, no missing sounds, no volume spikes
+- Haptics: fusion, chain, and brew trigger appropriate feedback
+- Boosters: all 3 function correctly, accessible from booster bar
+- Performance: no crashes in 15 minutes of continuous play; 60fps on iPhone SE 2nd gen
+- Qualitative: at least 1 tester spontaneously expresses positive reaction during chain or brew
+- Music: ambient loop plays, creates cozy atmosphere, loops seamlessly
+- Adaptive audio: tension layer engages in last 5 moves
 
 ---
 

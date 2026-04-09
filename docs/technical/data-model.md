@@ -112,16 +112,18 @@ All timestamps are ISO 8601 / UTC. All IDs are lowercase alphanumeric with under
 
 ### Field Constraints
 
-| Field | Type | Constraints |
-|---|---|---|
-| `player_id` | string | Firebase UID, immutable after creation |
-| `display_name` | string | 1–20 characters, alphanumeric + spaces, profanity-filtered server-side |
-| `essence_balance` | int | ≥ 0, server-authoritative |
-| `gem_balance` | int | ≥ 0, server-authoritative |
-| `current_level` | int | ≥ 1, monotonically increasing |
-| `streak_count` | int | ≥ 0, resets to 0 if `streak_last_date` is >1 calendar day ago |
-| `level_stars` | map<string, int> | Key: level_id as string. Value: 1–3. |
-| `booster_inventory` | map<string, int> | Key: booster_type_id. Value: ≥ 0. |
+
+| Field               | Type             | Constraints                                                            |
+| ------------------- | ---------------- | ---------------------------------------------------------------------- |
+| `player_id`         | string           | Firebase UID, immutable after creation                                 |
+| `display_name`      | string           | 1–20 characters, alphanumeric + spaces, profanity-filtered server-side |
+| `essence_balance`   | int              | ≥ 0, server-authoritative                                              |
+| `gem_balance`       | int              | ≥ 0, server-authoritative                                              |
+| `current_level`     | int              | ≥ 1, monotonically increasing                                          |
+| `streak_count`      | int              | ≥ 0, resets to 0 if `streak_last_date` is >1 calendar day ago          |
+| `level_stars`       | map<string, int> | Key: level_id as string. Value: 1–3.                                   |
+| `booster_inventory` | map<string, int> | Key: booster_type_id. Value: ≥ 0.                                      |
+
 
 ---
 
@@ -208,11 +210,13 @@ All timestamps are ISO 8601 / UTC. All IDs are lowercase alphanumeric with under
 
 ### Blocker Types (MVP)
 
-| Type | Behavior | HP |
-|---|---|---|
-| `ice` | Covers a token. Adjacent fusions crack ice (1 HP per adjacent fusion). Token underneath revealed when destroyed. | 1–2 |
-| `stone` | Occupies a cell. Cannot be fused. Destroyed by adjacent fusions. | 1–3 |
-| `lock` | Locks a token in place (cannot fall due to gravity). Destroyed by including the locked token in a fusion. | 1 |
+
+| Type    | Behavior                                                                                                         | HP  |
+| ------- | ---------------------------------------------------------------------------------------------------------------- | --- |
+| `ice`   | Covers a token. Adjacent fusions crack ice (1 HP per adjacent fusion). Token underneath revealed when destroyed. | 1–2 |
+| `stone` | Occupies a cell. Cannot be fused. Destroyed by adjacent fusions.                                                 | 1–3 |
+| `lock`  | Locks a token in place (cannot fall due to gravity). Destroyed by including the locked token in a fusion.        | 1   |
+
 
 ---
 
@@ -395,41 +399,47 @@ All values served from Firebase Remote Config. Organized by parameter group.
 
 ### 8.1 Economy
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `essence_per_star_1` | int | 50 | Essence awarded for 1-star completion |
-| `essence_per_star_2` | int | 100 | Essence awarded for 2-star completion |
-| `essence_per_star_3` | int | 200 | Essence awarded for 3-star completion |
-| `gems_daily_brew` | int | 5 | Gems for completing daily brew |
-| `gems_streak_day_3` | int | 10 | Gems at streak day 3 |
-| `gems_streak_day_7` | int | 25 | Gems at streak day 7 |
-| `booster_cost_extra_moves` | int | 100 | Essence cost for Extra Moves booster |
-| `booster_cost_color_bomb` | int | 200 | Essence cost for Color Bomb booster |
-| `booster_cost_row_clear` | int | 150 | Essence cost for Row Clear booster |
-| `booster_gem_cost_extra_moves` | int | 10 | Gem cost for Extra Moves booster |
-| `booster_gem_cost_color_bomb` | int | 20 | Gem cost for Color Bomb booster |
-| `booster_gem_cost_row_clear` | int | 15 | Gem cost for Row Clear booster |
+
+| Parameter                      | Type | Default | Description                           |
+| ------------------------------ | ---- | ------- | ------------------------------------- |
+| `essence_per_star_1`           | int  | 50      | Essence awarded for 1-star completion |
+| `essence_per_star_2`           | int  | 100     | Essence awarded for 2-star completion |
+| `essence_per_star_3`           | int  | 200     | Essence awarded for 3-star completion |
+| `gems_daily_brew`              | int  | 5       | Gems for completing daily brew        |
+| `gems_streak_day_3`            | int  | 10      | Gems at streak day 3                  |
+| `gems_streak_day_7`            | int  | 25      | Gems at streak day 7                  |
+| `booster_cost_extra_moves`     | int  | 100     | Essence cost for Extra Moves booster  |
+| `booster_cost_color_bomb`      | int  | 200     | Essence cost for Color Bomb booster   |
+| `booster_cost_row_clear`       | int  | 150     | Essence cost for Row Clear booster    |
+| `booster_gem_cost_extra_moves` | int  | 10      | Gem cost for Extra Moves booster      |
+| `booster_gem_cost_color_bomb`  | int  | 20      | Gem cost for Color Bomb booster       |
+| `booster_gem_cost_row_clear`   | int  | 15      | Gem cost for Row Clear booster        |
+
 
 ### 8.2 Ad Frequency Caps
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `interstitial_cooldown_seconds` | int | 120 | Minimum seconds between interstitials |
-| `max_interstitials_per_session` | int | 5 | Hard cap per session |
-| `interstitial_start_after_level` | int | 5 | Don't show interstitials before this level |
-| `rewarded_cooldown_seconds` | int | 30 | Cooldown between rewarded ads |
-| `rewarded_extra_moves_count` | int | 5 | Moves granted per rewarded ad |
+
+| Parameter                        | Type | Default | Description                                |
+| -------------------------------- | ---- | ------- | ------------------------------------------ |
+| `interstitial_cooldown_seconds`  | int  | 120     | Minimum seconds between interstitials      |
+| `max_interstitials_per_session`  | int  | 5       | Hard cap per session                       |
+| `interstitial_start_after_level` | int  | 5       | Don't show interstitials before this level |
+| `rewarded_cooldown_seconds`      | int  | 30      | Cooldown between rewarded ads              |
+| `rewarded_extra_moves_count`     | int  | 5       | Moves granted per rewarded ad              |
+
 
 ### 8.3 Feature Flags
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `feature_events_enabled` | bool | true | Master toggle for events system |
-| `feature_workshop_enabled` | bool | true | Show/hide workshop |
-| `feature_daily_brew_enabled` | bool | true | Enable daily brew level |
-| `feature_push_notifications` | bool | true | Enable push notification sends |
-| `maintenance_mode` | bool | false | Show maintenance screen, block gameplay |
-| `force_update_min_version` | string | "1.0.0" | Minimum app version; older shows force-update dialog |
+
+| Parameter                    | Type   | Default | Description                                          |
+| ---------------------------- | ------ | ------- | ---------------------------------------------------- |
+| `feature_events_enabled`     | bool   | true    | Master toggle for events system                      |
+| `feature_workshop_enabled`   | bool   | true    | Show/hide workshop                                   |
+| `feature_daily_brew_enabled` | bool   | true    | Enable daily brew level                              |
+| `feature_push_notifications` | bool   | true    | Enable push notification sends                       |
+| `maintenance_mode`           | bool   | false   | Show maintenance screen, block gameplay              |
+| `force_update_min_version`   | string | "1.0.0" | Minimum app version; older shows force-update dialog |
+
 
 ### 8.4 Booster Config
 
@@ -480,21 +490,23 @@ All values served from Firebase Remote Config. Organized by parameter group.
 
 ## 9. Local vs Cloud Storage Strategy
 
-| Data | Local | Cloud (Firestore) | Authority | Sync Frequency |
-|---|---|---|---|---|
-| Player profile | ✅ Full copy | ✅ Full copy | Cloud for currencies; local for progress | On foreground, level complete, connectivity change |
-| Level stars | ✅ | ✅ (in profile) | max(local, cloud) per level | With profile sync |
-| Level results | ✅ Last 200 | ✅ All (subcollection) | Cloud | Batched on connectivity |
-| Booster inventory | ✅ | ✅ (in profile) | Cloud | With profile sync |
-| Potion collection | ✅ | ✅ (in profile) | union(local, cloud) | With profile sync |
-| Workshop state | ✅ | ✅ (in profile) | max(index) | With profile sync |
-| Streak data | ✅ | ✅ (in profile) | Cloud | With profile sync |
-| Event progress | ✅ | ✅ (in profile) | Cloud for rewards claimed; local for levels played | With profile sync |
-| Settings | ✅ | ❌ | Local only | Never synced |
-| Level definitions | ✅ (ScriptableObjects) | ❌ (Cloud Storage for remote levels) | Build + Cloud Storage | On-demand download |
-| Remote Config | ✅ (cached) | — (Remote Config service) | Server | On foreground, 1-hour cache TTL |
-| IAP receipts | ❌ | ✅ (Cloud Function) | Server (receipt verification) | On purchase |
-| Ad history | ✅ (session-scoped) | ❌ | Local | Never synced |
+
+| Data              | Local                 | Cloud (Firestore)                   | Authority                                          | Sync Frequency                                     |
+| ----------------- | --------------------- | ----------------------------------- | -------------------------------------------------- | -------------------------------------------------- |
+| Player profile    | ✅ Full copy           | ✅ Full copy                         | Cloud for currencies; local for progress           | On foreground, level complete, connectivity change |
+| Level stars       | ✅                     | ✅ (in profile)                      | max(local, cloud) per level                        | With profile sync                                  |
+| Level results     | ✅ Last 200            | ✅ All (subcollection)               | Cloud                                              | Batched on connectivity                            |
+| Booster inventory | ✅                     | ✅ (in profile)                      | Cloud                                              | With profile sync                                  |
+| Potion collection | ✅                     | ✅ (in profile)                      | union(local, cloud)                                | With profile sync                                  |
+| Workshop state    | ✅                     | ✅ (in profile)                      | max(index)                                         | With profile sync                                  |
+| Streak data       | ✅                     | ✅ (in profile)                      | Cloud                                              | With profile sync                                  |
+| Event progress    | ✅                     | ✅ (in profile)                      | Cloud for rewards claimed; local for levels played | With profile sync                                  |
+| Settings          | ✅                     | ❌                                   | Local only                                         | Never synced                                       |
+| Level definitions | ✅ (ScriptableObjects) | ❌ (Cloud Storage for remote levels) | Build + Cloud Storage                              | On-demand download                                 |
+| Remote Config     | ✅ (cached)            | — (Remote Config service)           | Server                                             | On foreground, 1-hour cache TTL                    |
+| IAP receipts      | ❌                     | ✅ (Cloud Function)                  | Server (receipt verification)                      | On purchase                                        |
+| Ad history        | ✅ (session-scoped)    | ❌                                   | Local                                              | Never synced                                       |
+
 
 ---
 
@@ -502,18 +514,20 @@ All values served from Firebase Remote Config. Organized by parameter group.
 
 When local and cloud state diverge (e.g., player plays offline on two devices):
 
-| Field | Resolution Strategy | Rationale |
-|---|---|---|
-| `essence_balance` | **Server wins** | Prevents duplication. Offline essence earnings are tracked as deltas in `pending_sync_queue` and applied server-side via Cloud Function that validates against level results. |
-| `gem_balance` | **Server wins** | Same as essence. Gems from IAP are only granted after server-side receipt verification. |
-| `current_level` / `highest_level_unlocked` | **max(local, cloud)** | Player should never lose forward progress. |
-| `level_stars` | **max(local, cloud) per level** | Player keeps their best performance. |
-| `potions_collected` | **union(local, cloud)** | Never remove a collected potion. |
-| `workshop.current_upgrade_index` | **max(local, cloud)** | Workshop progress is forward-only. Essence cost validated server-side. |
-| `streak_count` | **Server wins** | Server timestamp is authoritative for streak continuity. |
-| `booster_inventory` | **Server wins** | Prevents duplication. Booster consumption tracked in level results, validated server-side. |
-| `event_progress.rewards_claimed` | **union(local, cloud)** | Never un-claim a reward. Reward granting validated server-side. |
-| `settings` | **Local wins** | Device-specific preferences, not synced. |
+
+| Field                                      | Resolution Strategy             | Rationale                                                                                                                                                                     |
+| ------------------------------------------ | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `essence_balance`                          | **Server wins**                 | Prevents duplication. Offline essence earnings are tracked as deltas in `pending_sync_queue` and applied server-side via Cloud Function that validates against level results. |
+| `gem_balance`                              | **Server wins**                 | Same as essence. Gems from IAP are only granted after server-side receipt verification.                                                                                       |
+| `current_level` / `highest_level_unlocked` | **max(local, cloud)**           | Player should never lose forward progress.                                                                                                                                    |
+| `level_stars`                              | **max(local, cloud) per level** | Player keeps their best performance.                                                                                                                                          |
+| `potions_collected`                        | **union(local, cloud)**         | Never remove a collected potion.                                                                                                                                              |
+| `workshop.current_upgrade_index`           | **max(local, cloud)**           | Workshop progress is forward-only. Essence cost validated server-side.                                                                                                        |
+| `streak_count`                             | **Server wins**                 | Server timestamp is authoritative for streak continuity.                                                                                                                      |
+| `booster_inventory`                        | **Server wins**                 | Prevents duplication. Booster consumption tracked in level results, validated server-side.                                                                                    |
+| `event_progress.rewards_claimed`           | **union(local, cloud)**         | Never un-claim a reward. Reward granting validated server-side.                                                                                                               |
+| `settings`                                 | **Local wins**                  | Device-specific preferences, not synced.                                                                                                                                      |
+
 
 ### Sync Flow
 
@@ -542,20 +556,24 @@ App Foreground
 
 ## 11. Firestore Document Size Estimates
 
-| Document | Estimated Size | Notes |
-|---|---|---|
-| Player profile | 2–5 KB | Grows slowly with potions_collected and level_stars. At 500 levels completed, ~8 KB. |
-| Level result | 0.5–1 KB | Subcollection document. |
+
+| Document       | Estimated Size | Notes                                                                                |
+| -------------- | -------------- | ------------------------------------------------------------------------------------ |
+| Player profile | 2–5 KB         | Grows slowly with potions_collected and level_stars. At 500 levels completed, ~8 KB. |
+| Level result   | 0.5–1 KB       | Subcollection document.                                                              |
+
 
 Firestore document limit is 1 MB — no risk of exceeding even at 10,000+ levels.
 
 ### Firestore Indexes Required
 
-| Collection | Fields | Type |
-|---|---|---|
-| `players` | `created_at` | ASC (for admin queries) |
-| `players/{uid}/level_results` | `level_id`, `timestamp` | Composite ASC, DESC |
-| `players/{uid}/level_results` | `timestamp` | DESC (for recent results) |
+
+| Collection                    | Fields                  | Type                      |
+| ----------------------------- | ----------------------- | ------------------------- |
+| `players`                     | `created_at`            | ASC (for admin queries)   |
+| `players/{uid}/level_results` | `level_id`, `timestamp` | Composite ASC, DESC       |
+| `players/{uid}/level_results` | `timestamp`             | DESC (for recent results) |
+
 
 ---
 
@@ -589,3 +607,4 @@ service cloud.firestore {
   }
 }
 ```
+

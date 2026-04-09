@@ -16,12 +16,14 @@ You are joining a lean team (3–8 people) building a 10-week MVP. Every documen
 
 Read these in order. Total time: ~50 minutes.
 
-| # | Document | Time | What You'll Learn |
-|---|----------|------|-------------------|
-| 1 | [README.md](../../README.md) | 5 min | Project overview, doc map, tech stack, key metrics |
-| 2 | [Game Design Document](../game-design/GDD.md) | 20 min | Vision, design pillars, full gameplay loop, all systems |
-| 3 | [Core Mechanic Spec](../game-design/core-mechanic.md) | 15 min | Grid rules, fusion logic, chain resolution, edge cases |
-| 4 | [MVP Build Plan](../production/mvp-build-plan.md) | 10 min | 10-week timeline, deliverables, who owns what |
+
+| #   | Document                                              | Time   | What You'll Learn                                       |
+| --- | ----------------------------------------------------- | ------ | ------------------------------------------------------- |
+| 1   | [README.md](../../README.md)                          | 5 min  | Project overview, doc map, tech stack, key metrics      |
+| 2   | [Game Design Document](../game-design/GDD.md)         | 20 min | Vision, design pillars, full gameplay loop, all systems |
+| 3   | [Core Mechanic Spec](../game-design/core-mechanic.md) | 15 min | Grid rules, fusion logic, chain resolution, edge cases  |
+| 4   | [MVP Build Plan](../production/mvp-build-plan.md)     | 10 min | 10-week timeline, deliverables, who owns what           |
+
 
 ---
 
@@ -82,45 +84,55 @@ After the Day 1 list, read the documents relevant to your role.
 
 ### Developer (UD-1, UD-2)
 
-| Document | Why |
-|----------|-----|
-| [Architecture](../technical/architecture.md) | System layers, module boundaries, tech decisions |
-| [Data Model](../technical/data-model.md) | All schemas — player profile, level config, economy, events |
-| [Infrastructure](../technical/infrastructure.md) | Firebase setup, CI/CD pipeline, environments |
-| [AGENTS.md](../../AGENTS.md) | AI coding assistant rules and project conventions |
+
+| Document                                         | Why                                                         |
+| ------------------------------------------------ | ----------------------------------------------------------- |
+| [Architecture](../technical/architecture.md)     | System layers, module boundaries, tech decisions            |
+| [Data Model](../technical/data-model.md)         | All schemas — player profile, level config, economy, events |
+| [Infrastructure](../technical/infrastructure.md) | Firebase setup, CI/CD pipeline, environments                |
+| [AGENTS.md](../../AGENTS.md)                     | AI coding assistant rules and project conventions           |
+
 
 ### Designer (GP)
 
-| Document | Why |
-|----------|-----|
+
+| Document                                                           | Why                                                   |
+| ------------------------------------------------------------------ | ----------------------------------------------------- |
 | [Level Design Framework](../game-design/level-design-framework.md) | Difficulty curve, lever introduction schedule, pacing |
-| [Tutorial Flow](../game-design/tutorial-flow.md) | First 5 levels step-by-step, UX principles |
-| [Economy Model](../economy/economy-model.md) | Currency flow, earning/spending rates, pacing targets |
-| [A/B Test Plan](../analytics/ab-test-plan.md) | First 6 experiments, hypotheses, decision criteria |
+| [Tutorial Flow](../game-design/tutorial-flow.md)                   | First 5 levels step-by-step, UX principles            |
+| [Economy Model](../economy/economy-model.md)                       | Currency flow, earning/spending rates, pacing targets |
+| [A/B Test Plan](../analytics/ab-test-plan.md)                      | First 6 experiments, hypotheses, decision criteria    |
+
 
 ### Artist (ART)
 
-| Document | Why |
-|----------|-----|
+
+| Document                                      | Why                                                            |
+| --------------------------------------------- | -------------------------------------------------------------- |
 | [Art Direction](../creative/art-direction.md) | Visual style, color palette, token/orb/potion design, workshop |
-| [Sound Design](../creative/sound-design.md) | Audio identity, SFX catalog, haptic map |
+| [Sound Design](../creative/sound-design.md)   | Audio identity, SFX catalog, haptic map                        |
+
 
 ### QA
 
-| Document | Why |
-|----------|-----|
-| [Milestone Gates](../production/milestone-gates.md) | Pass/fail criteria you will verify at each gate |
-| [Risk Register](../production/risk-register.md) | Known risks and what to watch for |
+
+| Document                                                   | Why                                                |
+| ---------------------------------------------------------- | -------------------------------------------------- |
+| [Milestone Gates](../production/milestone-gates.md)        | Pass/fail criteria you will verify at each gate    |
+| [Risk Register](../production/risk-register.md)            | Known risks and what to watch for                  |
 | [Event Tracking Plan](../analytics/event-tracking-plan.md) | Every analytics event — verify they fire correctly |
+
 
 ### Producer (GP)
 
-| Document | Why |
-|----------|-----|
-| [MVP Build Plan](../production/mvp-build-plan.md) | Week-by-week plan, deliverables, owners |
-| [Milestone Gates](../production/milestone-gates.md) | Go/no-go criteria at each checkpoint |
-| [Risk Register](../production/risk-register.md) | 15+ risks with likelihood, impact, and mitigations |
-| [Project Summary](../project-management/project-summary.md) | Living status doc, decision log, blockers |
+
+| Document                                                    | Why                                                |
+| ----------------------------------------------------------- | -------------------------------------------------- |
+| [MVP Build Plan](../production/mvp-build-plan.md)           | Week-by-week plan, deliverables, owners            |
+| [Milestone Gates](../production/milestone-gates.md)         | Go/no-go criteria at each checkpoint               |
+| [Risk Register](../production/risk-register.md)             | 15+ risks with likelihood, impact, and mitigations |
+| [Project Summary](../project-management/project-summary.md) | Living status doc, decision log, blockers          |
+
 
 ---
 
@@ -128,14 +140,16 @@ After the Day 1 list, read the documents relevant to your role.
 
 ### Where Things Live
 
-| What | Where |
-|------|-------|
-| **Decisions** | [Project Summary — Decision Log](../project-management/project-summary.md) |
-| **Game design specs** | `docs/game-design/` |
-| **Economy values** | `docs/economy/economy-model.md` + Remote Config |
-| **Technical specs** | `docs/technical/` |
-| **Production planning** | `docs/production/` |
-| **Terminology** | [Glossary](../project-management/glossary.md) |
+
+| What                    | Where                                                                      |
+| ----------------------- | -------------------------------------------------------------------------- |
+| **Decisions**           | [Project Summary — Decision Log](../project-management/project-summary.md) |
+| **Game design specs**   | `docs/game-design/`                                                        |
+| **Economy values**      | `docs/economy/economy-model.md` + Remote Config                            |
+| **Technical specs**     | `docs/technical/`                                                          |
+| **Production planning** | `docs/production/`                                                         |
+| **Terminology**         | [Glossary](../project-management/glossary.md)                              |
+
 
 ### How to Propose Changes
 
