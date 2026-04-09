@@ -1,0 +1,59 @@
+---
+description: Strict plan adherence rules for Brew mobile game project
+globs: **/*
+alwaysApply: true
+---
+
+# Brew Project — Agent Rules
+
+## Project Identity
+
+This is **Brew**, a mobile puzzle game for iOS and Android. The game concept, mechanics, economy, and production plan are fully specified in `docs/`. These documents are the source of truth.
+
+## Strict Plan Adherence
+
+1. **Never deviate from the documented game design without explicit human approval.** The GDD, core mechanic spec, level design framework, and meta systems spec define what the game IS. If a proposed change contradicts any of these documents, stop and ask before implementing.
+
+2. **Never add features, systems, currencies, or meta layers not specified in the documentation.** Scope creep is the primary risk. If you think something should be added, propose it as a document amendment first — never just build it.
+
+3. **Never change economy values (currency amounts, costs, rewards) without updating the economy model document first.** Economy balance is fragile. All changes must be reflected in `docs/economy/economy-model.md` before implementation.
+
+4. **Follow the MVP Build Plan week-by-week.** The plan in `docs/production/mvp-build-plan.md` defines what is built when. Do not skip ahead, reorder milestones, or defer critical-path items.
+
+5. **Respect milestone gates.** At the end of each milestone (weeks 2, 4, 6, 8, 10), the criteria in `docs/production/milestone-gates.md` must be evaluated before proceeding. If a gate fails, follow the documented rework plan — do not proceed to the next phase.
+
+## Implementation Rules
+
+6. **Core mechanic implementation must exactly match `docs/game-design/core-mechanic.md`.** Every fusion rule, chain behavior, gravity behavior, and brew threshold must be implemented as specified. No "close enough."
+
+7. **Level data must be JSON-driven.** Levels are defined as data, not code. The level format must match the schema in `docs/technical/data-model.md`.
+
+8. **All economy values must be server-configurable via Firebase Remote Config.** No hardcoded currency amounts, costs, move limits, or ad frequency caps. Everything tunable without an app update.
+
+9. **Analytics events must match `docs/analytics/event-tracking-plan.md` exactly.** Every event name, parameter name, and parameter type must be implemented as documented. Missing analytics is a blocking bug.
+
+10. **Tutorial must follow `docs/game-design/tutorial-flow.md` step by step.** The tutorial is the most important retention lever. It is not optional, not "nice to have," and not something to cut for time.
+
+## Quality Rules
+
+11. **Performance targets: 60fps on iPhone SE 2nd gen, <100MB install, <5s cold start.** These are not aspirational — they are requirements. Test on low-end devices early and often.
+
+12. **The game must FEEL good before it looks good.** Juice (particles, screen shake, haptics, sound) is not polish — it is core. The Week 5-6 milestone gate specifically tests feel.
+
+13. **No monetization dark patterns.** No fake timers, no manufactured impossible levels, no hidden odds, no loot boxes, no deceptive UI. See `docs/economy/monetization-plan.md` for the full ethical guardrail list.
+
+## Document Management
+
+14. **When any specification changes, update the source document FIRST, then implement.** Documents stay in sync with implementation at all times.
+
+15. **When making a decision not covered by existing documentation, document the decision in the relevant spec file before implementing.**
+
+## File Organization
+
+- `docs/game-design/` — What the game is
+- `docs/economy/` — How money works
+- `docs/technical/` — How it's built
+- `docs/production/` — When things happen
+- `docs/creative/` — How it looks and sounds
+- `docs/analytics/` — What we measure
+- `docs/liveops/` — How we operate post-launch
