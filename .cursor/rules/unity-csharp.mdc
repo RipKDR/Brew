@@ -1,0 +1,105 @@
+---
+description: Unity C# coding standards for Brew
+globs: "**/*.cs"
+alwaysApply: true
+---
+
+# Unity C# Coding Standards — Brew
+
+## Naming Conventions
+
+- **PascalCase** for public methods, properties, classes, structs, enums, enum values, constants, and ScriptableObject fields.
+- **_camelCase** (leading underscore) for private and protected fields: `_moveCounter`, `_boardModel`.
+- **camelCase** (no underscore) for parameters and local variables: `clusterSize`, `targetCell`.
+- **I-prefix** for interfaces: `IAnalyticsService`, `IAdService`, `ISaveManager`.
+- **No Hungarian notation.** Never `strName`, `iCount`, `bIsActive`, `m_health`.
+- **No `m_` prefix.** Unity's older convention — Brew uses `_camelCase` exclusively.
+- **Enum values are PascalCase:** `CellState.Idle`, `TokenColor.Ember`, `BoardPhase.Cascading`.
+
+## MonoBehaviour Usage
+
+- **Minimize MonoBehaviours.** Use them only for Unity lifecycle hooks (`Awake`, `Start`, `Update`, `OnDestroy`) and for components that must live on GameObjects (renderers, colliders, UI elements).
+- **All game logic lives in plain C# classes.** `BoardModel`, `FusionEngine`, `CascadeResolver`, `ScoreCalculator`, `WinLoseEvaluator` — none of these inherit MonoBehaviour.
+- **Presentation MonoBehaviours call into logic classes**, never the reverse. `BoardPresenter` reads computed steps from `FusionEngine` and drives animations. The engine never knows about GameObjects.
+- This separation enables unit testing in EditMode without the Unity runtime.
+
+## ScriptableObjects for Configuration
+
+- **All configuration data** must be defined as ScriptableObjects: board configs, level definitions, economy values, ingredient definitions, potion definitions, booster definitions.
+- ScriptableObjects are the design-time source of truth. At runtime, Remote Config values override ScriptableObject defaults for economy tuning.
+- Never scatter config values across MonoBehaviour inspector fields. Centralize in a dedicated SO that the relevant system references.
+- Name SOs descriptively: `Level_016.asset`, `PotionDef_HealingDraught.asset`, `EconomyConfig_Default.asset`.
+
+## Event System & Decoupling
+
+- **Use C# `event` / `Action<T>` or UnityEvents for inter-system communication.** When a brew completes, fire an event — don't call `EconomyManager.AddEssence()` directly from `FusionEngine`.
+- **Never hold direct references between managers.** `EconomyManager` must not reference `WorkshopManager`. Use events or the service locator.
+- **Prefer C# events over UnityEvents** for system-to-system communication. Use UnityEvents only when designers need to wire things in the Inspector.
+- **Unsubscribe in `OnDestroy` or `OnDisable`.** Leaked event subscriptions cause null reference exceptions and memory leaks.
+
+## Object Pooling
+
+- **Mandatory for tokens, orbs, particles, floating text, and any object created/destroyed during gameplay.**
+- Use the project's `ObjectPool<T>` utility in `Scripts/Utilities/`.
+- **Never call `Instantiate()` or `Destroy()` during the gameplay loop.** Pre-warm pools during level load. Return objects to the pool when they leave play.
+- Pool sizes should be configurable (set in a ScriptableObject or calculated from grid dimensions).
+
+## Async Patterns
+
+- **Prefer async/await with UniTask** over Unity coroutines for sequenced game logic (fusion animation → cascade → settle → check brew).
+- Coroutines are acceptable for simple, self-contained animation timing that doesn't need cancellation or error handling.
+- **Never use `async void`** except for Unity event handlers that require it. Use `async UniTaskVoid` or `async UniTask` and handle exceptions.
+- All Firebase operations (`RemoteConfig.FetchAsync`, `Firestore.SetAsync`, etc.) must use async/await with timeout and cancellation token support.
+
+## Serialization
+
+- **`[SerializeField]` for inspector-exposed private fields.** Never make a field `public` just to see it in the Inspector.
+- Use `[field: SerializeField]` for auto-properties when needed.
+- Use `[Header("Section")]` and `[Tooltip("...")]` to organize Inspector fields in Presentation-layer MonoBehaviours.
+- Private fields that are NOT inspector-exposed need no attribute.
+
+## Board State Machine
+
+The board state machine sequence is sacred:
+
+```
+Idle → PlayerInput → Fusing → Cascading → Settling → CheckBrew → CheckWin → Idle
+```
+
+- **Never bypass states.** Every transition must pass through the full sequence.
+- **Never accept player input during resolution** (Fusing, Cascading, Settling, CheckBrew). The `BoardStateMachine` gates input.
+- **Never check win/lose before cascades are fully resolved.** A cascade can produce a winning brew — the player must not be shown a fail screen while a cascade is still resolving.
+- If you need to add a new state, insert it into the existing sequence with a clear transition. Do not create parallel state paths.
+
+## No Magic Numbers
+
+- **Every gameplay-relevant value must come from a ScriptableObject or RemoteConfig.**
+- Wrong: `if (cluster.Size >= 6)` — hardcoded brew threshold.
+- Right: `if (cluster.Size >= _brewConfig.BrewThreshold)` — reads from config.
+- Wrong: `AddEssence(50)` — hardcoded reward.
+- Right: `AddEssence(_remoteConfig.GetInt("essence_per_star_1"))` — server-configurable.
+- Constants like `Vector3.zero` or mathematical values (`Mathf.PI`) are fine. Game-design values are not.
+
+## Error Handling
+
+- **Graceful degradation for all network operations.** Firebase calls can fail — the game must not crash.
+- If Remote Config fetch fails: use last cached values, or fall back to baked-in ScriptableObject defaults.
+- If Firestore write fails: queue the write in `pending_sync_queue` for retry on next connectivity.
+- If ad load fails: hide the ad button silently. Never show "Ad failed to load" to the player.
+- If IAP receipt verification fails: do not grant the reward. Show a clear "Purchase could not be verified — please try again" message.
+- Use `try/catch` around all SDK calls. Log non-fatal exceptions to Crashlytics with breadcrumb context (`level_id`, `board_state_hash`).
+
+## Performance Rules
+
+- **Target: 60 fps on iPhone SE 2nd gen.** Profile on low-end devices from Week 3 onward.
+- **Particle budget:** ≤ 3 active emitters simultaneously during gameplay.
+- **Sprite atlasing:** One atlas per screen context. Do not reference sprites across atlas boundaries.
+- **No per-frame allocations** in hot paths (Update loops, cascade resolution). Use object pools, cached collections, and struct-based data where possible.
+- **Burst-compile** intensive algorithms (cascade solver, cluster detection) if profiling shows they're bottlenecks.
+
+## File Organization
+
+- One primary class per file. File name matches class name: `FusionEngine.cs` contains `class FusionEngine`.
+- Organize files into the documented folder structure (`Core/`, `Meta/`, `Data/`, `Services/`, `Presentation/`, `Utilities/`).
+- Test files mirror the source structure: `Tests/EditMode/Core/FusionEngineTests.cs` tests `Scripts/Core/FusionEngine.cs`.
+- Interfaces go in the same folder as their primary implementation, or in a shared `Interfaces/` subfolder if used across layers.

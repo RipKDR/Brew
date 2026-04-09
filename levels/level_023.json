@@ -1,0 +1,37 @@
+{
+  "level_id": 23,
+  "grid_width": 7,
+  "grid_height": 9,
+  "grid_mask": [],
+  "ingredient_pool": [
+    "ember",
+    "frost",
+    "vine",
+    "brine"
+  ],
+  "recipe_targets": [
+    {
+      "ingredient": "frost",
+      "count": 2
+    },
+    {
+      "ingredient": "vine",
+      "count": 1
+    }
+  ],
+  "move_limit": 36,
+  "blocker_placements": [
+    {
+      "row": 3,
+      "col": 1,
+      "type": "stone"
+    }
+  ],
+  "star_thresholds": [
+    1020,
+    2040,
+    3264
+  ],
+  "is_tutorial": false,
+  "tutorial_steps": []
+}

@@ -1,0 +1,34 @@
+{
+  "level_id": 35,
+  "grid_width": 8,
+  "grid_height": 10,
+  "grid_mask": [],
+  "ingredient_pool": [
+    "ember",
+    "frost",
+    "vine",
+    "brine",
+    "glow"
+  ],
+  "recipe_targets": [
+    {
+      "ingredient": "glow",
+      "count": 3
+    }
+  ],
+  "move_limit": 34,
+  "blocker_placements": [
+    {
+      "row": 8,
+      "col": 5,
+      "type": "stone"
+    }
+  ],
+  "star_thresholds": [
+    980,
+    1960,
+    3136
+  ],
+  "is_tutorial": false,
+  "tutorial_steps": []
+}

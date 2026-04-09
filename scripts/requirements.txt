@@ -1,0 +1,6 @@
+# Brew development scripts — Python dependencies
+#
+# All core scripts use the standard library only.
+# These optional packages improve output formatting and validation.
+
+jsonschema>=4.20.0

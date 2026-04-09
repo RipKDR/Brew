@@ -67,6 +67,64 @@ All design, technical, production, and creative specifications are finalized and
 | [Event Templates](docs/liveops/event-templates.md) | Weekly event system, daily brew, theme swapping workflow |
 | [Content Calendar](docs/liveops/content-calendar.md) | First 90 days post-soft-launch — events, tests, tuning |
 
+### API & SDK
+| Document | Purpose |
+|----------|---------|
+| [Cloud Functions API](docs/api/cloud-functions-api.md) | Firebase Cloud Functions — endpoints, schemas, auth |
+| [Remote Config Schema](docs/api/remote-config-schema.md) | Every tunable server-side parameter with defaults |
+| [Unity Architecture](docs/sdk/unity-architecture.md) | Module structure, dependencies, public interfaces |
+| [Event Bus Design](docs/sdk/event-bus-design.md) | Internal event system — typed events, publishers, subscribers |
+| [State Machine Spec](docs/sdk/state-machine-spec.md) | Board state machine — states, transitions, edge cases |
+
+### Testing & QA
+| Document | Purpose |
+|----------|---------|
+| [Test Plan](docs/testing/test-plan.md) | Unit, integration, and manual test coverage |
+| [Device Matrix](docs/testing/device-matrix.md) | Target devices with priority and test protocols |
+| [Regression Checklist](docs/testing/regression-checklist.md) | 60-check pre-release validation |
+
+### Legal & Compliance
+| Document | Purpose |
+|----------|---------|
+| [Privacy Policy](docs/legal/privacy-policy-template.md) | GDPR/CCPA-compliant privacy policy template |
+| [Terms of Service](docs/legal/terms-of-service-template.md) | User terms template |
+| [App Store Compliance](docs/legal/app-store-compliance.md) | Apple + Google submission checklists |
+| [Data Collection Inventory](docs/legal/data-collection-inventory.md) | Every data point mapped to purpose and controls |
+
+### Project Management
+| Document | Purpose |
+|----------|---------|
+| [Project Summary](docs/project-management/project-summary.md) | Living status document with decision log |
+| [Glossary](docs/project-management/glossary.md) | All game terminology defined |
+| [Style Guide](docs/project-management/style-guide.md) | C# conventions, git workflow, code patterns |
+
+### Onboarding
+| Document | Purpose |
+|----------|---------|
+| [New Team Member Guide](docs/onboarding/new-team-member-guide.md) | Day-1 reading list and setup by role |
+
+### Agent Intelligence
+| File | Purpose |
+|------|---------|
+| [AGENTS.md](AGENTS.md) | AI agent project guide — decisions, conventions, pitfalls |
+| [.cursor/rules/brew-project.mdc](.cursor/rules/brew-project.mdc) | 15 strict plan adherence rules |
+| [.cursor/rules/unity-csharp.mdc](.cursor/rules/unity-csharp.mdc) | Unity C# coding standards |
+| [.cursor/rules/economy-guard.mdc](.cursor/rules/economy-guard.mdc) | Economy integrity guardrails |
+| [.cursor/rules/analytics-tracking.mdc](.cursor/rules/analytics-tracking.mdc) | Analytics event tracking standards |
+| [.cursor/skills/brew-level-design.md](.cursor/skills/brew-level-design.md) | Skill: level design and validation |
+| [.cursor/skills/brew-economy-tuning.md](.cursor/skills/brew-economy-tuning.md) | Skill: economy tuning and balance |
+| [.cursor/skills/brew-qa-checklist.md](.cursor/skills/brew-qa-checklist.md) | Skill: pre-merge and pre-build QA |
+
+### Scripts & Automation
+| File | Purpose |
+|------|---------|
+| [scripts/level-generator/generate_level.py](scripts/level-generator/generate_level.py) | Generate level JSONs with difficulty presets |
+| [scripts/economy-sim/simulate_economy.py](scripts/economy-sim/simulate_economy.py) | Simulate player economy over N days |
+| [scripts/build/build_config.py](scripts/build/build_config.py) | Pre-build validation checks |
+| [hooks/pre-commit.sh](hooks/pre-commit.sh) | Git pre-commit hook — schema, economy, size checks |
+| [.github/workflows/ci.yml](.github/workflows/ci.yml) | CI: level validation, economy sim, doc checks |
+| [.github/workflows/build.yml](.github/workflows/build.yml) | Build: tag-triggered Unity Cloud Build |
+
 ## Key Metrics (Targets)
 
 | Metric | Target | No-Go |
@@ -80,11 +138,11 @@ All design, technical, production, and creative specifications are finalized and
 
 ## Tech Stack
 
-- **Engine**: Unity (C#)
+- **Engine**: Unity 6 (6000.1 LTS), C# 11
 - **Backend**: Firebase (Auth, Firestore, Cloud Functions, Remote Config, Analytics)
-- **Ads**: AdMob + mediation (IronSource/AppLovin MAX)
+- **Ads**: AdMob + mediation (AppLovin MAX)
 - **IAP**: Unity IAP
-- **CI/CD**: Unity Cloud Build + Fastlane
+- **CI/CD**: GitHub Actions + Fastlane
 - **Analytics**: Firebase Analytics + custom events
 
 ## Reading Order for New Team Members

@@ -1,0 +1,90 @@
+---
+description: Economy integrity rules — prevents accidental economy bugs
+globs: "**/Economy/**,**/Currency/**,**/Shop/**,**/IAP/**,**/Reward/**"
+alwaysApply: true
+---
+
+# Economy Integrity Rules — Brew
+
+## Currency Types Are Fixed
+
+Brew has exactly **two currencies**: **Essence** (soft) and **Gems** (premium). This is a deliberate design decision, not a starting point.
+
+- **Never introduce a new currency type.** No energy, tickets, event tokens, seasonal coins, stamps, keys, or hearts. If you feel a third currency is needed, stop and propose it as a document amendment in `docs/economy/economy-model.md` — do not implement it.
+- **Never rename the existing currencies.** They are "Essence" and "Gems" everywhere — code, UI, analytics, documentation.
+- Currency type should be represented as an enum with exactly two values: `CurrencyType.Essence` and `CurrencyType.Gems`. If you find yourself adding a third enum value, you are violating this rule.
+
+## Never Hardcode Currency Amounts
+
+- **All currency values must come from RemoteConfig or ScriptableObjects.** This includes: earn amounts (Essence per star, Gem rewards), spend amounts (booster costs, workshop upgrade costs), caps (ad frequency limits), and display thresholds.
+- Wrong: `player.AddEssence(50);` — hardcoded amount.
+- Right: `player.AddEssence(_remoteConfig.GetInt("essence_per_star_1"));` — server-configurable.
+- Wrong: `if (player.Gems >= 10)` — hardcoded cost check.
+- Right: `if (player.Gems >= _boosterConfig.GetGemCost(boosterType))` — reads from config.
+- The only acceptable numeric literals in economy code are `0` (zero-balance checks) and comparison operators.
+
+## Transaction Logging
+
+Every currency transaction must fire the corresponding analytics event. No exceptions.
+
+### On currency earn:
+Fire `currency_earn` with parameters:
+- `currency_type`: `"essence"` or `"gem"`
+- `amount`: quantity earned
+- `source`: origin identifier (`"level_complete"`, `"daily_brew"`, `"streak_bonus"`, `"event_reward"`, `"rewarded_ad"`, `"iap"`)
+- `balance_after`: player's balance after the transaction
+
+### On currency spend:
+Fire `currency_spend` with parameters:
+- `currency_type`: `"essence"` or `"gem"`
+- `amount`: quantity spent
+- `sink`: destination identifier (`"booster_purchase"`, `"workshop_upgrade"`, `"extra_moves"`, `"continue_after_fail"`)
+- `item_id`: ID of the purchased item
+- `balance_after`: player's balance after the transaction
+
+If you add a new earn source or spend sink, you must also update `docs/analytics/event-tracking-plan.md` with the new source/sink value.
+
+## IAP Receipt Validation
+
+- **All IAP receipts must be server-validated before granting rewards.** The flow is: Unity IAP confirms purchase → client sends receipt to Cloud Function → Cloud Function verifies with App Store / Google Play → on success, currencies are credited in Firestore and locally.
+- **Never grant IAP rewards on the client side alone.** A local-only grant without server verification is an exploit vector.
+- If server validation fails (network error, timeout), show a retry prompt. Do not grant the reward optimistically.
+- If server validation rejects the receipt (invalid, already consumed), log the event and do not grant. Show a user-facing error.
+
+## Rewarded Ad Reward Caps
+
+- Rewarded ad rewards must respect frequency caps from RemoteConfig:
+  - `max_rewarded_ads_per_day`: hard cap across all placements (default: 5)
+  - `rewarded_cooldown_seconds`: minimum time between rewarded ads (default: 30)
+- When the daily cap is reached, all rewarded ad buttons must grey out and show "Available tomorrow."
+- The Gem-based alternative must remain functional after the ad cap is hit (e.g., streak protection at 5 Gems when no ad is available).
+- Never grant a rewarded ad reward without confirming the ad was watched to completion. The ad SDK callback must confirm completion before calling the reward function.
+
+## Currency Display Formatting
+
+- Display balances with locale-aware formatting.
+- Large numbers must abbreviate gracefully:
+  - < 1,000: show exact number (`847`)
+  - 1,000–999,999: show with K suffix (`1.2K`, `54K`, `999K`)
+  - 1,000,000+: show with M suffix (`1.0M`, `2.5M`)
+- Abbreviation thresholds and format patterns should be centralized in a single `CurrencyFormatter` utility — not duplicated across UI scripts.
+- Balance displays must update reactively when the underlying value changes (use events or data binding).
+
+## Balance Protection
+
+- Currency balances must never go negative. All spend operations must validate `balance >= cost` before executing.
+- If a spend would result in a negative balance, reject the transaction and show an "Insufficient [Essence/Gems]" prompt with a path to earn more (point to shop, daily brew, or rewarded ad).
+- Server (Firestore) is the authority for currency balances. Local values are a cache. On sync conflict, server wins.
+- The offline earn queue (`pending_sync_queue`) must track deltas, not absolute values, to prevent duplication exploits on multi-device sync.
+
+## Document-First Economy Changes
+
+- **Before implementing any economy change, update `docs/economy/economy-model.md` first.** This includes: new earn sources, new spend sinks, rate changes, new workshop tiers, new booster prices, new IAP products.
+- Run the earn-rate model (§5 of economy-model.md) with the proposed values to verify workshop completion pacing stays within the 30–45 day target for regular players (10 levels/day).
+- If a change affects monetization, also update `docs/economy/monetization-plan.md`.
+- Changes to Remote Config parameter names or types must be reflected in `docs/technical/data-model.md` §8.
+
+## No Essence-to-Gem Conversion
+
+- Players cannot convert Essence to Gems or Gems to Essence. This is intentional — it preserves Gem scarcity as a monetization lever.
+- Do not implement any exchange, trade, or conversion mechanic between the two currencies.

@@ -1,0 +1,189 @@
+name: Brew CI
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate-levels:
+    name: Validate Level JSONs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Generate reference levels (if none exist)
+        run: |
+          if [ ! -d levels ] || [ -z "$(ls -A levels/*.json 2>/dev/null)" ]; then
+            echo "No level files found — generating batch 1-40 for validation"
+            python scripts/level-generator/generate_level.py \
+              --batch-start 1 --batch-end 40 \
+              --difficulty-curve --seed 42 \
+              --output-dir levels/
+          fi
+
+      - name: Validate level files
+        run: |
+          python scripts/build/build_config.py \
+            --project-root . \
+            --levels-dir levels/ \
+            --level-range 1-40
+
+  validate-economy:
+    name: Validate Economy Pacing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: Run economy simulation (regular non-payer)
+        run: |
+          python scripts/economy-sim/simulate_economy.py \
+            --days 50 \
+            --levels-per-day 10 \
+            --star-average 2.0 \
+            --win-rate 0.7 \
+            --streak-average 3
+
+  validate-docs:
+    name: Validate Required Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required documentation files
+        run: |
+          EXIT_CODE=0
+          REQUIRED_DOCS=(
+            "docs/game-design/GDD.md"
+            "docs/game-design/core-mechanic.md"
+            "docs/economy/economy-model.md"
+            "docs/technical/architecture.md"
+            "docs/production/mvp-build-plan.md"
+            "docs/production/milestone-gates.md"
+            "docs/project-management/project-summary.md"
+            "docs/project-management/glossary.md"
+            "docs/project-management/style-guide.md"
+            "docs/onboarding/new-team-member-guide.md"
+            "docs/project-management/session-handoff.md"
+            "docs/project-management/agent-prompt.md"
+            "docs/project-management/context-snapshot.md"
+            "CHANGELOG.md"
+          )
+
+          for doc in "${REQUIRED_DOCS[@]}"; do
+            if [ -f "$doc" ]; then
+              echo "  [OK]   $doc"
+            else
+              echo "  [MISS] $doc"
+              EXIT_CODE=1
+            fi
+          done
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo ""
+            echo "All required docs present."
+          else
+            echo ""
+            echo "Some required docs are missing (see above)."
+          fi
+          exit $EXIT_CODE
+
+  validate-context:
+    name: Validate Context Continuity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate handoff freshness and ADR index
+        run: |
+          python scripts/context/validate_context.py \
+            --project-root . \
+            --handoff-file docs/project-management/session-handoff.md \
+            --adr-readme docs/adr/README.md \
+            --max-handoff-age-days 14
+
+  lint:
+    name: Lint & Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for TODO/FIXME in committed code
+        run: |
+          echo "Scanning for TODO/FIXME markers in source files..."
+          HITS=$(grep -rn --include="*.cs" --include="*.py" --include="*.ts" \
+            -E '(TODO|FIXME|HACK|XXX)' . \
+            --exclude-dir='.git' \
+            --exclude-dir='node_modules' || true)
+
+          if [ -n "$HITS" ]; then
+            echo ""
+            echo "⚠  Found TODO/FIXME markers (review before merging):"
+            echo "$HITS"
+            echo ""
+            echo "These are warnings — not blocking the build."
+          else
+            echo "  No TODO/FIXME markers found."
+          fi
+
+      - name: Check for hardcoded currency values in C# code
+        run: |
+          echo "Scanning for hardcoded currency amounts in .cs files..."
+          # Look for patterns like: essence = 50; or gems = 100;
+          # that suggest magic numbers instead of config-driven values
+          HITS=$(grep -rn --include="*.cs" \
+            -iE '(essence|gem|coin|currency)\s*[=+\-]\s*[0-9]{2,}' . \
+            --exclude-dir='.git' || true)
+
+          if [ -n "$HITS" ]; then
+            echo ""
+            echo "⚠  Possible hardcoded currency values found:"
+            echo "$HITS"
+            echo ""
+            echo "Consider using RemoteConfig or ScriptableObject constants."
+            echo "This is a warning — not blocking the build."
+          else
+            echo "  No hardcoded currency patterns found."
+          fi
+
+      - name: Check for .env or credential files
+        run: |
+          EXIT_CODE=0
+          DANGEROUS=$(find . -name '.env' -o -name '.env.*' \
+            -o -name 'credentials.json' \
+            -o -name 'service-account*.json' \
+            -o -name '*.keystore' \
+            | grep -v '.git/' || true)
+
+          if [ -n "$DANGEROUS" ]; then
+            echo "⚠  Potentially sensitive files found in repo:"
+            echo "$DANGEROUS"
+            EXIT_CODE=1
+          else
+            echo "  No sensitive files detected."
+          fi
+          exit $EXIT_CODE

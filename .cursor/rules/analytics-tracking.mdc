@@ -1,0 +1,139 @@
+---
+description: Analytics event tracking standards
+globs: "**/Analytics/**,**/Tracking/**,**/Events/**"
+alwaysApply: true
+---
+
+# Analytics Event Tracking Standards — Brew
+
+## Source of Truth
+
+The canonical event catalog is `docs/analytics/event-tracking-plan.md`. Every event name, parameter name, parameter type, and example value is defined there. When in doubt, open that file.
+
+## Naming Conventions
+
+- **Event names:** `snake_case`, max 40 characters. Examples: `level_start`, `currency_earn`, `rewarded_ad_watched`.
+- **Parameter names:** `snake_case`, max 40 characters. Examples: `level_id`, `currency_type`, `balance_after`.
+- **String parameter values:** lowercase, max 100 characters. Examples: `"essence"`, `"main"`, `"fail_extra_moves"`.
+- **Numeric values:** integers unless explicitly noted as float in the tracking plan.
+- **Timestamps:** ISO 8601 UTC. The Firebase SDK adds `event_timestamp` automatically — do not add a custom one unless the tracking plan specifies it.
+- Names must match the tracking plan **exactly**. `level_complete` is correct; `levelComplete`, `LevelComplete`, `level-complete`, and `level_completed` are all wrong.
+
+## Required Base Parameters
+
+Every event must include these parameters, set as user-level properties or injected by the `AnalyticsService` wrapper:
+
+| Parameter | Type | Source |
+|-----------|------|--------|
+| `session_id` | string (UUID) | Generated on `session_start`, attached to all events in that session |
+| `player_id` | string | Firebase Auth UID (or anonymous ID before auth) |
+
+These are set once per session on the `AnalyticsService` and automatically included. Individual event call sites do not need to pass them manually.
+
+## Event Coverage Requirements
+
+### Every gameplay action must fire its event:
+
+| Action | Event | Defined in |
+|--------|-------|-----------|
+| Session opens | `session_start` | §1 |
+| Session closes | `session_end` | §1 |
+| Tutorial begins | `tutorial_start` | §2 |
+| Tutorial step completes | `tutorial_step_complete` | §2 |
+| Tutorial finishes | `tutorial_complete` | §2 |
+| Tutorial skipped | `tutorial_skip` | §2 |
+| Level begins | `level_start` | §3 |
+| Player makes a move | `level_move` | §3 |
+| Fusion occurs | `level_fusion` | §3 |
+| Potion brewed in level | `level_brew` | §3 |
+| Level completed (win) | `level_complete` | §3 |
+| Level failed | `level_fail` | §3 |
+| Currency earned | `currency_earn` | §4 |
+| Currency spent | `currency_spend` | §4 |
+| Booster activated | `booster_use` | §4 |
+| Workshop upgraded | `workshop_upgrade` | §5 |
+| New potion collected | `potion_collected` | §5 |
+| Streak milestone | `streak_milestone` | §5 |
+| Daily brew completed | `daily_brew_complete` | §5 |
+| Rewarded ad offered | `rewarded_ad_offered` | §6 |
+| Rewarded ad watched | `rewarded_ad_watched` | §6 |
+| Rewarded ad declined | `rewarded_ad_declined` | §6 |
+| Interstitial shown | `interstitial_shown` | §6 |
+| IAP offer shown | `iap_offer_shown` | §6 |
+| IAP purchase started | `iap_purchase_start` | §6 |
+| IAP purchase completed | `iap_purchase_complete` | §6 |
+| IAP purchase failed | `iap_purchase_fail` | §6 |
+| Event started (live-ops) | `event_start` | §7 |
+| Event level completed | `event_level_complete` | §7 |
+| Event completed | `event_complete` | §7 |
+
+If you add a new feature that involves a player action, economy transaction, or progression milestone, you must define a new event in the tracking plan document **before** implementing it.
+
+## Level Events Must Include Context
+
+- All `level_*` events must include `level_id` and `level_type` (`"main"`, `"daily"`, `"event"`).
+- `level_move` and `level_fusion` must include `move_number` (1-based index of the current move).
+- `level_complete` and `level_fail` must include `attempt_number`, `moves_used`, `time_spent_sec`, and `boosters_used`.
+
+## Economy Events Must Include Balance
+
+- `currency_earn` must include `currency_type`, `amount`, `source`, and `balance_after`.
+- `currency_spend` must include `currency_type`, `amount`, `sink`, `item_id`, and `balance_after`.
+- The `source` and `sink` values must match the predefined set in the tracking plan. Do not invent new source/sink strings without updating the document.
+
+## Implementation Rules
+
+### Use the AnalyticsService Facade
+
+All events must go through the `AnalyticsService` facade — never call Firebase Analytics directly from game code. The service provides typed methods:
+
+```csharp
+// Right — typed, validated, discoverable
+_analytics.LogLevelComplete(levelId, stars, movesUsed, movesRemaining, score, timeSpent, boostersUsed, attempt);
+
+// Wrong — raw, typo-prone, unvalidated
+Firebase.Analytics.FirebaseAnalytics.LogEvent("level_complete", ...);
+```
+
+### Never Remove or Rename Existing Events
+
+- Removing an event breaks dashboards, funnels, and reports downstream.
+- Renaming an event creates a data discontinuity (old name stops, new name starts, no join key).
+- If an event must be deprecated: stop firing it in new code, but leave the `AnalyticsService` method in place with a `[Obsolete]` attribute. Update the tracking plan with a "Deprecated" note and the date.
+
+### Test in Firebase DebugView
+
+Before merging any PR that adds or modifies analytics events:
+
+1. Enable Firebase DebugView on a test device (`-FIRDebugEnabled` on iOS, `adb shell setprop debug.firebase.analytics.app <package>` on Android).
+2. Trigger the event in the game.
+3. Verify in the Firebase Console (DebugView) that:
+   - The event name appears exactly as specified.
+   - All required parameters are present with correct types.
+   - String values are lowercase and within length limits.
+   - Numeric values are integers (not strings, not floats unless specified).
+4. Include a screenshot of DebugView in the PR description.
+
+### Offline Event Queuing
+
+- Firebase Analytics SDK handles offline queuing automatically. Events fired while offline are stored locally and sent when connectivity is restored.
+- Do not build a custom offline queue for analytics. Rely on the SDK.
+- Ensure that offline events retain their original timestamps (the SDK handles this — do not override `event_timestamp`).
+
+### Volume Awareness
+
+- `level_move` is the highest-volume event (~200K/day at 5K DAU). During soft-launch, log at 100%. Post global launch at >50K DAU, evaluate whether to sample at 10% or aggregate server-side.
+- All other events are low-to-medium volume and should always log at 100%.
+- Firebase Analytics has a 500 unique event name limit. Do not create per-level or per-item event names (e.g., `level_12_complete`). Use parameters for context.
+
+## User Properties
+
+Set these as Firebase user properties (not event parameters) — they persist across sessions:
+
+| Property | Set When | Example |
+|----------|----------|---------|
+| `install_date` | First launch | `"2026-05-01"` |
+| `platform` | First launch | `"ios"` or `"android"` |
+| `app_version` | Every launch | `"1.0.0"` |
+| `country` | First launch (from device locale) | `"us"` |
+| `ab_group` | On experiment assignment | `"tut_short\|moves_gen"` |

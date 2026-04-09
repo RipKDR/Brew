@@ -1,0 +1,44 @@
+{
+  "level_id": 37,
+  "grid_width": 8,
+  "grid_height": 10,
+  "grid_mask": [],
+  "ingredient_pool": [
+    "ember",
+    "frost",
+    "vine",
+    "brine",
+    "glow"
+  ],
+  "recipe_targets": [
+    {
+      "ingredient": "ember",
+      "count": 2
+    }
+  ],
+  "move_limit": 26,
+  "blocker_placements": [
+    {
+      "row": 2,
+      "col": 6,
+      "type": "stone"
+    },
+    {
+      "row": 4,
+      "col": 1,
+      "type": "stone"
+    },
+    {
+      "row": 4,
+      "col": 2,
+      "type": "stone"
+    }
+  ],
+  "star_thresholds": [
+    720,
+    1440,
+    2304
+  ],
+  "is_tutorial": false,
+  "tutorial_steps": []
+}
