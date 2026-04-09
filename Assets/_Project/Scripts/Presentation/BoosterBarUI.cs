@@ -20,6 +20,7 @@ namespace Brew.Presentation
         private ClusterDetector _detector;
         private MoveTracker _moveTracker;
         private int _minClusterSize = 3;
+        private int _extraMovesAmount = 5;
 
         private BoosterType? _armedBooster;
 
@@ -38,7 +39,8 @@ namespace Brew.Presentation
             TokenSpawner spawner,
             ClusterDetector detector,
             MoveTracker moveTracker,
-            int minClusterSize = 3)
+            int minClusterSize = 3,
+            int extraMovesAmount = 5)
         {
             _boosterManager = manager ?? throw new ArgumentNullException(nameof(manager));
             _board = board ?? throw new ArgumentNullException(nameof(board));
@@ -46,6 +48,7 @@ namespace Brew.Presentation
             _detector = detector ?? throw new ArgumentNullException(nameof(detector));
             _moveTracker = moveTracker ?? throw new ArgumentNullException(nameof(moveTracker));
             _minClusterSize = minClusterSize;
+            _extraMovesAmount = extraMovesAmount;
 
             _armedBooster = null;
 
@@ -86,7 +89,7 @@ namespace Brew.Presentation
                 ClearArmedHighlights();
                 _armedBooster = null;
 
-                if (_boosterManager.ActivateExtraMoves(_moveTracker, 5))
+                if (_boosterManager.ActivateExtraMoves(_moveTracker, _extraMovesAmount))
                     OnBoosterArmed?.Invoke(BoosterType.ExtraMoves);
 
                 return;

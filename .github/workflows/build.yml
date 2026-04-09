@@ -1,6 +1,5 @@
 name: Brew Build
 
-# Triggered on version tags only
 on:
   push:
     tags:
@@ -29,7 +28,7 @@ jobs:
         run: |
           python scripts/build/build_config.py \
             --project-root . \
-            --levels-dir levels/ \
+            --levels-dir Assets/_Project/Resources/Levels/ \
             --level-range 1-40
 
       - name: Validate economy pacing
@@ -49,65 +48,135 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
 
-  trigger-unity-build:
-    name: Trigger Unity Cloud Build
+  build-android:
+    name: Build Android
     needs: pre-build-checks
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger build (placeholder)
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: Android
+          unityVersion: 6000.4.1f1
+          buildName: Brew
+          versioning: Custom
+          version: ${{ needs.pre-build-checks.outputs.version }}
+          androidAppBundle: true
+          androidKeystoreName: ${{ secrets.ANDROID_KEYSTORE_NAME }}
+          androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          androidKeyaliasName: ${{ secrets.ANDROID_KEYALIAS_NAME }}
+          androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-build
+          path: build/Android
+
+  build-ios:
+    name: Build iOS
+    needs: pre-build-checks
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: iOS
+          unityVersion: 6000.4.1f1
+          buildName: Brew
+          versioning: Custom
+          version: ${{ needs.pre-build-checks.outputs.version }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: build/iOS
+
+  deploy-android:
+    name: Deploy Android to Play Console
+    needs: build-android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: android-build
+          path: build/Android
+
+      - uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.brew.puzzle
+          releaseFiles: build/Android/*.aab
+          track: internal
+
+  deploy-ios:
+    name: Deploy iOS to TestFlight
+    needs: build-ios
+    runs-on: macos-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-build
+          path: build/iOS
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Build and upload to TestFlight
+        env:
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.ASC_KEY }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: |
-          echo "═══════════════════════════════════════════════════"
-          echo "  Unity Cloud Build — Trigger Placeholder"
-          echo "═══════════════════════════════════════════════════"
-          echo ""
-          echo "  Version: ${{ needs.pre-build-checks.outputs.version }}"
-          echo ""
-          echo "  To enable actual Unity Cloud Build triggers:"
-          echo ""
-          echo "  1. Add these repository secrets:"
-          echo "     - UNITY_ORG_ID:     Your Unity org ID"
-          echo "     - UNITY_PROJECT_ID: Your Unity project ID"
-          echo "     - UNITY_API_KEY:    Unity Cloud Build API key"
-          echo ""
-          echo "  2. Replace this step with an API call:"
-          echo ""
-          echo '     curl -X POST \'
-          echo '       "https://build-api.cloud.unity3d.com/api/v1/orgs/${UNITY_ORG_ID}/projects/${UNITY_PROJECT_ID}/buildtargets/_all/builds" \'
-          echo '       -H "Authorization: Basic ${UNITY_API_KEY}" \'
-          echo '       -H "Content-Type: application/json" \'
-          echo '       -d '"'"'{"clean": false, "delay": 0}'"'"
-          echo ""
-          echo "  3. Optionally poll for build completion:"
-          echo ""
-          echo '     curl "https://build-api.cloud.unity3d.com/api/v1/orgs/${UNITY_ORG_ID}/projects/${UNITY_PROJECT_ID}/buildtargets/_all/builds?per_page=1" \'
-          echo '       -H "Authorization: Basic ${UNITY_API_KEY}"'
-          echo ""
-          echo "═══════════════════════════════════════════════════"
+          cd build/iOS
+          xcodebuild -project Unity-iPhone.xcodeproj \
+            -scheme Unity-iPhone \
+            -sdk iphoneos \
+            -configuration Release \
+            archive -archivePath Brew.xcarchive \
+            CODE_SIGN_IDENTITY="${{ secrets.CODE_SIGN_IDENTITY }}" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE }}"
+
+          xcodebuild -exportArchive \
+            -archivePath Brew.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath export/
+
+          fastlane pilot upload \
+            --ipa "export/Brew.ipa" \
+            --skip_waiting_for_build_processing true
 
   notify:
     name: Build Notification
-    needs: [pre-build-checks, trigger-unity-build]
+    needs: [pre-build-checks, build-android, build-ios]
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - name: Send notification (placeholder)
+      - name: Send notification
         run: |
           VERSION="${{ needs.pre-build-checks.outputs.version }}"
-          STATUS="${{ needs.trigger-unity-build.result }}"
+          ANDROID="${{ needs.build-android.result }}"
+          IOS="${{ needs.build-ios.result }}"
 
-          echo "Sending build notification..."
-          echo "  Version: ${VERSION}"
-          echo "  Status:  ${STATUS}"
-          echo ""
-          echo "  To enable real notifications, replace this with:"
-          echo ""
-          echo "  curl -X POST \${{ secrets.WEBHOOK_URL }} \\"
-          echo "    -H 'Content-Type: application/json' \\"
-          echo "    -d '{\"text\": \"Brew ${VERSION} build ${STATUS}\"}'"
-          echo ""
-          echo "  Supports Slack, Discord, or any webhook endpoint."
+          echo "Build v${VERSION}: Android=${ANDROID}, iOS=${IOS}"
 
-          # Placeholder webhook call (will no-op without the secret)
-          # curl -X POST "${{ secrets.WEBHOOK_URL }}" \
-          #   -H "Content-Type: application/json" \
-          #   -d "{\"text\": \"Brew v${VERSION} build ${STATUS}\"}"
+          if [ -n "${{ secrets.WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.WEBHOOK_URL }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"text\": \"Brew v${VERSION} — Android: ${ANDROID}, iOS: ${IOS}\"}" || true
+          fi

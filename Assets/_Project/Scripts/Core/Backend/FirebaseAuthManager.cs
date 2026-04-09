@@ -3,7 +3,8 @@ using System;
 namespace Brew.Core.Backend
 {
     /// <summary>
-    /// Auth state abstraction; wire to Firebase Auth later. Pure C# — no Unity dependencies.
+    /// Auth state abstraction. Pure C# — no Unity dependencies.
+    /// Real Firebase Auth is bridged via <see cref="FirebaseAuthBridge"/>.
     /// </summary>
     public sealed class FirebaseAuthManager
     {
@@ -48,6 +49,22 @@ namespace Brew.Core.Backend
             IsAuthenticated = false;
             IsAnonymous = false;
             OnAuthStateChanged?.Invoke(false, string.Empty);
+        }
+
+        /// <summary>
+        /// Applies auth snapshot from <see cref="FirebaseAuthBridge"/> (Firebase UID and flags).
+        /// </summary>
+        internal void ApplyFirebaseAuthState(bool isAuthenticated, string userId, bool isAnonymous)
+        {
+            if (isAuthenticated && string.IsNullOrEmpty(userId))
+            {
+                return;
+            }
+
+            _userId = isAuthenticated ? userId : null;
+            IsAuthenticated = isAuthenticated;
+            IsAnonymous = isAnonymous;
+            OnAuthStateChanged?.Invoke(isAuthenticated, userId ?? string.Empty);
         }
     }
 }

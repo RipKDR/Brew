@@ -5,7 +5,7 @@ Thanks for helping build Brew! This guide covers how we work together.
 ## Getting Started
 
 1. Clone the repo
-2. Install [Unity 2022 LTS](https://unity.com/releases/editor/qa/lts-releases)
+2. Install [Unity 6 (6000.1 LTS)](https://unity.com/releases/editor/qa/lts-releases)
 3. Install [Python 3.11+](https://www.python.org/downloads/)
 4. Set up git hooks:
   ```bash

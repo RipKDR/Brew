@@ -82,13 +82,22 @@ Values are rounded to the nearest whole number at display.
 
 ### 3.3 Essence from Weekly Event
 
+Rewards are milestone-based (no per-level star bonus). Values driven by `WeeklyEventConfigSO`.
+
 | Source | Essence |
 |--------|---------|
-| Per event level (×7) | 50 each = 350 |
-| 3-star bonus per level (×7) | 25 each = 175 |
-| All-7 completion bonus | 500 |
-| All-7 3-star bonus | 250 |
-| **Event max** | **1,275** |
+| Per event level (×7) | 75 each = 525 |
+| Milestone — 3 levels cleared | 100 |
+| Milestone — all 7 cleared | 250 |
+| **Event max Essence** | **875** |
+
+Gem rewards from weekly events:
+
+| Source | Gems |
+|--------|------|
+| Milestone — 5 levels cleared | 10 |
+| Milestone — all 7 cleared | 25 |
+| **Event max Gems** | **35** |
 
 ### 3.4 Gem Earning (Free Sources Only)
 
@@ -102,10 +111,10 @@ Values are rounded to the nearest whole number at display.
 | Shelf milestone — 50% | 50 | One-time |
 | Shelf milestone — 75% | 100 | One-time |
 | Shelf milestone — 100% | 250 | One-time |
-| Weekly Event (all 7 cleared) | 30 | Weekly |
-| Weekly Event (all 7 at 3-star) | +20 | Weekly |
+| Weekly Event — 5 levels cleared | 10 | Weekly |
+| Weekly Event — all 7 cleared | 25 | Weekly |
 
-**Monthly free Gem income (active player):** ~5/day × 30 = 150 (Daily Brew base) + ~30 (streak bonuses) + ~120–200 (events) + milestone one-offs = **~300–400 Gems/month** for a highly engaged non-payer.
+**Monthly free Gem income (active player):** ~5/day × 30 = 150 (Daily Brew base) + ~30 (streak bonuses) + ~140 (events, 35/week × 4) + milestone one-offs = **~320–420 Gems/month** for a highly engaged non-payer.
 
 ---
 

@@ -39,7 +39,9 @@ Surfaced after the player completes level 5. Appears as a modal offer with a 24-
 
 The No-Ads Pass removes **only interstitial ads**. Rewarded ads remain available as opt-in choices (the player can still choose to watch an ad for +3 moves, 2× rewards, etc.). This ensures rewarded ad revenue is not eliminated by the pass.
 
-### 2.4 Weekly Deal (Recurring)
+### 2.4 Weekly Deal (Post-MVP — Not in Current Catalog)
+
+> **Status:** Planned for post-soft-launch. The `weekly_deal` SKU is **not** in the current `IAPManager.Catalog`. Implement after validating IAP conversion during soft launch.
 
 | SKU | Price | Contents | Limit |
 |-----|-------|----------|-------|
