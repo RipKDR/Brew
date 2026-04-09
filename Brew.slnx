@@ -1,0 +1,5 @@
+﻿<Solution>
+  <Project Path="Brew.Tests.EditMode.csproj" />
+  <Project Path="Brew.csproj" />
+  <Project Path="Brew.Editor.csproj" />
+</Solution>

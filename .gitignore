@@ -142,3 +142,7 @@ ui-debug.log
 # .github/            — CI/CD workflows (tracked)
 # .cursor/            — Cursor AI rules and skills (tracked)
 # config/             — Firebase and build config (tracked)
+
+
+#Ignore vscode AI rules
+.github\instructions\codacy.instructions.md

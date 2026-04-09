@@ -2,7 +2,7 @@
 
 You are continuing work on **Brew**, a mobile puzzle game for iOS and Android. The project lives at `T:\Brew`. Brew is a one-tap cluster puzzle where players fuse same-colored ingredient tokens into growing Brew Orbs that chain-fuse and eventually brew into potions to fill recipes — all before running out of moves. It is NOT a match-3 game. The core mechanic is tap-cluster-fuse-brew.
 
-**Tech stack:** Unity 6 (6000.1 LTS), C# 11, Firebase (Auth/Firestore/Cloud Functions/Remote Config/Analytics/Crashlytics), AdMob + AppLovin MAX mediation, Unity IAP, GitHub Actions + Fastlane CI/CD.
+**Tech stack:** Unity 7 (6000.1 LTS), C# 11, Firebase (Auth/Firestore/Cloud Functions/Remote Config/Analytics/Crashlytics), AdMob + AppLovin MAX mediation, Unity IAP, GitHub Actions + Fastlane CI/CD.
 
 ---
 
