@@ -151,6 +151,41 @@ namespace Brew.Tests.EditMode.Data
             Assert.AreEqual(8, config.GridWidth);
             Assert.AreEqual(10, config.GridHeight);
         }
+
+        [Test]
+        public void LoadFromJson_WithBlockerPlacements_ParsesBlockers()
+        {
+            string json = @"{
+                ""level_id"": 36,
+                ""grid_width"": 8,
+                ""grid_height"": 10,
+                ""ingredient_pool"": [""ember"", ""frost"", ""vine""],
+                ""recipe_targets"": [{""ingredient"": ""vine"", ""count"": 2}],
+                ""move_limit"": 40,
+                ""star_thresholds"": [1800, 3600, 5760],
+                ""is_tutorial"": false,
+                ""blocker_placements"": [
+                    {""type"": ""stone"", ""row"": 3, ""col"": 2},
+                    {""type"": ""stone"", ""row"": 6, ""col"": 4}
+                ]
+            }";
+
+            var config = LevelLoader.LoadFromJson(json);
+            Assert.AreEqual(2, config.BlockerPlacements.Count);
+            Assert.AreEqual("stone", config.BlockerPlacements[0].Type);
+            Assert.AreEqual(3, config.BlockerPlacements[0].Row);
+            Assert.AreEqual(2, config.BlockerPlacements[0].Col);
+            Assert.AreEqual(6, config.BlockerPlacements[1].Row);
+            Assert.AreEqual(4, config.BlockerPlacements[1].Col);
+        }
+
+        [Test]
+        public void LoadFromJson_WithoutBlockers_ReturnsEmptyList()
+        {
+            var config = LevelLoader.LoadFromJson(ValidLevelJson);
+            Assert.IsNotNull(config.BlockerPlacements);
+            Assert.AreEqual(0, config.BlockerPlacements.Count);
+        }
     }
 
     [TestFixture]

@@ -21,6 +21,25 @@ namespace Brew.Core
     }
 
     /// <summary>
+    /// Blocker placement data parsed from level JSON.
+    /// Gameplay logic for blockers is not yet implemented in the board engine;
+    /// this preserves design intent from level data.
+    /// </summary>
+    public readonly struct BlockerPlacement
+    {
+        public string Type { get; }
+        public int Row { get; }
+        public int Col { get; }
+
+        public BlockerPlacement(string type, int row, int col)
+        {
+            Type = type ?? string.Empty;
+            Row = row;
+            Col = col;
+        }
+    }
+
+    /// <summary>
     /// Immutable level configuration parsed from JSON or ScriptableObject.
     /// Pure C# — no Unity dependencies.
     /// </summary>
@@ -34,6 +53,7 @@ namespace Brew.Core
         public int MoveLimit { get; }
         public IReadOnlyList<int> StarThresholds { get; }
         public bool IsTutorial { get; }
+        public IReadOnlyList<BlockerPlacement> BlockerPlacements { get; }
 
         public LevelConfig(
             int levelId,
@@ -43,7 +63,8 @@ namespace Brew.Core
             IReadOnlyList<RecipeTarget> recipeTargets,
             int moveLimit,
             IReadOnlyList<int> starThresholds,
-            bool isTutorial)
+            bool isTutorial,
+            IReadOnlyList<BlockerPlacement> blockerPlacements = null)
         {
             if (gridWidth < 5 || gridWidth > 9)
                 throw new ArgumentOutOfRangeException(nameof(gridWidth), gridWidth, "Grid width must be 5-9.");
@@ -66,6 +87,7 @@ namespace Brew.Core
             MoveLimit = moveLimit;
             StarThresholds = starThresholds;
             IsTutorial = isTutorial;
+            BlockerPlacements = blockerPlacements ?? Array.Empty<BlockerPlacement>();
         }
     }
 

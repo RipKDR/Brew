@@ -37,7 +37,7 @@ Surfaced after the player completes level 5. Appears as a modal offer with a 24-
 |-----|-------|--------|-------|
 | no_ads | $4.99 | Permanently removes interstitial ads | Once per account |
 
-The No-Ads Pass removes **only interstitial ads**. Rewarded ads remain available as opt-in choices (the player can still choose to watch an ad for +3 moves, 2× rewards, etc.). This ensures rewarded ad revenue is not eliminated by the pass.
+The No-Ads Pass removes **only interstitial ads**. Rewarded ads remain available as opt-in choices (the player can still choose to watch an ad for +5 moves, 2× rewards, etc.). This ensures rewarded ad revenue is not eliminated by the pass.
 
 ### 2.4 Weekly Deal (Recurring)
 
@@ -64,7 +64,7 @@ Weekly Deal appears in the shop with a "Weekly Deal" badge and a countdown timer
 
 | # | Placement | Trigger | Reward | Frequency Cap |
 |---|-----------|---------|--------|---------------|
-| 1 | **Fail Recovery** | Player runs out of moves | +3 moves, resume level | 1× per level attempt |
+| 1 | **Fail Recovery** | Player runs out of moves | +5 moves, resume level | 1× per level attempt |
 | 2 | **Double Potion Reward** | Level completion results screen | 2× Essence earned for that level | 1× per level completion |
 | 3 | **Free Daily Booster** | Booster shop screen, daily reset | 1 free Shake booster | 1× per day (resets 00:00 UTC) |
 | 4 | **Streak Protection** | Fail modal when streak ≥ 2 | Preserves Win Streak | 2× per day (resets 00:00 UTC) |

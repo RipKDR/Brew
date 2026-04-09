@@ -8,7 +8,7 @@
 
 ## Primary Outcome
 
-Week 10 code review and bug-fix sprint complete. All P0/P1 issues resolved. Levels 36-40 rebalanced as challenge levels. Soft launch plan and store listing prepared. Ready for Unity Editor verification and Gate 5 checkpoint.
+Gate 5 code sprint complete. P1 bug fixes (hardcoded extra moves, level duration tracking, blocker data preservation) resolved. 46 new tests added (AnalyticsManager, FirebaseAuthManager, TutorialLevelData, plus blockers and IAP). Doc/code reconciliation done for economy-model.md and monetization-plan.md. Ready for Unity Editor verification, blocker gameplay implementation, and Gate 5 checkpoint.
 
 ## Must Complete This Week
 
@@ -20,24 +20,34 @@ Week 10 code review and bug-fix sprint complete. All P0/P1 issues resolved. Leve
 - [x] Economy sanity check against spec documents
 - [x] Create soft launch plan document
 - [x] Write app store description and keywords
-- Run all EditMode unit tests in Unity Editor — fix any remaining failures
+- [x] Remove hardcoded extra moves from BoardPresenter and BoosterBarUI
+- [x] Add blocker data parsing to LevelLoader/LevelConfig
+- [x] Add weekly_deal SKU to IAPManager
+- [x] Add weekly event economy fields to WeeklyEventConfigSO
+- [x] Fix level duration tracking (was always 0)
+- [x] Rename NotificationManager localHour → utcHour
+- [x] Reconcile economy-model.md and monetization-plan.md with code
+- [x] Add test coverage for AnalyticsManager, FirebaseAuthManager, TutorialLevelData
+- Run all EditMode unit tests in Unity Editor (31+ files, ~400+ methods) — fix any failures
 - Create ScriptableObject assets and assign to GameFlowController
-- Verify weekly event flow end-to-end in Unity Editor
+- Implement blocker gameplay in board engine (CellContentType.Blocker, BoardModel, ClusterDetector, CascadeResolver, BoardPresenter)
 
 ## Secondary Work
 
-- Implement `INotificationScheduler` platform adapters for iOS and Android
 - Begin app store asset preparation (icon, screenshots)
-- Sync `levels/` root directory with `Resources/Levels/` to eliminate stale copies
+- Implement `INotificationScheduler` platform adapters for iOS and Android
+- Full play session: campaign levels 1-5 → event flow → daily brew → workshop → verify streak reset on fail
+- Complete Gate 5 checklist items
 
 ## Risks to Watch
 
+- Blocker gameplay NOT yet implemented — LevelConfig preserves data but CellContentType has no Blocker variant; levels 36-40 play without blockers
 - Firebase SDK not yet imported — backend managers are pure C# abstractions
 - Unity IAP and AdMob SDKs not yet configured — managers are logic-only stubs
 - NotificationManager needs platform-specific implementations before device testing
-- BoosterBarUI and BoardPresenter still hardcode extra-moves amount (5) instead of reading from config
+- BoardPresenter.ActivateExtraMoves no longer has a default parameter — any unknown callers must be updated
 
 ## Owners
 
-- Product/Engineering: Level tuning complete, event theme design, app store assets
-- Engineering: Unity Editor testing, SDK integration, platform notification adapters
+- Product/Engineering: Blocker gameplay design, event theme design, app store assets
+- Engineering: Unity Editor testing, SDK integration, blocker board engine work, platform notification adapters

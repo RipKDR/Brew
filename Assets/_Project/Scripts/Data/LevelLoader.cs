@@ -132,6 +132,13 @@ namespace Brew.Data
             else
                 starThresholds = new[] { 1000, 3000, 6000 };
 
+            var blockers = new List<BlockerPlacement>();
+            if (raw.blocker_placements != null)
+            {
+                foreach (var bp in raw.blocker_placements)
+                    blockers.Add(new BlockerPlacement(bp.type, bp.row, bp.col));
+            }
+
             return new LevelConfig(
                 raw.level_id,
                 raw.grid_width,
@@ -140,7 +147,8 @@ namespace Brew.Data
                 recipeTargets,
                 raw.move_limit,
                 starThresholds,
-                raw.is_tutorial);
+                raw.is_tutorial,
+                blockers);
         }
 
         [Serializable]

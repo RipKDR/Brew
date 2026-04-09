@@ -23,6 +23,16 @@ namespace Brew.Data.LiveOps
         [SerializeField] private int _allCompleteEssence = 250;
         [SerializeField] private int _allCompleteGems = 25;
 
+        [Header("Star Bonus Per Level")]
+        [Tooltip("Extra essence per level for achieving 3 stars")]
+        [SerializeField] private int _threeStarBonusEssence = 25;
+
+        [Header("Gem Rewards")]
+        [Tooltip("Gems for completing all event levels")]
+        [SerializeField] private int _completionGems = 30;
+        [Tooltip("Extra gems for all levels at 3 stars")]
+        [SerializeField] private int _allThreeStarGems = 20;
+
         public int LevelCount => _levelCount;
         public int EssencePerLevel => _essencePerLevel;
         public int[] MoveBudgets => _moveBudgets;
@@ -32,6 +42,9 @@ namespace Brew.Data.LiveOps
         public int MilestoneFiveGems => _milestoneFiveGems;
         public int AllCompleteEssence => _allCompleteEssence;
         public int AllCompleteGems => _allCompleteGems;
+        public int ThreeStarBonusEssence => _threeStarBonusEssence;
+        public int CompletionGems => _completionGems;
+        public int AllThreeStarGems => _allThreeStarGems;
 
         public MilestoneDefinition[] BuildMilestoneDefinitions()
         {
