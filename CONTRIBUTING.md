@@ -8,21 +8,23 @@ Thanks for helping build Brew! This guide covers how we work together.
 2. Install [Unity 2022 LTS](https://unity.com/releases/editor/qa/lts-releases)
 3. Install [Python 3.11+](https://www.python.org/downloads/)
 4. Set up git hooks:
-   ```bash
+  ```bash
    python scripts/setup_hooks.py
-   ```
+  ```
 5. Open the project in Unity and let it import
 
 ## Branching
 
 Use the following branch prefixes:
 
-| Prefix      | Use for                        |
-|-------------|--------------------------------|
-| `feature/`  | New functionality              |
-| `fix/`      | Bug fixes                      |
-| `docs/`     | Documentation changes          |
-| `hotfix/`   | Critical production fixes      |
+
+| Prefix     | Use for                   |
+| ---------- | ------------------------- |
+| `feature/` | New functionality         |
+| `fix/`     | Bug fixes                 |
+| `docs/`    | Documentation changes     |
+| `hotfix/`  | Critical production fixes |
+
 
 Examples: `feature/booster-ui`, `fix/board-crash-on-shuffle`, `docs/economy-rebalance`
 
@@ -58,13 +60,13 @@ When reviewing, watch for:
 ## Contributing Levels
 
 1. Generate the level skeleton with `generate_level.py`:
-   ```bash
+  ```bash
    python tools/generate_level.py --id 42 --grid 9x9 --colors 4 --moves 25
-   ```
+  ```
 2. Validate the config:
-   ```bash
+  ```bash
    python tools/build_config.py --validate levels/level_042.json
-   ```
+  ```
 3. Playtest in-game — target the completion rate for the level's difficulty tier
 4. Include playtest results in your PR description
 
@@ -75,9 +77,9 @@ Economy touches are high-risk. Follow this order strictly:
 1. **Update the doc first** — edit `docs/economy/economy-model.md` with the proposed change
 2. **Get approval** — economy changes need explicit sign-off before implementation
 3. **Run the economy sim** to verify pacing isn't broken:
-   ```bash
+  ```bash
    python tools/economy_sim.py --config docs/economy/economy-model.md
-   ```
+  ```
 4. **Implement** only after the above steps pass
 5. **Include sim results** in your PR
 
@@ -95,3 +97,4 @@ Economy touches are high-risk. Follow this order strictly:
 - **Don't hardcode economy values.** Everything goes through config files.
 - **Don't commit without running the pre-commit hook.** If the hook fails, fix the issue before pushing.
 - **Don't merge your own PR** without a review.
+
