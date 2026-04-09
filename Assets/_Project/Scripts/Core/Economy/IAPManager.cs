@@ -6,7 +6,7 @@ namespace Brew.Core.Economy
 {
     /// <summary>
     /// In-app purchase catalog and fulfillment against <see cref="CurrencyManager"/>.
-    /// Pure C# — no Unity dependencies. Booster grants use <see cref="IAPProduct.BoosterCount"/> as catalog metadata; wire <see cref="BoosterManager"/> in the presentation layer if needed.
+    /// Pure C# — no Unity dependencies. Booster grants use <see cref="IAPProduct.BoosterCount"/> as catalog metadata; wire <see cref="Brew.Core.BoosterManager"/> in the presentation layer if needed.
     /// </summary>
     public sealed class IAPManager
     {
