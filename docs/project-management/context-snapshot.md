@@ -1,6 +1,6 @@
 # Brew — Context Snapshot
 
-> Generated: 2026-04-09 (Session 3)
+> Generated: 2026-04-09 (Session 5)
 > Project summary updated: 2026-04-09
 > Session handoff updated: 2026-04-09
 
@@ -13,55 +13,62 @@
 
 ## Current Milestone Focus
 
-- Milestone: **Core Loop (Weeks 3-4)** — working toward Milestone Gate 2
-- Goal: Play a complete level from start to win/lose with working fusions, chains, brews, and recipe tracking
-- Source plan: `docs/production/mvp-build-plan.md`
+- Milestone: **Meta & Economy (Weeks 7-8)** — working toward Milestone Gate 4
+- Goal: Build meta-progression (potion shelf, workshop, daily brew, win streaks), full economy (dual currency, IAP, ads), and Firebase backend
+- Source plan: `docs/production/mvp-build-plan.md`, `docs/prompts/04-week-7-8-meta-and-economy.md`
 
 ## Next 3 Tasks
 
-1. Open project in Unity Editor. Run EditMode unit tests (13 test files, ~140+ methods). Fix any compilation or test failures.
-2. Wire up the UI: create Canvas with HUD, level select, complete/fail screens in the Gameplay scene. Create prefabs for RecipeVialUI and LevelButton. Assign serialized references on GameFlowController.
-3. Play through levels 1-10 to verify full loop: level select → tap → fuse → chain → brew → recipe tracking → score → win/lose → save → next level. Complete Gate 2 checklist items 2.1-2.10.
+1. Build economy foundation: CurrencyManager (Essence + Gems), RewardCalculator, EconomyConfigSO with all tuning values from economy-model.md.
+2. Build meta-progression Core classes: PotionShelfManager, WorkshopManager, WinStreakTracker, DailyBrewManager — all pure C# with config SOs.
+3. Build monetization + backend: IAPManager, AdManager, FirebaseAuthManager, CloudSaveManager, RemoteConfigManager, AnalyticsManager.
 
 ## Blockers / Risks
 
-- Risk: Unity Editor may require additional DOTween package for production-quality animations. Currently using coroutine-based placeholder timing.
-- Risk: Level JSONs use "brine" and "glow" instead of "sun" and "shadow" — LevelLoader handles mapping.
-- Blocker: Gate 2 criteria (2.6–2.10) require Unity Editor runtime testing.
-- Risk: GameFlowController relies on scene-level object references that must be wired in Unity Inspector.
+- Risk: Firebase SDK not yet imported into Unity project — backend managers use interface abstractions so they compile without SDK.
+- Risk: Unity IAP package not yet configured — IAPManager uses abstracted purchase flow.
+- Risk: Gate 3 runtime verification still pending (external playtest + Unity Editor testing).
+- Risk: Ad SDK (AdMob) not yet integrated — AdManager uses stub callbacks.
 
 ## Decisions This Session
 
-- ScoreCalculator formula: fusion = cluster_size * 10 * chain_multiplier * cascade_multiplier; brew flat 200/100; multipliers reset per move.
-- WinLoseEvaluator win priority: recipe complete checked before moves exhausted.
-- Level JSON color mapping: "brine" → Sun, "glow" → Shadow.
-- PlayerProgress keeps best stars only on replay.
-- LocalSaveManager atomic write via temp-then-rename.
-- BoardPresenter accepts LevelConfig via InitializeWithLevel() for per-level configuration.
+- CurrencyManager is pure C# with event-driven notifications — no MonoBehaviour dependency.
+- All economy values come from ScriptableObject configs or Remote Config — zero hardcoded values in code.
+- Offline-first cloud save: write local immediately, sync to Firestore when connected.
+- Remote Config as single source of truth for all tunable values at runtime.
 
 ## Code Inventory
 
-### Core Layer (pure C#, zero Unity deps) — 18 files
+### Core Layer (pure C#, zero Unity deps) — 21 files
 
-- Enums: IngredientColor, CellContentType, BoardPhase, LevelOutcome
-- Data types: CellContent, GridCoord, RecipeTarget, LevelConfig, RecipeProgress, FusionResult, ChainFusionResult, GravityStep
+- Enums: IngredientColor, CellContentType, BoardPhase, LevelOutcome, BoosterType
+- Data types: CellContent, GridCoord, RecipeTarget, LevelConfig, RecipeProgress, FusionResult, ChainFusionResult, GravityStep, TutorialLevelData
 - Logic: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver
-- Game systems: MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator
+- Game systems: MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, BoosterManager
 
-### Data Layer — 4 files
+### Data Layer — 8 files
 
-- BoardConfigSO (ScriptableObject)
+- BoardConfigSO, AudioConfigSO, ScreenShakeConfigSO (ScriptableObjects)
+- SfxId (enum)
 - LevelLoader (JSON parser)
 - PlayerProgress + LevelStarEntry (save data)
 - LocalSaveManager (persistence)
+- SettingsManager (PlayerPrefs-backed)
 
-### Presentation Layer — 10 files
+### Presentation Layer — 22 files
 
-- BoardPresenter, InputController, TokenView
+- BoardPresenter, InputController, TokenView, TokenAnimator
 - HudController, RecipeVialUI
 - LevelCompleteScreen, LevelFailScreen
 - LevelSelectScreen, LevelButton
 - GameFlowController
+- AudioManager, AdaptiveAudioController
+- HapticManager
+- ScreenShakeController, ParticleManager
+- BrewAnimationController
+- TutorialController, TutorialOverlay
+- BoosterBarUI, BoosterSlotUI
+- SettingsPanel
 
 ### Utilities — 1 file
 
@@ -71,10 +78,10 @@
 
 - BrewSceneSetup
 
-### Tests — 13 files, ~140+ methods
+### Tests — 14 files, ~155+ methods
 
-- Core: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver, MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, LevelConfig
-- Data: LevelLoader, PlayerProgress, LevelDataIntegration
+- Core: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver, MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, LevelConfig, BoosterManager
+- Data: LevelLoader, LevelDataIntegration
 
 ## ADR Summary
 
@@ -86,25 +93,29 @@
 
 ## Changelog (Unreleased)
 
-### Added
+### Added — Feel & Juice (Gate 3 prep)
 
-- Core Loop game systems: MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator
-- LevelConfig immutable data class with RecipeTarget and LevelOutcome
-- LevelLoader: JSON parsing with color name mapping and schema validation
-- PlayerProgress + LocalSaveManager: save/load with atomic write safety
-- Full UI screen set: HudController, RecipeVialUI, LevelCompleteScreen, LevelFailScreen, LevelSelectScreen, LevelButton, GameFlowController
-- 40 level JSONs copied to Resources/Levels/ for runtime loading
-- 7 new test files with ~80+ test methods covering all new Core and Data classes
+- Booster System: BoosterType, BoosterManager, BoosterBarUI, BoosterSlotUI
+- Audio System: AudioManager, AudioConfigSO, SfxId, AdaptiveAudioController
+- Haptic System: HapticManager
+- Screen Shake: ScreenShakeConfigSO, ScreenShakeController
+- Particle System: ParticleManager
+- Token Animation: TokenAnimator
+- Brew Animation: BrewAnimationController
+- Tutorial System: TutorialLevelData, TutorialController, TutorialOverlay
+- Settings: SettingsManager, SettingsPanel
+- Scene Setup: Enhanced BrewSceneSetup
+- Tests: BoosterManagerTests
 
-### Changed
+### Previously Added
 
-- BoardPresenter: now accepts LevelConfig via InitializeWithLevel(), integrates MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, fires OnLevelOutcome event
-- Project status: advanced from Foundation to Core Loop phase
+- Core Loop: MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, LevelConfig, LevelLoader, PlayerProgress, LocalSaveManager, full UI screen set, 40 level JSONs
+- Foundation: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver, BoardPresenter, InputController, TokenView, ObjectPool, BoardConfigSO
 
 ## Recent Git Commits
 
-- a6b92a0 2026-04-09 Add 11 build continuation prompts covering full dev lifecycle from context recovery through post-launch liveops
-- 88fecc1 2026-04-09 Add full dev ecosystem: Firebase config, GitHub templates, localization, performance budget, competitive analysis, Unity scaffold, context tools, .gitignore, .editorconfig
-- 72fd0f0 2026-04-09 Add changelog, ADR framework, and session handoff template
-- be61828 2026-04-09 Add complete development ecosystem: agents, SDK, API, scripts, testing, legal, CI/CD, 40 level JSONs
-- 7df9337 2026-04-09 Initialize Brew project with complete pre-production documentation
+- f18aff9 2026-04-09 Add remaining meta files, project settings, and doc updates
+- 268a255 2026-04-09 Implement Feel & Juice systems for Gate 3 prep
+- 339fde3 2026-04-09 Fix formatting in Firebase config README
+- 23767d5 2026-04-09 Add Adaptive Performance settings, Timeline config
+- 83a15d5 2026-04-09 Implement Foundation + Core Loop gameplay systems (Gate 1-2)

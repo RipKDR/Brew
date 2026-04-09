@@ -11,7 +11,7 @@
 | Field         | Value                                                                                                                                               |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Project**   | Brew — Mobile Puzzle Game                                                                                                                           |
-| **Status**    | Core Loop Phase (Weeks 3-4) — Scoring, recipes, moves, win/lose, level loading, save system, UI screens implemented. Gate 2 runtime testing pending |
+| **Status**    | Meta & Economy Phase (Weeks 7-8) — Feel & Juice code complete (Gate 3 runtime pending). Now implementing meta-progression, economy, IAP, ads, Firebase backend. |
 | **Pitch**     | *"Tap clusters to fuse ingredients into glowing orbs. Chain orbs together to brew potions. Craft every recipe before you run out of moves."*        |
 | **Platforms** | iOS (15+), Android (8.0+) — portrait only                                                                                                           |
 | **Engine**    | Unity 6 (6000.1 LTS), C#                                                                                                                            |
@@ -30,9 +30,9 @@
 | Documentation complete             | 2026-04-09  | Done                                                        |
 | Implementation start               | TBD         | —                                                           |
 | **Milestone 1** — Foundation       | Week 2      | Code complete — Gate 1 runtime testing pending              |
-| **Milestone 2** — Core Loop        | Week 4      | In progress — code complete, Gate 2 runtime testing pending |
-| **Milestone 3** — Feel & Juice     | Week 6      | Not started                                                 |
-| **Milestone 4** — Meta & Economy   | Week 8      | Not started                                                 |
+| **Milestone 2** — Core Loop        | Week 4      | Code complete — Gate 2 runtime testing pending              |
+| **Milestone 3** — Feel & Juice     | Week 6      | Code complete — Gate 3 runtime testing pending              |
+| **Milestone 4** — Meta & Economy   | Week 8      | In progress                                                 |
 | **Milestone 5** — Content & Polish | Week 10     | Not started                                                 |
 | Soft launch target                 | TBD         | —                                                           |
 | Global launch target               | TBD         | —                                                           |
