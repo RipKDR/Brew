@@ -52,16 +52,21 @@ namespace Brew.Data
             return ConvertToLevelConfig(raw, resolveThemed: true, themedIngredientId);
         }
 
+        private static int _cachedMaxLevelId = -1;
+
         /// <summary>
-        /// Scans Resources/Levels/ for the highest numbered level file.
-        /// Falls back to 40 if no runtime scan is possible.
+        /// Returns the number of level files in Resources/Levels/.
+        /// Cached after first call to avoid repeated resource loading.
+        /// Falls back to 40 if no resources found.
         /// </summary>
         public static int GetMaxLevelId()
         {
+            if (_cachedMaxLevelId > 0)
+                return _cachedMaxLevelId;
+
             var all = Resources.LoadAll<TextAsset>("Levels");
-            if (all == null || all.Length == 0)
-                return 40;
-            return all.Length;
+            _cachedMaxLevelId = (all != null && all.Length > 0) ? all.Length : 40;
+            return _cachedMaxLevelId;
         }
 
         /// <summary>

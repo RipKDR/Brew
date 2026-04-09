@@ -6,6 +6,36 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 
 ## [Unreleased]
 
+### Fixed — Week 10 Code Review Sprint
+
+- **P0: AnalyticsManager compilation errors**: `LogEventStart` now accepts `(string eventId, string eventName)` and `LogEventComplete` accepts `(string eventId, int completedLevelCount)` — signatures match all call sites in `GameFlowController`
+- **P1: Streak exploit**: Streak now correctly resets on level fail — immediate reset when protection panel is not shown, reset via Retry button when protection was not purchased
+- **P1: Hardcoded economy values**: `GameFlowController.InitializeSystems()` now reads from config ScriptableObjects (`PotionShelfConfigSO`, `WorkshopConfigSO`, `DailyBrewConfigSO`, `WinStreakConfigSO`) with fallbacks
+- **P1: Magic numbers replaced**: Remaining-move bonus, extra-moves-from-ad, ad daily cap, interstitial frequency now driven by `EconomyConfigSO`
+- **P2: BoosterManager default charges**: Changed from `int.MaxValue` (infinite) to `0` — boosters must be explicitly granted via save data
+- **P2: BoosterManager.ActivateExtraMoves**: Removed default parameter — callers must pass explicit amount from config
+- **P2: Tutorial check**: `GameFlowController` now uses `LevelConfig.IsTutorial` property instead of hardcoded `LevelId <= 5`
+- **P2: Level cap**: `AdvanceToNextLevel` uses `LevelLoader.GetMaxLevelId()` (cached scan of Resources/) instead of hardcoded `40`
+- **P2: Workshop analytics cost**: Now reads from `WorkshopConfigSO` instead of duplicating the cost array
+- **P2: CloudSaveManager.PlayerSaveData**: Converted 12 public fields to auto-properties per AGENTS.md conventions
+
+### Added — Week 10 Code Review Sprint
+
+- **Config SO fields**: `GameFlowController` now has `[SerializeField]` references for `PotionShelfConfigSO`, `WorkshopConfigSO`, `DailyBrewConfigSO`, `WinStreakConfigSO`, and `SettingsPanel`
+- **EconomyConfigSO fields**: Added `RewardedAdDailyCap`, `InterstitialFrequency`, `RemainingMoveBonusPerMove`, `ExtraMovesFromAd`
+- **SettingsPanel**: Added privacy policy button (opens URL), credits panel toggle, restore purchases button with `OnRestorePurchasesRequested` event
+- **LevelLoader.GetMaxLevelId()**: Cached method that scans Resources/Levels/ for level count
+- **Soft launch plan**: `docs/production/soft-launch-plan.md` — target markets, budget, metrics, kill criteria, decision checkpoints
+- **Store listing**: `marketing/store-listing/store-listing.md` — app name, description, keywords, promotional text
+
+### Changed — Week 10 Code Review Sprint
+
+- **Levels 36-40 rebalanced** as proper challenge levels: all now have 3-4 recipe targets, 36-45 moves (down from 18-82), 1-4 stone blockers. L39 is the hardest (4 recipes, 8 brews, 38 moves, 4 blockers). L40 is a satisfying 9×10 finale (3 recipes, 45 moves)
+- **BoosterManagerTests**: Updated for new default-zero charges and explicit `ActivateExtraMoves` amount parameter
+- Synced root `levels/` directory with `Assets/_Project/Resources/Levels/` for levels 36-40
+- `TutorialLevelData.IsTutorialLevel()` marked `[Obsolete]` — use `LevelConfig.IsTutorial` instead
+- Updated `project-summary.md` milestone table and weekly focus
+
 ### Added — Integration Wiring (Gate 5 prep)
 
 - **Event Theme Overlay**: `LevelLoader.LoadEventLevel(json, themedIngredientId)` resolves "themed" placeholder in event level JSONs to a concrete ingredient from Remote Config; falls back to Shadow
