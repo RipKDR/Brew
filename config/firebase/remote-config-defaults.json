@@ -1,0 +1,95 @@
+{
+  "parameters": {
+
+    "essence_per_star_1": {
+      "defaultValue": { "value": "50" }
+    },
+    "essence_per_star_2": {
+      "defaultValue": { "value": "100" }
+    },
+    "essence_per_star_3": {
+      "defaultValue": { "value": "150" }
+    },
+    "gem_daily_brew_reward": {
+      "defaultValue": { "value": "5" }
+    },
+    "workshop_upgrade_costs": {
+      "defaultValue": { "value": "[100, 250, 500, 1000, 2000]" }
+    },
+    "booster_cost_shake_essence": {
+      "defaultValue": { "value": "200" }
+    },
+    "booster_cost_shake_gems": {
+      "defaultValue": { "value": "5" }
+    },
+    "booster_cost_catalyst_essence": {
+      "defaultValue": { "value": "350" }
+    },
+    "booster_cost_catalyst_gems": {
+      "defaultValue": { "value": "8" }
+    },
+    "extra_moves_gem_cost": {
+      "defaultValue": { "value": "10" }
+    },
+
+    "default_move_limit": {
+      "defaultValue": { "value": "25" }
+    },
+    "min_cluster_size": {
+      "defaultValue": { "value": "3" }
+    },
+    "brew_threshold": {
+      "defaultValue": { "value": "7" }
+    },
+    "cascade_settle_delay_ms": {
+      "defaultValue": { "value": "100" }
+    },
+    "max_boosters_per_level": {
+      "defaultValue": { "value": "3" }
+    },
+
+    "rewarded_ad_extra_moves_count": {
+      "defaultValue": { "value": "5" }
+    },
+    "interstitial_frequency": {
+      "defaultValue": { "value": "3" }
+    },
+    "max_rewarded_ads_per_session": {
+      "defaultValue": { "value": "5" }
+    },
+    "ad_cooldown_seconds": {
+      "defaultValue": { "value": "30" }
+    },
+
+    "streak_multipliers": {
+      "defaultValue": { "value": "[1.0, 1.0, 1.25, 1.5, 1.75, 2.0, 2.0, 2.5]" }
+    },
+    "streak_protection_enabled": {
+      "defaultValue": { "value": "true" }
+    },
+
+    "daily_brew_enabled": {
+      "defaultValue": { "value": "true" }
+    },
+    "weekly_events_enabled": {
+      "defaultValue": { "value": "true" }
+    },
+    "workshop_enabled": {
+      "defaultValue": { "value": "true" }
+    },
+    "win_streak_enabled": {
+      "defaultValue": { "value": "true" }
+    },
+
+    "active_event_id": {
+      "defaultValue": { "value": "" }
+    },
+    "event_config": {
+      "defaultValue": { "value": "{}" }
+    },
+
+    "difficulty_modifier": {
+      "defaultValue": { "value": "1.0" }
+    }
+  }
+}

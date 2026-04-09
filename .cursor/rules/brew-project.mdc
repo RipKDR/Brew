@@ -48,6 +48,10 @@ This is **Brew**, a mobile puzzle game for iOS and Android. The game concept, me
 
 15. **When making a decision not covered by existing documentation, document the decision in the relevant spec file before implementing.**
 
+16. **Before substantial implementation work, load continuity artifacts in this exact order:** `AGENTS.md` -> `docs/project-management/session-handoff.md` -> `docs/project-management/context-snapshot.md` -> `docs/project-management/agent-prompt.md`.
+
+17. **Before ending a substantial session, update continuity artifacts:** update `session-handoff.md`, regenerate `context-snapshot.md`, and record cross-cutting decisions in `docs/adr/`.
+
 ## File Organization
 
 - `docs/game-design/` — What the game is

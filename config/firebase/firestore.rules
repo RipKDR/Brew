@@ -1,0 +1,81 @@
+rules_version = '2';
+
+// ============================================================================
+// Brew — Firestore Security Rules
+//
+// Principles:
+//   1. No public access — every request requires authentication.
+//   2. Players can only read/write their own data.
+//   3. Game definitions (levels, events) are read-only for authenticated users.
+//   4. Server-side collections (remote config, admin) are inaccessible to clients.
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ----------------------------------------------------------------------
+    // Default: deny everything not explicitly allowed
+    // ----------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ----------------------------------------------------------------------
+    // Players collection
+    // Each player document is keyed by Firebase Auth UID.
+    // A player can only read and write their own document and subcollections.
+    // ----------------------------------------------------------------------
+    match /players/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+
+      // Player subcollections (inventory, progress, receipts, etc.)
+      match /{subcollection=**} {
+        allow read, write: if request.auth != null
+                           && request.auth.uid == userId;
+      }
+    }
+
+    // ----------------------------------------------------------------------
+    // Level definitions
+    // Read-only for all authenticated users. Only server (Admin SDK) can write.
+    // Levels contain grid layout, move limits, objectives, and blocker config.
+    // ----------------------------------------------------------------------
+    match /levels/{levelId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ----------------------------------------------------------------------
+    // Event definitions
+    // Read-only for all authenticated users. Only server (Admin SDK) can write.
+    // Events contain weekly/seasonal challenge configs and reward tiers.
+    // ----------------------------------------------------------------------
+    match /events/{eventId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ----------------------------------------------------------------------
+    // Leaderboards
+    // Players can read all leaderboard entries (needed for display).
+    // Only server (Cloud Functions) writes leaderboard entries to prevent
+    // score manipulation.
+    // ----------------------------------------------------------------------
+    match /leaderboards/{boardId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+
+      match /entries/{entryId} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+    }
+
+    // ----------------------------------------------------------------------
+    // Server-managed collections (remote config cache, admin, analytics)
+    // No client access — managed exclusively via Admin SDK / Cloud Functions.
+    // ----------------------------------------------------------------------
+    // (Covered by the default deny rule above)
+  }
+}

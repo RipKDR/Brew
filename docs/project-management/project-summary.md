@@ -115,6 +115,7 @@ See [Milestone Gates](../production/milestone-gates.md) for per-milestone go/no-
 | 2026-04-09 | Unity 6 (6000.1 LTS) selected as the canonical engine version | Matches architecture docs and AGENTS guidance; minimizes configuration drift across implementation sessions | Engineering |
 | 2026-04-09 | Firebase as sole backend | Fastest path for lean team; single platform covers auth, database, config, analytics, crash reporting | Engineering |
 | 2026-04-09 | 10-week MVP timeline with 5 milestone gates | Tight scope forces discipline; gates catch fundamental problems before sunk-cost accumulates | Product |
+| 2026-04-09 | Context continuity became CI-enforced via handoff + ADR checks | Prevents session drift and ensures deterministic resume behavior for human and AI contributors | Engineering |
 
 ---
 
@@ -183,6 +184,15 @@ See [Milestone Gates](../production/milestone-gates.md) for per-milestone go/no-
 | Project Summary (this doc) | [docs/project-management/project-summary.md](project-summary.md) |
 | Glossary | [docs/project-management/glossary.md](glossary.md) |
 | Style Guide | [docs/project-management/style-guide.md](style-guide.md) |
+| Session Handoff | [docs/project-management/session-handoff.md](session-handoff.md) |
+| Context Snapshot | [docs/project-management/context-snapshot.md](context-snapshot.md) |
+| Enhanced Agent Prompt | [docs/project-management/agent-prompt.md](agent-prompt.md) |
+| Weekly Focus | [docs/project-management/weekly-focus.md](weekly-focus.md) |
+
+### Architecture Decisions
+| Document | Path |
+|----------|------|
+| ADR Index | [docs/adr/README.md](../adr/README.md) |
 
 ### Onboarding
 | Document | Path |

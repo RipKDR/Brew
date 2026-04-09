@@ -23,18 +23,19 @@
 - Aligned CI required docs in `.github/workflows/ci.yml` with real repository paths.
 - Added context continuity CI job (`validate-context`) for handoff freshness and ADR index checks.
 - Reconciled canonical engine version in key docs to Unity 6 (6000.1 LTS).
+- Added continuity artifacts: `CHANGELOG.md`, `docs/adr/README.md`, `docs/adr/0001-canonical-unity-version.md`, `docs/project-management/agent-prompt.md`, and `docs/project-management/weekly-focus.md`.
+- Implemented context automation scripts: `scripts/context/build_context_snapshot.py` and `scripts/context/validate_context.py`.
+- Generated `docs/project-management/context-snapshot.md` and validated context + build readiness locally.
 
 ## In Progress
 
-- Implement context snapshot automation (`scripts/context/build_context_snapshot.py`).
-- Add and validate ADR scaffolding and index structure.
-- Add master agent prompt guidance and enforce via project rules.
+- None. Context operating system preparation is complete and ready for build execution.
 
 ## Next 3 Tasks
 
-1. Generate `docs/project-management/context-snapshot.md` via context builder script.
-2. Wire and validate context checks locally using `scripts/context/validate_context.py`.
-3. Run readiness verification and update this handoff with final status.
+1. Begin Week 1 implementation tasks from `docs/production/mvp-build-plan.md`.
+2. Keep `session-handoff.md` and `context-snapshot.md` updated at the end of each substantial session.
+3. Add additional ADRs when architectural decisions become cross-cutting or expensive to reverse.
 
 ## Blockers / Risks
 
@@ -51,17 +52,31 @@
 
 - `.github/workflows/ci.yml`
 - `README.md`
+- `CHANGELOG.md`
 - `docs/project-management/project-summary.md`
+- `docs/project-management/session-handoff.md`
+- `docs/project-management/context-snapshot.md`
+- `docs/project-management/agent-prompt.md`
+- `docs/project-management/weekly-focus.md`
 - `docs/onboarding/new-team-member-guide.md`
+- `docs/adr/README.md`
+- `docs/adr/0001-canonical-unity-version.md`
+- `AGENTS.md`
+- `.cursor/rules/brew-project.mdc`
+- `scripts/build/build_config.py`
+- `scripts/context/build_context_snapshot.py`
+- `scripts/context/validate_context.py`
 
 ## Verification Notes
 
-- Pending full validation pass after context automation scripts are added.
+- `python scripts/context/build_context_snapshot.py --project-root .` passed.
+- `python scripts/context/validate_context.py --project-root .` passed.
+- `python scripts/build/build_config.py --project-root . --levels-dir levels/ --level-range 1-40` passed with expected warnings for missing Unity project files and optional platform env vars.
 
 ## Handoff Checklist
 
-- [ ] Decision log updated in `docs/project-management/project-summary.md` (if new decisions made)
-- [ ] This handoff file updated
-- [ ] Context snapshot regenerated
-- [ ] ADR index validated
-- [ ] CI/local readiness checks run and results recorded
+- [x] Decision log updated in `docs/project-management/project-summary.md` (if new decisions made)
+- [x] This handoff file updated
+- [x] Context snapshot regenerated
+- [x] ADR index validated
+- [x] CI/local readiness checks run and results recorded

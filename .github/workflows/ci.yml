@@ -38,7 +38,7 @@ jobs:
 
       - name: Validate level files
         run: |
-          python scripts/build/build_config.py \
+          FIREBASE_PROJECT_ID=ci-placeholder python scripts/build/build_config.py \
             --project-root . \
             --levels-dir levels/ \
             --level-range 1-40
