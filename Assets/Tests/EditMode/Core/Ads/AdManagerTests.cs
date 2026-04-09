@@ -96,5 +96,109 @@ namespace Brew.Tests.EditMode
             ads.RecordRewardedAdWatched(AdPlacement.StreakProtection);
             Assert.IsFalse(ads.CanShowPlacement(AdPlacement.StreakProtection));
         }
+
+        [Test]
+        public void OnRewardedAdCompleted_FiresWithCorrectPlacement()
+        {
+            var ads = new AdManager();
+            ads.CheckNewDay(Day1);
+            AdPlacement? firedPlacement = null;
+            ads.OnRewardedAdCompleted += p => firedPlacement = p;
+
+            ads.RecordRewardedAdWatched(AdPlacement.FailRecovery);
+
+            Assert.AreEqual(AdPlacement.FailRecovery, firedPlacement);
+        }
+
+        [Test]
+        public void OnInterstitialShown_FiresOnRecord()
+        {
+            var ads = new AdManager(interstitialFrequency: 1);
+            ads.CheckNewDay(Day1);
+            bool fired = false;
+            ads.OnInterstitialShown += () => fired = true;
+
+            ads.RecordLevelWin(isTutorialLevel: false);
+            ads.RecordInterstitialShown();
+
+            Assert.IsTrue(fired);
+            Assert.AreEqual(0, ads.LevelWinsSinceLastInterstitial);
+        }
+
+        [Test]
+        public void RecordLevelWin_TutorialLevel_DoesNotAdvanceInterstitialCounter()
+        {
+            var ads = new AdManager(interstitialFrequency: 3);
+            ads.CheckNewDay(Day1);
+
+            ads.RecordLevelWin(isTutorialLevel: true);
+            ads.RecordLevelWin(isTutorialLevel: true);
+            ads.RecordLevelWin(isTutorialLevel: true);
+
+            Assert.AreEqual(0, ads.LevelWinsSinceLastInterstitial);
+            Assert.IsFalse(ads.ShouldShowInterstitial());
+        }
+
+        [Test]
+        public void CanShowRewarded_InterstitialPlacement_ReturnsFalse()
+        {
+            var ads = new AdManager();
+            ads.CheckNewDay(Day1);
+
+            Assert.IsFalse(ads.CanShowRewarded(AdPlacement.Interstitial));
+        }
+
+        [Test]
+        public void RecordRewardedAdWatched_InterstitialPlacement_IsNoOp()
+        {
+            var ads = new AdManager();
+            ads.CheckNewDay(Day1);
+
+            ads.RecordRewardedAdWatched(AdPlacement.Interstitial);
+
+            Assert.AreEqual(0, ads.RewardedAdsWatchedToday);
+        }
+
+        [Test]
+        public void Constructor_NegativeMaxRewarded_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => new AdManager(maxRewardedPerDay: -1));
+        }
+
+        [Test]
+        public void Constructor_ZeroInterstitialFrequency_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => new AdManager(interstitialFrequency: 0));
+        }
+
+        [Test]
+        public void CanShowPlacement_DoublePotionReward_ReturnsTrue()
+        {
+            var ads = new AdManager();
+            ads.CheckNewDay(Day1);
+
+            Assert.IsTrue(ads.CanShowPlacement(AdPlacement.DoublePotionReward));
+        }
+
+        [Test]
+        public void CanShowPlacement_DailyBrewDoubler_ReturnsTrue()
+        {
+            var ads = new AdManager();
+            ads.CheckNewDay(Day1);
+
+            Assert.IsTrue(ads.CanShowPlacement(AdPlacement.DailyBrewDoubler));
+        }
+
+        [Test]
+        public void ShouldShowInterstitial_AfterTutorialWin_ReturnsFalse()
+        {
+            var ads = new AdManager(interstitialFrequency: 1);
+            ads.CheckNewDay(Day1);
+
+            ads.RecordLevelWin(isTutorialLevel: false);
+            ads.RecordLevelWin(isTutorialLevel: true);
+
+            Assert.IsFalse(ads.ShouldShowInterstitial());
+        }
     }
 }

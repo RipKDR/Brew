@@ -7,10 +7,12 @@ namespace Brew.Data
 {
     /// <summary>
     /// Parses level JSON files into LevelConfig instances.
-    /// Handles color name mapping and schema validation.
+    /// Handles color name mapping, schema validation, and event theme overlay.
     /// </summary>
     public static class LevelLoader
     {
+        private const string ThemedPlaceholder = "themed";
+
         private static readonly Dictionary<string, IngredientColor> ColorMap = new(StringComparer.OrdinalIgnoreCase)
         {
             { "ember", IngredientColor.Ember },
@@ -23,7 +25,9 @@ namespace Brew.Data
         };
 
         /// <summary>
-        /// Parses a level JSON string into a LevelConfig.
+        /// Parses a campaign level JSON string into a LevelConfig.
+        /// Throws if "themed" appears in the ingredient pool (use
+        /// <see cref="LoadEventLevel"/> for event templates).
         /// </summary>
         public static LevelConfig LoadFromJson(string json)
         {
@@ -31,7 +35,21 @@ namespace Brew.Data
                 throw new ArgumentException("Level JSON is null or empty.", nameof(json));
 
             var raw = JsonUtility.FromJson<RawLevelData>(json);
-            return ConvertToLevelConfig(raw);
+            return ConvertToLevelConfig(raw, resolveThemed: false, themedIngredientId: null);
+        }
+
+        /// <summary>
+        /// Parses an event level JSON, resolving "themed" ingredient slots to the
+        /// given ingredient ID from Remote Config. Falls back to "shadow" if
+        /// <paramref name="themedIngredientId"/> is null or empty.
+        /// </summary>
+        public static LevelConfig LoadEventLevel(string json, string themedIngredientId)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                throw new ArgumentException("Level JSON is null or empty.", nameof(json));
+
+            var raw = JsonUtility.FromJson<RawLevelData>(json);
+            return ConvertToLevelConfig(raw, resolveThemed: true, themedIngredientId);
         }
 
         /// <summary>
@@ -58,20 +76,37 @@ namespace Brew.Data
                 $"Valid names: ember, frost, vine, sun, shadow, brine, glow.");
         }
 
-        private static LevelConfig ConvertToLevelConfig(RawLevelData raw)
+        private static bool IsThemed(string name) =>
+            name != null && name.Trim().Equals(ThemedPlaceholder, StringComparison.OrdinalIgnoreCase);
+
+        private static string ResolveThemed(string name, string themedIngredientId)
+        {
+            if (!IsThemed(name))
+                return name;
+            return string.IsNullOrWhiteSpace(themedIngredientId) ? "shadow" : themedIngredientId;
+        }
+
+        private static LevelConfig ConvertToLevelConfig(
+            RawLevelData raw, bool resolveThemed, string themedIngredientId)
         {
             var ingredientPool = new List<IngredientColor>();
             if (raw.ingredient_pool != null)
             {
                 foreach (string name in raw.ingredient_pool)
-                    ingredientPool.Add(ParseColor(name));
+                {
+                    string resolved = resolveThemed ? ResolveThemed(name, themedIngredientId) : name;
+                    ingredientPool.Add(ParseColor(resolved));
+                }
             }
 
             var recipeTargets = new List<RecipeTarget>();
             if (raw.recipe_targets != null)
             {
                 foreach (var rt in raw.recipe_targets)
-                    recipeTargets.Add(new RecipeTarget(ParseColor(rt.ingredient), rt.count));
+                {
+                    string resolved = resolveThemed ? ResolveThemed(rt.ingredient, themedIngredientId) : rt.ingredient;
+                    recipeTargets.Add(new RecipeTarget(ParseColor(resolved), rt.count));
+                }
             }
 
             int[] starThresholds;
@@ -102,6 +137,9 @@ namespace Brew.Data
             public int move_limit;
             public int[] star_thresholds;
             public bool is_tutorial;
+            public int[] grid_mask;
+            public RawBlockerPlacement[] blocker_placements;
+            public RawTutorialStep[] tutorial_steps;
         }
 
         [Serializable]
@@ -109,6 +147,22 @@ namespace Brew.Data
         {
             public string ingredient;
             public int count;
+        }
+
+        [Serializable]
+        private class RawBlockerPlacement
+        {
+            public string type;
+            public int row;
+            public int col;
+        }
+
+        [Serializable]
+        private class RawTutorialStep
+        {
+            public string instruction;
+            public int highlight_row;
+            public int highlight_col;
         }
     }
 }

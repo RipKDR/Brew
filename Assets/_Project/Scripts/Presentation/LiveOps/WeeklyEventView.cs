@@ -90,6 +90,27 @@ namespace Brew.Presentation.LiveOps
             }
         }
 
+        public void RefreshState(EventState state)
+        {
+            switch (state)
+            {
+                case EventState.Active:
+                    ShowBanner();
+                    Refresh();
+                    break;
+                case EventState.Completed:
+                    ShowBanner();
+                    ShowResults();
+                    break;
+                case EventState.NotStarted:
+                case EventState.Expired:
+                    HideBanner();
+                    HideLevelSelect();
+                    HideResults();
+                    break;
+            }
+        }
+
         public void ShowBanner()
         {
             if (_eventBannerPanel != null) _eventBannerPanel.SetActive(true);

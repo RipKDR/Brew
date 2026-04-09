@@ -205,6 +205,62 @@ namespace Brew.Tests.EditMode.Core.Services
             Assert.AreEqual(NotificationType.StreakAtRisk, firedType);
         }
 
+        [Test]
+        public void OnNotificationScheduled_FiresEventEndingSoonType()
+        {
+            NotificationType? firedType = null;
+            _manager.OnNotificationScheduled += t => firedType = t;
+
+            long eventEnd = new DateTimeOffset(_now.AddDays(3)).ToUnixTimeSeconds();
+            _manager.ScheduleEventEndingSoon(_now, eventEnd, allEventLevelsComplete: false, hoursBeforeEnd: 24);
+
+            Assert.AreEqual(NotificationType.EventEndingSoon, firedType);
+        }
+
+        [Test]
+        public void ScheduleStreakAtRisk_WhenLocalHourPassed_SchedulesNextDay()
+        {
+            var lateEvening = new DateTime(2026, 4, 1, 21, 0, 0, DateTimeKind.Utc);
+            _manager.ScheduleStreakAtRisk(lateEvening, hasPlayedToday: false, currentStreak: 3, localHour: 20);
+
+            Assert.AreEqual(1, _scheduler.Scheduled.Count);
+            var expected = lateEvening.Date.AddDays(1).AddHours(20);
+            Assert.AreEqual(expected, _scheduler.Scheduled[0].FireTime);
+        }
+
+        [Test]
+        public void Constructor_NullScheduler_ThrowsArgumentNullException()
+        {
+            Assert.Throws<ArgumentNullException>(() => new NotificationManager(null));
+        }
+
+        [Test]
+        public void Constructor_CustomMaxPerDay_IsRespected()
+        {
+            var sched = new MockScheduler();
+            var mgr = new NotificationManager(sched, maxPerDay: 2, rePromptCooldownDays: 7);
+
+            mgr.ScheduleDailyBrewReminder(_now, dailyBrewCompleted: false);
+            mgr.ScheduleStreakAtRisk(_now, hasPlayedToday: false, currentStreak: 3, localHour: 20);
+
+            Assert.AreEqual(2, sched.Scheduled.Count);
+
+            long eventEnd = new DateTimeOffset(_now.AddDays(3)).ToUnixTimeSeconds();
+            mgr.ScheduleEventEndingSoon(_now, eventEnd, allEventLevelsComplete: false);
+            Assert.AreEqual(2, sched.Scheduled.Count);
+        }
+
+        [Test]
+        public void Constructor_CustomRePromptCooldown_IsRespected()
+        {
+            var sched = new MockScheduler();
+            var mgr = new NotificationManager(sched, maxPerDay: 1, rePromptCooldownDays: 3);
+
+            mgr.RecordPermissionDenied(_now);
+            Assert.IsFalse(mgr.ShouldRePromptPermission(_now.AddDays(2)));
+            Assert.IsTrue(mgr.ShouldRePromptPermission(_now.AddDays(3)));
+        }
+
         // --- Mock ---
 
         private class MockScheduler : INotificationScheduler

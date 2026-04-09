@@ -4,7 +4,9 @@ using Brew.Core.Backend;
 using Brew.Core.Economy;
 using Brew.Core.LiveOps;
 using Brew.Core.Meta;
+using Brew.Core.Services;
 using Brew.Data;
+using Brew.Data.LiveOps;
 using Brew.Presentation.LiveOps;
 using UnityEngine;
 
@@ -39,9 +41,12 @@ namespace Brew.Presentation
 
         [Header("Config")]
         [SerializeField] private EconomyConfigSO _economyConfig;
+        [SerializeField] private WeeklyEventConfigSO _weeklyEventConfig;
 
         private PlayerProgress _progress;
         private LevelConfig _currentLevelConfig;
+        private bool _isPlayingEventLevel;
+        private int _currentEventLevelIndex;
 
         private CurrencyManager _currencyManager;
         private RewardCalculator _rewardCalculator;
@@ -54,6 +59,8 @@ namespace Brew.Presentation
         private AnalyticsManager _analytics;
         private CloudSaveManager _cloudSave;
         private WeeklyEventManager _weeklyEvent;
+        private RemoteConfigManager _remoteConfig;
+        private NotificationManager _notificationManager;
 
         private void Start()
         {
@@ -105,6 +112,10 @@ namespace Brew.Presentation
             _iapManager = new IAPManager(_currencyManager);
             _adManager = new AdManager(5, 3, () => _iapManager.HasNoAdsPass);
 
+            _remoteConfig = new RemoteConfigManager(RemoteConfigDefaults.GetAll());
+            InitializeWeeklyEvent();
+            InitializeNotifications();
+
             InitializeViews();
         }
 
@@ -132,6 +143,92 @@ namespace Brew.Presentation
             }
         }
 
+        private void InitializeWeeklyEvent()
+        {
+            int levelCount = _weeklyEventConfig != null ? _weeklyEventConfig.LevelCount : 7;
+            int essencePerLevel = _weeklyEventConfig != null ? _weeklyEventConfig.EssencePerLevel : 75;
+
+            var milestones = _weeklyEventConfig != null
+                ? _weeklyEventConfig.BuildMilestoneDefinitions()
+                : new[]
+                {
+                    new MilestoneDefinition("3 Levels", 3, ("Essence", 100)),
+                    new MilestoneDefinition("5 Levels", 5, ("Gems", 10)),
+                    new MilestoneDefinition("All Complete", 7, ("Essence", 250), ("Gems", 25))
+                };
+
+            _weeklyEvent = new WeeklyEventManager(
+                levelCount,
+                essencePerLevel,
+                milestones,
+                () => _remoteConfig.GetBool(RemoteConfigDefaults.WeeklyEventsEnabled, true));
+
+            TryStartWeeklyEvent();
+        }
+
+        private void TryStartWeeklyEvent()
+        {
+            bool eventActive = _remoteConfig.GetBool(RemoteConfigDefaults.EventActive, false);
+            if (!eventActive) return;
+
+            string eventId = _remoteConfig.GetString(RemoteConfigDefaults.EventId);
+            string eventName = _remoteConfig.GetString(RemoteConfigDefaults.EventName);
+            string tsStr = _remoteConfig.GetString(RemoteConfigDefaults.EventEndTimestamp, "0");
+            long endTimestamp = long.TryParse(tsStr, out long ts) ? ts : 0;
+            string potionId = _remoteConfig.GetString(RemoteConfigDefaults.EventPotionId);
+
+            _weeklyEvent.StartEvent(eventId, eventName, endTimestamp, potionId);
+        }
+
+        private void InitializeNotifications()
+        {
+            INotificationScheduler scheduler;
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+            scheduler = new UnityNotificationScheduler();
+#else
+            scheduler = new NullNotificationScheduler();
+#endif
+            _notificationManager = new NotificationManager(scheduler);
+        }
+
+        public void StartEventLevel(int eventLevelIndex)
+        {
+            _currentEventLevelIndex = eventLevelIndex;
+
+            string themedId = _remoteConfig.GetString(RemoteConfigDefaults.EventThemedIngredientId);
+            string path = $"levels/events/event_template_{(eventLevelIndex + 1):D2}";
+            var textAsset = Resources.Load<TextAsset>(path);
+            if (textAsset == null)
+            {
+                Debug.LogError($"Event level template not found: {path}");
+                return;
+            }
+
+            _isPlayingEventLevel = true;
+
+            _currentLevelConfig = LevelLoader.LoadEventLevel(textAsset.text, themedId);
+
+            _levelSelectPanel.SetActive(false);
+            _gameplayPanel.SetActive(true);
+            _levelCompleteScreen.Hide();
+            _levelFailScreen.Hide();
+
+            _boardPresenter.OnLevelOutcome -= HandleLevelOutcome;
+            _boardPresenter.InitializeWithLevel(_currentLevelConfig);
+            _boardPresenter.OnLevelOutcome += HandleLevelOutcome;
+
+            _hudController.Initialize(
+                _boardPresenter.MoveTracker,
+                _boardPresenter.ScoreCalculator,
+                _boardPresenter.RecipeTracker);
+
+            _hudController.UpdateWalletDisplay(
+                _currencyManager.GetBalance(CurrencyType.Essence),
+                _currencyManager.GetBalance(CurrencyType.Gems));
+
+            _analytics.LogEventStart(_weeklyEvent.EventId, _weeklyEvent.EventName);
+        }
+
         private void WireEvents()
         {
             _levelSelectScreen.OnLevelSelected += StartLevel;
@@ -151,6 +248,9 @@ namespace Brew.Presentation
             _workshop.OnUpgradePurchased += OnWorkshopUpgraded;
 
             if (_dailyBrewUI != null) _dailyBrewUI.OnDailyBrewRequested += HandleDailyBrewRequest;
+
+            if (_weeklyEventView != null)
+                _weeklyEventView.OnEventLevelSelected += StartEventLevel;
         }
 
         private void OnDestroy()
@@ -170,23 +270,44 @@ namespace Brew.Presentation
                 _levelFailScreen.OnProtectStreakGems -= HandleProtectStreakGems;
                 _levelFailScreen.OnDismissStreakProtection -= HandleDismissStreakProtection;
             }
+            if (_weeklyEventView != null) _weeklyEventView.OnEventLevelSelected -= StartEventLevel;
+            if (_currencyManager != null) _currencyManager.OnBalanceChanged -= OnBalanceChanged;
+            if (_winStreak != null) _winStreak.OnStreakChanged -= OnStreakChanged;
+            if (_potionShelf != null) _potionShelf.OnMilestoneReached -= OnMilestoneReached;
+            if (_workshop != null) _workshop.OnUpgradePurchased -= OnWorkshopUpgraded;
+            if (_dailyBrewUI != null) _dailyBrewUI.OnDailyBrewRequested -= HandleDailyBrewRequest;
         }
 
         private void ShowLevelSelect()
         {
+            _isPlayingEventLevel = false;
             _levelSelectPanel.SetActive(true);
             _gameplayPanel.SetActive(false);
             _levelCompleteScreen.Hide();
             _levelFailScreen.Hide();
             _levelSelectScreen.Refresh();
 
-            _dailyBrew.CheckNewDay(System.DateTime.UtcNow);
-            _adManager.CheckNewDay(System.DateTime.UtcNow);
+            var utcNow = System.DateTime.UtcNow;
+            _dailyBrew.CheckNewDay(utcNow);
+            _adManager.CheckNewDay(utcNow);
             if (_dailyBrewUI != null) _dailyBrewUI.Refresh();
+
+            if (_weeklyEventView != null && _weeklyEvent != null)
+            {
+                long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                _weeklyEventView.RefreshState(_weeklyEvent.GetState(now));
+            }
+
+            if (SettingsManager.NotificationsEnabled)
+            {
+                _notificationManager.ScheduleDailyBrewReminder(
+                    utcNow, _dailyBrew.IsCompletedToday);
+            }
         }
 
         private void StartLevel(int levelId)
         {
+            _isPlayingEventLevel = false;
             _currentLevelConfig = LevelLoader.LoadFromResources(levelId);
 
             _levelSelectPanel.SetActive(false);
@@ -232,6 +353,12 @@ namespace Brew.Presentation
             int bonus = _boardPresenter.MoveTracker.MovesRemaining * 50;
             int stars = ScoreCalculator.CalculateStars(score, _currentLevelConfig.StarThresholds);
 
+            if (_isPlayingEventLevel)
+            {
+                HandleEventLevelWin(stars, score);
+                return;
+            }
+
             _winStreak.IncrementStreak();
             int essenceEarned = _rewardCalculator.CalculateEssence(stars, _winStreak.CurrentStreak);
             float streakMult = _winStreak.CurrentMultiplier;
@@ -264,10 +391,64 @@ namespace Brew.Presentation
 
             _levelCompleteScreen.Show(score, bonus, stars, essenceEarned, streakMult, isNewPotion, canDouble);
 
+            ScheduleNotificationsAfterWin();
+
             if (_adManager.ShouldShowInterstitial())
             {
                 _adManager.RecordInterstitialShown();
                 _analytics.LogAdInterstitial();
+            }
+        }
+
+        private void HandleEventLevelWin(int stars, int score)
+        {
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            bool completed = _weeklyEvent.TryCompleteLevel(_currentEventLevelIndex, now);
+            _isPlayingEventLevel = false;
+
+            if (!completed)
+            {
+                ShowLevelSelect();
+                return;
+            }
+
+            int essencePerLevel = _weeklyEvent.EssencePerLevel;
+            if (essencePerLevel > 0)
+                _currencyManager.Add(CurrencyType.Essence, essencePerLevel, "event_level");
+
+            _analytics.LogEventLevelComplete(_weeklyEvent.EventId, _currentEventLevelIndex, stars);
+
+            var milestoneRewards = _weeklyEvent.ClaimMilestoneRewards();
+            foreach (var (type, amount) in milestoneRewards)
+            {
+                if (string.Equals(type, "Essence", System.StringComparison.OrdinalIgnoreCase))
+                    _currencyManager.Add(CurrencyType.Essence, amount, "event_milestone");
+                else if (string.Equals(type, "Gems", System.StringComparison.OrdinalIgnoreCase))
+                    _currencyManager.Add(CurrencyType.Gems, amount, "event_milestone");
+            }
+
+            if (_weeklyEvent.GetState(now) == EventState.Completed)
+                _analytics.LogEventComplete(_weeklyEvent.EventId, _weeklyEvent.CompletedLevelCount);
+
+            _cloudSave.MarkDirty();
+
+            _levelCompleteScreen.Show(score, 0, stars, essencePerLevel, 1f, false, false);
+        }
+
+        private void ScheduleNotificationsAfterWin()
+        {
+            if (!SettingsManager.NotificationsEnabled) return;
+
+            var utcNow = System.DateTime.UtcNow;
+            _notificationManager.ScheduleStreakAtRisk(
+                utcNow, hasPlayedToday: true, _winStreak.CurrentStreak);
+
+            if (_weeklyEvent != null)
+            {
+                string tsStr = _remoteConfig.GetString(RemoteConfigDefaults.EventEndTimestamp, "0");
+                long endTs = long.TryParse(tsStr, out long ts) ? ts : 0;
+                bool allDone = _weeklyEvent.GetState(DateTimeOffset.UtcNow.ToUnixTimeSeconds()) == EventState.Completed;
+                _notificationManager.ScheduleEventEndingSoon(utcNow, endTs, allDone);
             }
         }
 

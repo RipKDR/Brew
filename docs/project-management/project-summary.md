@@ -1,7 +1,7 @@
 # Brew — Project Summary
 
 > **Living document.** Updated as decisions are made, milestones are reached, and blockers emerge.
-> Last updated: 2026-04-09 (Session 3)
+> Last updated: 2026-04-09 (Session 4)
 
 ---
 
@@ -11,7 +11,7 @@
 | Field         | Value                                                                                                                                               |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Project**   | Brew — Mobile Puzzle Game                                                                                                                           |
-| **Status**    | Meta & Economy Phase (Weeks 7-8) — code complete. Economy, meta-progression, IAP, ads, Firebase abstractions implemented. Gate 4 runtime testing pending. |
+| **Status**    | Content & Polish Phase (Weeks 9-10) — integration wiring complete. Event system, notifications, and theme overlay connected. Gate 5 prep in progress. |
 | **Pitch**     | *"Tap clusters to fuse ingredients into glowing orbs. Chain orbs together to brew potions. Craft every recipe before you run out of moves."*        |
 | **Platforms** | iOS (15+), Android (8.0+) — portrait only                                                                                                           |
 | **Engine**    | Unity 6 (6000.1 LTS), C#                                                                                                                            |
@@ -28,12 +28,12 @@
 | Milestone                          | Target Date | Status                                                      |
 | ---------------------------------- | ----------- | ----------------------------------------------------------- |
 | Documentation complete             | 2026-04-09  | Done                                                        |
-| Implementation start               | TBD         | —                                                           |
-| **Milestone 1** — Foundation       | Week 2      | Code complete — Gate 1 runtime testing pending              |
-| **Milestone 2** — Core Loop        | Week 4      | Code complete — Gate 2 runtime testing pending              |
-| **Milestone 3** — Feel & Juice     | Week 6      | Code complete — Gate 3 runtime testing pending              |
-| **Milestone 4** — Meta & Economy   | Week 8      | Code complete — Gate 4 runtime testing pending              |
-| **Milestone 5** — Content & Polish | Week 10     | Not started                                                 |
+| Implementation start               | 2026-04-09  | Done                                                        |
+| **Milestone 1** — Foundation       | Week 2      | Complete — Gate 1 runtime testing pending                   |
+| **Milestone 2** — Core Loop        | Week 4      | Complete — Gate 2 runtime testing pending                   |
+| **Milestone 3** — Feel & Juice     | Week 6      | Complete — Gate 3 runtime testing pending                   |
+| **Milestone 4** — Meta & Economy   | Week 8      | Complete — Gate 4 runtime testing pending                   |
+| **Milestone 5** — Content & Polish | Week 10     | In progress — integration wired, Gate 5 prep underway       |
 | Soft launch target                 | TBD         | —                                                           |
 | Global launch target               | TBD         | —                                                           |
 

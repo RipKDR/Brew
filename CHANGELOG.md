@@ -6,6 +6,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 
 ## [Unreleased]
 
+### Added — Integration Wiring (Gate 5 prep)
+
+- **Event Theme Overlay**: `LevelLoader.LoadEventLevel(json, themedIngredientId)` resolves "themed" placeholder in event level JSONs to a concrete ingredient from Remote Config; falls back to Shadow
+- **Notification Platform Adapters**: `UnityNotificationScheduler` (compile-guarded iOS/Android) and `NullNotificationScheduler` (Editor/unsupported fallback) implementing `INotificationScheduler`
+- **Event Level Flow**: `GameFlowController.StartEventLevel()` loads event templates, `HandleEventLevelWin()` grants per-level Essence + milestone rewards via `CurrencyManager`
+- **RemoteConfig Sync**: 48 additional key constants in `RemoteConfigDefaults.cs` (workshop costs, shelf milestones, daily brew streak bonuses, IAP amounts) — now 68 total matching JSON
+- **Event Integration Tests**: `EventLevelLoaderTests` (11 tests: theme resolution, fallback, metadata, key count sync)
+- **AdManager Tests**: 11 new tests covering events, tutorial path, constructor validation, placement edge cases
+- **NotificationManager Tests**: 5 new tests covering EventEndingSoon event, next-day scheduling, null guard, custom params
+- **CurrencyFormatter Tests**: 5 new boundary tests at exact tier transitions
+
+### Changed — Integration Wiring
+
+- `GameFlowController`: constructs `WeeklyEventManager` + `RemoteConfigManager` + `NotificationManager`; event level loading path; notification scheduling after wins and on level select
+- `WeeklyEventView`: added `RefreshState(EventState)` for banner/level-select/results visibility management
+- `LevelLoader`: extended `RawLevelData` with `grid_mask`, `blocker_placements`, `tutorial_steps` for event JSON compatibility
+- `AGENTS.md`: updated phase to "Implementation — Content & Polish", fixed path references to `_Project/Scripts/`
+- `project-summary.md`: milestone table updated (Milestones 1-4 Complete, Milestone 5 In Progress)
+
 ### Added — Content & Polish (Gate 5 prep)
 
 - **Weekly Event System**: `WeeklyEventManager` (pure C#, event lifecycle state machine, 7-level completion tracking, milestone rewards at 3/5/all levels), `MilestoneDefinition` data class, `WeeklyEventConfigSO` (level count, reward amounts, move budgets, board size), `WeeklyEventView` (event banner, level select, results, timer countdown)

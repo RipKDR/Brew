@@ -94,6 +94,42 @@ namespace Brew.Tests.EditMode.Utilities
             Assert.AreEqual("10M", CurrencyFormatter.Format(10_000_000));
         }
 
+        // ── Exact boundary transitions ────────────────────────
+
+        [Test]
+        public void Format_999_IsExact_1000_IsDecimalK()
+        {
+            Assert.AreEqual("999", CurrencyFormatter.Format(999));
+            Assert.AreEqual("1.0K", CurrencyFormatter.Format(1000));
+        }
+
+        [Test]
+        public void Format_9999_IsDecimalK_10000_IsIntegerK()
+        {
+            Assert.AreEqual("10.0K", CurrencyFormatter.Format(9999));
+            Assert.AreEqual("10K", CurrencyFormatter.Format(10000));
+        }
+
+        [Test]
+        public void Format_999999_IsIntegerK_1000000_IsDecimalM()
+        {
+            Assert.AreEqual("999K", CurrencyFormatter.Format(999999));
+            Assert.AreEqual("1.0M", CurrencyFormatter.Format(1000000));
+        }
+
+        [Test]
+        public void Format_9999999_IsDecimalM_10000000_IsIntegerM()
+        {
+            Assert.AreEqual("10.0M", CurrencyFormatter.Format(9999999));
+            Assert.AreEqual("10M", CurrencyFormatter.Format(10000000));
+        }
+
+        [Test]
+        public void Format_1999_RoundsToDecimalK()
+        {
+            Assert.AreEqual("2.0K", CurrencyFormatter.Format(1999));
+        }
+
         // ── Edge cases ──────────────────────────────────────
 
         [Test]

@@ -131,15 +131,47 @@
 - Updated `GameFlowController` with `WeeklyEventView` SerializeField and initialization
 - Updated `BrewSceneSetup` to create WeeklyEvent screen in meta screens and wire to GameFlowController
 
+### Integration Wiring Phase (Session 5)
+
+**Event System Wiring:**
+
+- `LevelLoader.LoadEventLevel(json, themedIngredientId)` — theme overlay resolves "themed" placeholder to concrete `IngredientColor` from Remote Config; falls back to Shadow if ID is empty
+- Extended `RawLevelData` with `grid_mask`, `blocker_placements`, `tutorial_steps` fields for event JSON compatibility
+- `GameFlowController` now constructs `WeeklyEventManager` with config from `WeeklyEventConfigSO` (or spec-matching defaults)
+- `GameFlowController.TryStartWeeklyEvent()` reads `event_active`/`event_id`/`event_name`/`event_end_timestamp`/`event_potion_id` from `RemoteConfigManager`
+- `GameFlowController.StartEventLevel(int)` loads event templates with theme resolution, wires gameplay
+- `HandleEventLevelWin()` grants per-level Essence, claims milestones, fires analytics
+- `WeeklyEventView.RefreshState(EventState)` manages banner/level-select/results visibility
+
+**Notification Integration:**
+
+- `NullNotificationScheduler` — no-op for Editor/unsupported platforms (prevents crashes)
+- `UnityNotificationScheduler` — compile-guarded iOS/Android implementation using Unity Mobile Notifications
+- `GameFlowController` constructs `NotificationManager` with platform-detected scheduler
+- Notification triggers: streak-at-risk after win, event-ending-soon after win, daily-brew-reminder on level select
+- All triggers gated behind `SettingsManager.NotificationsEnabled`
+
+**RemoteConfigDefaults Sync:**
+
+- Added 48 missing key constants and dictionary entries to `RemoteConfigDefaults.cs` (workshop costs, shelf milestones, daily brew streak bonuses, IAP amounts, event config)
+- Total: 68 keys matching `config/firebase/remote-config-defaults.json` exactly
+
+**Test Coverage Hardening:**
+
+- `AdManagerTests` — 11 new tests: events, tutorial path, constructor validation, extra placements, interstitial no-ops
+- `NotificationManagerTests` — 5 new tests: EventEndingSoon event, next-day scheduling, null constructor, custom params
+- `CurrencyFormatterTests` — 5 new boundary tests at exact tier transitions (999/1000, 9999/10000, etc.)
+- `EventLevelLoaderTests` — 11 new tests: theme resolution, fallback, metadata preservation, RemoteConfigDefaults key count sync
+
 ## In Progress
 
-- None. All Week 9-10 code systems are complete. Ready for Unity Editor testing and Gate 5 preparation.
+- None. Integration wiring complete. Ready for Unity Editor testing and Gate 5 preparation.
 
 ## Next 3 Tasks
 
-1. Open project in Unity Editor. Run all EditMode unit tests (now 27 test files, ~300+ methods). Fix any compilation or test failures.
-2. Create WeeklyEventConfigSO and NotificationConfigSO assets in Unity. Assign to GameFlowController. Create ScriptableObject assets for any missing Week 7-8 configs (EconomyConfigSO, etc.).
-3. Play full session including event flow: activate event via Remote Config → play event levels → claim milestone rewards → verify notification scheduling. Complete Gate 5 checklist items.
+1. Open project in Unity Editor. Run all EditMode unit tests (now 28+ test files, ~350+ methods including new event/notification/formatter tests). Fix any compilation or test failures.
+2. Create ScriptableObject assets in Unity: `WeeklyEventConfigSO`, `NotificationConfigSO`, `EconomyConfigSO`, and any missing config SOs. Assign to `GameFlowController`.
+3. Play full session including event flow: set `event_active=true` in Remote Config → play event levels → claim milestone rewards → verify notification scheduling. Complete Gate 5 checklist items.
 
 ## Blockers / Risks
 
@@ -148,11 +180,22 @@
 - Risk: AdMob SDK not yet integrated — AdManager is pure logic; ad display requires SDK callbacks.
 - Risk: Gate 3 and Gate 4 runtime verification still pending (external playtest + Unity Editor testing).
 - Risk: Gate 5 requires full device matrix testing, performance profiling, and app store asset creation.
-- Risk: NotificationManager uses `INotificationScheduler` interface — platform implementations for iOS/Android not yet built (requires Unity Mobile Notifications package).
+- Risk: Unity Mobile Notifications package not yet imported — `UnityNotificationScheduler` compile-guarded but untested on device.
 - Blocker: Cloud save Firestore integration requires Firebase project setup and authentication flow.
-- Blocker: Event level templates need theme overlay system implemented in the level loader for ingredient swapping.
+- Resolved: ~~Event level templates need theme overlay system~~ — `LevelLoader.LoadEventLevel()` now resolves "themed" slots via Remote Config ingredient ID.
+- Resolved: ~~INotificationScheduler platform implementations missing~~ — `UnityNotificationScheduler` and `NullNotificationScheduler` created.
+- Resolved: ~~WeeklyEventManager not wired in GameFlowController~~ — fully constructed, event level loading path added.
+- Resolved: ~~RemoteConfigDefaults out of sync with JSON~~ — all 68 keys now mirrored.
 
-## Decisions Recorded This Session
+## Decisions Recorded This Session (Session 5)
+
+- Theme overlay uses parameter-based resolution (not static ColorMap) — `LoadEventLevel` accepts `themedIngredientId`, falls back to "shadow" on empty/null.
+- `GameFlowController` constructs `RemoteConfigManager` directly with `RemoteConfigDefaults.GetAll()` — no Firebase SDK dependency for local defaults.
+- `UnityNotificationScheduler` uses `#if` compile guards — no runtime platform detection, zero overhead on unsupported platforms.
+- Event level wins do NOT affect win streak or interstitial counter — event flow is separate from main campaign progression.
+- Notification scheduling is gated behind `SettingsManager.NotificationsEnabled` — respects user opt-out preference.
+
+### Prior Session Decisions (Weeks 9-10)
 
 - `WeeklyEventManager` is pure C# with `Func<bool>` feature flag — event system can be entirely disabled via Remote Config.
 - Event milestone rewards are injected via `MilestoneDefinition` array, not hardcoded — all reward values come from `WeeklyEventConfigSO`.
@@ -175,7 +218,42 @@
 - `AnalyticsManager` maintains an in-memory event log for debugging — events are inspectable without Firebase DebugView.
 - `BrewSceneSetup` now creates all meta screen GameObjects — workshop, potion shelf, daily brew, store, booster shop, wallet, weekly event.
 
-## Files Touched This Session (Week 9-10)
+## Files Touched This Session (Session 5 — Integration Wiring)
+
+### Created — Core/Services
+
+- `Assets/_Project/Scripts/Core/Services/NullNotificationScheduler.cs`
+- `Assets/_Project/Scripts/Core/Services/UnityNotificationScheduler.cs`
+
+### Created — Tests
+
+- `Assets/Tests/EditMode/Data/EventLevelLoaderTests.cs`
+
+### Modified — Data
+
+- `Assets/_Project/Scripts/Data/LevelLoader.cs` — added `LoadEventLevel()` theme overlay, extended `RawLevelData`
+- `Assets/_Project/Scripts/Data/Economy/RemoteConfigDefaults.cs` — added 48 missing key constants + dictionary entries (68 total)
+
+### Modified — Presentation
+
+- `Assets/_Project/Scripts/Presentation/GameFlowController.cs` — constructed WeeklyEventManager/RemoteConfigManager/NotificationManager, added event level flow, notification scheduling
+- `Assets/_Project/Scripts/Presentation/LiveOps/WeeklyEventView.cs` — added `RefreshState(EventState)` method
+
+### Modified — Tests
+
+- `Assets/Tests/EditMode/Core/Ads/AdManagerTests.cs` — 11 new tests
+- `Assets/Tests/EditMode/Core/Services/NotificationManagerTests.cs` — 5 new tests
+- `Assets/Tests/EditMode/Utilities/CurrencyFormatterTests.cs` — 5 new boundary tests
+
+### Modified — Docs
+
+- `AGENTS.md` — updated phase, fixed path references
+- `docs/project-management/project-summary.md` — updated milestone table
+- `docs/project-management/session-handoff.md` — this file
+
+---
+
+## Files Touched Prior Session (Week 9-10)
 
 ### Created — Core/LiveOps (pure C#)
 
