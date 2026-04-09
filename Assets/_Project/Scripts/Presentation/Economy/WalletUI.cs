@@ -1,4 +1,5 @@
 using Brew.Core.Economy;
+using Brew.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -39,9 +40,9 @@ namespace Brew.Presentation
             if (_currencyManager == null) return;
 
             if (_essenceText != null)
-                _essenceText.text = _currencyManager.GetBalance(CurrencyType.Essence).ToString("N0");
+                _essenceText.text = CurrencyFormatter.Format(_currencyManager.GetBalance(CurrencyType.Essence));
             if (_gemsText != null)
-                _gemsText.text = _currencyManager.GetBalance(CurrencyType.Gems).ToString("N0");
+                _gemsText.text = CurrencyFormatter.Format(_currencyManager.GetBalance(CurrencyType.Gems));
         }
 
         private void OnBalanceChanged(CurrencyType type, int newBalance) => Refresh();

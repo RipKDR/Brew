@@ -10,6 +10,7 @@ namespace Brew.Presentation
         [SerializeField] private Slider _sfxSlider;
         [SerializeField] private Toggle _hapticsToggle;
         [SerializeField] private Toggle _screenShakeToggle;
+        [SerializeField] private Toggle _notificationsToggle;
         [SerializeField] private Button _closeButton;
 
         private bool _isInitializing;
@@ -43,6 +44,12 @@ namespace Brew.Presentation
                 _screenShakeToggle.onValueChanged.AddListener(OnScreenShakeChanged);
             }
 
+            if (_notificationsToggle != null)
+            {
+                _notificationsToggle.isOn = SettingsManager.NotificationsEnabled;
+                _notificationsToggle.onValueChanged.AddListener(OnNotificationsChanged);
+            }
+
             if (_closeButton != null)
                 _closeButton.onClick.AddListener(Hide);
 
@@ -55,6 +62,7 @@ namespace Brew.Presentation
             if (_sfxSlider != null) _sfxSlider.onValueChanged.RemoveListener(OnSfxVolumeChanged);
             if (_hapticsToggle != null) _hapticsToggle.onValueChanged.RemoveListener(OnHapticsChanged);
             if (_screenShakeToggle != null) _screenShakeToggle.onValueChanged.RemoveListener(OnScreenShakeChanged);
+            if (_notificationsToggle != null) _notificationsToggle.onValueChanged.RemoveListener(OnNotificationsChanged);
             if (_closeButton != null) _closeButton.onClick.RemoveListener(Hide);
         }
 
@@ -84,6 +92,12 @@ namespace Brew.Presentation
         {
             if (_isInitializing) return;
             SettingsManager.ScreenShakeEnabled = value;
+        }
+
+        private void OnNotificationsChanged(bool value)
+        {
+            if (_isInitializing) return;
+            SettingsManager.NotificationsEnabled = value;
         }
     }
 }

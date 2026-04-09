@@ -1,6 +1,6 @@
 # Brew — Context Snapshot
 
-> Generated: 2026-04-09 (Session 5)
+> Generated: 2026-04-09 (Session 6)
 > Project summary updated: 2026-04-09
 > Session handoff updated: 2026-04-09
 
@@ -13,56 +13,58 @@
 
 ## Current Milestone Focus
 
-- Milestone: **Meta & Economy (Weeks 7-8)** — code complete, working toward Milestone Gate 4
-- Goal: Full meta-progression, dual-currency economy, IAP, ads, Firebase backend abstractions
-- Source plan: `docs/production/mvp-build-plan.md`, `docs/prompts/04-week-7-8-meta-and-economy.md`
+- Milestone: **Content & Polish (Weeks 9-10)** — code complete, working toward Milestone Gate 5
+- Goal: Weekly event system, push notifications, level tuning, CurrencyFormatter, settings expansion, soft launch preparation
+- Source plan: `docs/production/mvp-build-plan.md`, `docs/prompts/05-week-9-10-content-and-polish.md`
 
 ## Next 3 Tasks
 
-1. Open project in Unity Editor. Run all EditMode unit tests (24 test files, ~255+ methods). Fix any compilation or test failures.
-2. Create ScriptableObject assets (EconomyConfigSO, PotionShelfConfigSO, WorkshopConfigSO, WinStreakConfigSO, DailyBrewConfigSO). Assign to GameFlowController.
-3. Play full session loop: complete level → earn Essence → open workshop → purchase upgrade → complete daily brew → verify potion shelf → test IAP stubs. Complete Gate 4 checklist.
+1. Open project in Unity Editor. Run all EditMode unit tests (27 test files, ~300+ methods). Fix any compilation or test failures.
+2. Create ScriptableObject assets (WeeklyEventConfigSO, NotificationConfigSO, plus any missing Week 7-8 configs). Assign to GameFlowController.
+3. Play full session including event flow: activate event via Remote Config → play event levels → claim milestone rewards → verify notification scheduling. Complete Gate 5 checklist items.
 
 ## Blockers / Risks
 
 - Risk: Firebase SDK not yet imported — backend managers are pure C# abstractions awaiting SDK wiring.
 - Risk: Unity IAP and AdMob SDKs not yet configured — managers are logic-only stubs.
-- Risk: Gate 3 runtime verification still pending (external playtest + Unity Editor testing).
-- Blocker: Gate 4 requires IAP sandbox testing on both platforms.
+- Risk: NotificationManager needs platform-specific INotificationScheduler implementations.
+- Risk: Event theme overlay needs level loader modifications for ingredient swapping.
+- Blocker: Gate 5 requires full device matrix testing and app store asset creation.
 
 ## Decisions This Session
 
-- CurrencyManager is pure C# — zero Unity dependencies, testable in EditMode.
-- All economy values from EconomyConfigSO or RemoteConfigManager — zero hardcoded values.
-- Offline-first cloud save via CloudSaveManager (ADR 0002).
-- Remote Config as single config source at runtime (ADR 0003).
-- WorkshopManager enforces sequential purchases only.
-- DailyBrewManager uses UTC dates for consistency.
-- AdManager uses Func<bool> callback for No-Ads Pass — decoupled from IAPManager.
-- IAPManager product catalog is static readonly.
-- AnalyticsManager maintains in-memory event log for debugging.
+- WeeklyEventManager is pure C# with Func<bool> feature flag — fully disableable via Remote Config.
+- Event milestone rewards injected via MilestoneDefinition, not hardcoded.
+- NotificationManager uses INotificationScheduler interface — platform abstraction for testability.
+- Notification frequency cap: 1/day, 7-day re-prompt cooldown.
+- CurrencyFormatter is centralized static utility — single format function, no duplication.
+- Event level templates use "themed" ingredient placeholder for runtime swapping.
+- 13 new Remote Config keys for event system — all server-configurable.
 
 ## Code Inventory
 
-### Core Layer (pure C#, zero Unity deps) — 32 files
+### Core Layer (pure C#, zero Unity deps) — 35 files
 
-- Enums: IngredientColor, CellContentType, BoardPhase, LevelOutcome, BoosterType, CurrencyType, AdPlacement
-- Data types: CellContent, GridCoord, RecipeTarget, LevelConfig, RecipeProgress, FusionResult, ChainFusionResult, GravityStep, TutorialLevelData, IAPProduct, PotionShelfMilestoneDefinition, DailyStreakBonusDefinition, PlayerSaveData
+- Enums: IngredientColor, CellContentType, BoardPhase, LevelOutcome, BoosterType, CurrencyType, AdPlacement, EventState, NotificationType
+- Data types: CellContent, GridCoord, RecipeTarget, LevelConfig, RecipeProgress, FusionResult, ChainFusionResult, GravityStep, TutorialLevelData, IAPProduct, PotionShelfMilestoneDefinition, DailyStreakBonusDefinition, PlayerSaveData, MilestoneDefinition
 - Logic: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver
 - Game systems: MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, BoosterManager
 - Economy: CurrencyManager, RewardCalculator, IAPManager
 - Meta: PotionShelfManager, WorkshopManager, WinStreakTracker, DailyBrewManager
+- LiveOps: WeeklyEventManager
+- Services: NotificationManager, INotificationScheduler
 - Ads: AdManager
 - Backend: FirebaseAuthManager, CloudSaveManager, RemoteConfigManager, AnalyticsManager
 
-### Data Layer — 14 files
+### Data Layer — 16 files
 
 - BoardConfigSO, AudioConfigSO, ScreenShakeConfigSO
 - EconomyConfigSO, RemoteConfigDefaults
 - PotionShelfConfigSO, WorkshopConfigSO, WinStreakConfigSO, DailyBrewConfigSO
+- WeeklyEventConfigSO, NotificationConfigSO
 - SfxId, LevelLoader, PlayerProgress, LocalSaveManager, SettingsManager
 
-### Presentation Layer — 28 files
+### Presentation Layer — 29 files
 
 - BoardPresenter, InputController, TokenView, TokenAnimator
 - HudController, RecipeVialUI
@@ -74,22 +76,26 @@
 - BoosterBarUI, BoosterSlotUI, SettingsPanel
 - PotionShelfView, WorkshopView, DailyBrewUI
 - WalletUI, StoreUI, BoosterShopUI
+- WeeklyEventView
 
-### Utilities — 1 file
+### Utilities — 2 files
 
-- ObjectPool
+- ObjectPool, CurrencyFormatter
 
 ### Editor — 1 file
 
 - BrewSceneSetup
 
-### Tests — 24 files, ~255+ methods
+### Tests — 27 files, ~300+ methods
 
 - Core: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver, MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, LevelConfig, BoosterManager
 - Economy: CurrencyManager, RewardCalculator, IAPManager
 - Meta: PotionShelfManager, WorkshopManager, WinStreakTracker, DailyBrewManager
+- LiveOps: WeeklyEventManager
+- Services: NotificationManager
 - Ads: AdManager
 - Backend: CloudSaveManager, RemoteConfigManager
+- Utilities: CurrencyFormatter
 - Data: LevelLoader, LevelDataIntegration
 
 ## ADR Summary
@@ -102,8 +108,8 @@
 
 ## Recent Git Commits
 
+- (pending) 2026-04-09 Add Week 9-10 systems: weekly events, notifications, CurrencyFormatter, event levels
+- 3ed5842 2026-04-09 Complete Week 7-8 session close: handoff, changelog, ADRs 0002-0003, context snapshot
 - 11230eb 2026-04-09 Add Presentation layer for meta/economy systems and wire into GameFlowController
 - 751122d 2026-04-09 Fix XML doc cref to use fully qualified BoosterManager reference
 - 1e2aabf 2026-04-09 Add Meta/Economy/Backend/Ads systems and fix 15 bugs from code review
-- c50e16e 2026-04-09 Update project docs to reflect Week 7-8 phase start
-- f18aff9 2026-04-09 Add remaining meta files, project settings, and doc updates

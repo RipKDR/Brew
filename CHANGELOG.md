@@ -6,6 +6,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 
 ## [Unreleased]
 
+### Added — Content & Polish (Gate 5 prep)
+
+- **Weekly Event System**: `WeeklyEventManager` (pure C#, event lifecycle state machine, 7-level completion tracking, milestone rewards at 3/5/all levels), `MilestoneDefinition` data class, `WeeklyEventConfigSO` (level count, reward amounts, move budgets, board size), `WeeklyEventView` (event banner, level select, results, timer countdown)
+- **Push Notifications**: `NotificationManager` (pure C#, `INotificationScheduler` interface, 3 triggers: Daily Brew reminder, Streak at Risk, Event Ending Soon), `NotificationConfigSO` (caps, cooldowns, notification copy), frequency cap (1/day), permission cooldown (7 days)
+- **CurrencyFormatter**: Static utility for compact currency display (exact < 1K, K suffix 1K-999K, M suffix 1M+), integrated into `WalletUI`
+- **Event Level Templates**: 7 event level templates in `levels/events/` (E1-E2 easy, E3-E5 medium, E6 hard, E7 boss) with 7x9 board, themed ingredient slot
+- **Analytics Expansion**: 6 new methods in `AnalyticsManager`: `LogEventStart`, `LogEventLevelComplete`, `LogEventComplete`, `LogEventRewardClaimed`, `LogNotificationScheduled`, `LogNotificationOpened`
+- **Remote Config**: 13 new keys for event system (event_active, event_id, event_name, event_end_timestamp, theme colors, ingredient ID, reward values)
+- **Tests**: `WeeklyEventManagerTests` (~18 methods), `NotificationManagerTests` (~15 methods), `CurrencyFormatterTests` (~12 methods)
+
+### Changed — Content & Polish
+
+- Updated `GameFlowController`: added `WeeklyEventView` SerializeField and initialization
+- Updated `BrewSceneSetup`: creates WeeklyEvent screen in meta screens, wires to GameFlowController
+- Updated `SettingsPanel`: added notifications toggle
+- Updated `SettingsManager`: added `NotificationsEnabled` property (default true)
+- Updated `WalletUI`: uses `CurrencyFormatter.Format()` for compact balance display
+
 ### Added — Meta & Economy (Gate 4 prep)
 
 - **Economy Foundation**: `CurrencyType` enum, `CurrencyManager` (pure C#, Add/Spend with events, balance-never-negative), `RewardCalculator` (star × streak multiplier), `EconomyConfigSO` (all tuning values from economy-model.md)

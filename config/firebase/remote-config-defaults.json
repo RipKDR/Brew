@@ -53,5 +53,18 @@
   "gem_pack_2_amount": 300,
   "gem_pack_3_amount": 700,
   "gem_pack_4_amount": 1500,
-  "no_ads_pass_sku": "no_ads"
+  "no_ads_pass_sku": "no_ads",
+  "event_active": false,
+  "event_id": "",
+  "event_name": "",
+  "event_end_timestamp": 0,
+  "event_potion_id": "",
+  "event_theme_primary_color": "#FFFFFF",
+  "event_theme_secondary_color": "#CCCCCC",
+  "event_themed_ingredient_id": "",
+  "event_essence_per_level": 75,
+  "event_milestone_3_essence": 100,
+  "event_milestone_5_gems": 10,
+  "event_all_complete_essence": 250,
+  "event_all_complete_gems": 25
 }

@@ -1,6 +1,7 @@
 using Brew.Core;
 using Brew.Data;
 using Brew.Presentation;
+using Brew.Presentation.LiveOps;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -674,7 +675,7 @@ namespace Brew.Editor
             return panel;
         }
 
-        private static (GameObject potionShelf, GameObject workshop, GameObject dailyBrew, GameObject store, GameObject boosterShop, GameObject wallet)
+        private static (GameObject potionShelf, GameObject workshop, GameObject dailyBrew, GameObject store, GameObject boosterShop, GameObject wallet, GameObject weeklyEvent)
             CreateMetaScreens(Transform canvasTransform)
         {
             var potionShelfGo = CreateUIPanel("PotionShelfScreen", canvasTransform);
@@ -699,7 +700,11 @@ namespace Brew.Editor
             var walletGo = CreateUIPanel("WalletUI", canvasTransform);
             walletGo.AddComponent<WalletUI>();
 
-            return (potionShelfGo, workshopGo, dailyBrewGo, storeGo, boosterShopGo, walletGo);
+            var weeklyEventGo = CreateUIPanel("WeeklyEventScreen", canvasTransform);
+            weeklyEventGo.AddComponent<WeeklyEventView>();
+            weeklyEventGo.SetActive(false);
+
+            return (potionShelfGo, workshopGo, dailyBrewGo, storeGo, boosterShopGo, walletGo, weeklyEventGo);
         }
 
         private static GameFlowController CreateGameFlowController(
@@ -709,7 +714,7 @@ namespace Brew.Editor
             GameObject levelCompletePanel,
             GameObject levelFailPanel,
             GameObject gameplayPanel,
-            (GameObject potionShelf, GameObject workshop, GameObject dailyBrew, GameObject store, GameObject boosterShop, GameObject wallet) metaScreens)
+            (GameObject potionShelf, GameObject workshop, GameObject dailyBrew, GameObject store, GameObject boosterShop, GameObject wallet, GameObject weeklyEvent) metaScreens)
         {
             var existing = Object.FindAnyObjectByType<GameFlowController>();
             if (existing != null) return existing;
@@ -732,6 +737,7 @@ namespace Brew.Editor
             so.FindProperty("_storeUI").objectReferenceValue = metaScreens.store.GetComponent<StoreUI>();
             so.FindProperty("_boosterShopUI").objectReferenceValue = metaScreens.boosterShop.GetComponent<BoosterShopUI>();
             so.FindProperty("_walletUI").objectReferenceValue = metaScreens.wallet.GetComponent<WalletUI>();
+            so.FindProperty("_weeklyEventView").objectReferenceValue = metaScreens.weeklyEvent.GetComponent<WeeklyEventView>();
 
             so.ApplyModifiedProperties();
 

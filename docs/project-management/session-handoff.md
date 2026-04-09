@@ -8,9 +8,9 @@
 
 ## Current Milestone Focus
 
-- Milestone: **Meta & Economy (Weeks 7-8)** — working toward Milestone Gate 4
-- Goal: Full meta-progression (potion shelf, workshop, streaks, daily brew), dual-currency economy, IAP, ads, Firebase backend abstractions, analytics facade
-- Source plan: `docs/production/mvp-build-plan.md`, `docs/prompts/04-week-7-8-meta-and-economy.md`
+- Milestone: **Content & Polish (Weeks 9-10)** — working toward Milestone Gate 5
+- Goal: Weekly event system, push notifications, level tuning, CurrencyFormatter utility, settings expansion, soft launch preparation
+- Source plan: `docs/production/mvp-build-plan.md`, `docs/prompts/05-week-9-10-content-and-polish.md`
 
 ## Current Branch + Baseline
 
@@ -96,26 +96,73 @@
 - `AdManagerTests`, `IAPManagerTests`
 - `CloudSaveManagerTests`, `RemoteConfigManagerTests`
 
+### Content & Polish Phase (This Session)
+
+**Weekly Event System:**
+
+- `WeeklyEventManager` — pure C# event lifecycle (NotStarted/Active/Completed/Expired), 7-level completion tracking, milestone rewards at 3/5/all levels, config-driven reward amounts
+- `MilestoneDefinition` — data class for event milestone reward definitions
+- `WeeklyEventConfigSO` — ScriptableObject with level count, Essence per level, milestone rewards, move budgets, board dimensions
+- `WeeklyEventView` — MonoBehaviour with event banner, level select, results panels, timer countdown, level button states
+- `WeeklyEventManagerTests` — 18+ test methods covering lifecycle, completion, milestones, expiry, feature flags
+- 7 event level templates in `levels/events/` (E1-E7 difficulty progression: easy→medium→hard→boss)
+- Remote Config keys: `event_active`, `event_id`, `event_name`, `event_end_timestamp`, `event_potion_id`, theme colors, ingredient ID, per-level/milestone reward values
+
+**Push Notification System:**
+
+- `NotificationManager` — pure C# with `INotificationScheduler` interface abstraction, 3 notification triggers (Daily Brew, Streak at Risk, Event Ending Soon), daily frequency cap, permission cooldown tracking
+- `NotificationConfigSO` — ScriptableObject with max per day, cooldown days, hour offsets, notification titles/bodies
+- `NotificationManagerTests` — 15+ test methods covering all trigger logic, caps, permissions
+- Updated `SettingsPanel` with notifications toggle
+- Updated `SettingsManager` with `NotificationsEnabled` property
+
+**CurrencyFormatter Utility:**
+
+- `CurrencyFormatter` — pure C# static formatter (< 1K exact, 1K-9.9K decimal+K, 10K-999K integer+K, 1M+ M suffix)
+- `CurrencyFormatterTests` — 12+ test methods covering all ranges and edge cases
+- Updated `WalletUI` to use `CurrencyFormatter.Format()` instead of `ToString("N0")`
+
+**Analytics Expansion:**
+
+- Added 6 new analytics methods to `AnalyticsManager`: `LogEventStart`, `LogEventLevelComplete`, `LogEventComplete`, `LogEventRewardClaimed`, `LogNotificationScheduled`, `LogNotificationOpened`
+
+**Integration:**
+
+- Updated `GameFlowController` with `WeeklyEventView` SerializeField and initialization
+- Updated `BrewSceneSetup` to create WeeklyEvent screen in meta screens and wire to GameFlowController
+
 ## In Progress
 
-- None. All Week 7-8 code is complete. Ready for Unity Editor testing and Gate 4 preparation.
+- None. All Week 9-10 code systems are complete. Ready for Unity Editor testing and Gate 5 preparation.
 
 ## Next 3 Tasks
 
-1. Open project in Unity Editor. Run all EditMode unit tests (now 24 test files, ~255+ methods). Fix any compilation or test failures.
-2. Create EconomyConfigSO, PotionShelfConfigSO, WorkshopConfigSO, WinStreakConfigSO, DailyBrewConfigSO assets in Unity. Assign to GameFlowController.
-3. Play full session loop: complete level → earn Essence → open workshop → purchase upgrade → complete daily brew → verify streak multiplier → verify potion shelf updates. Complete Gate 4 checklist items 4.1–4.14.
+1. Open project in Unity Editor. Run all EditMode unit tests (now 27 test files, ~300+ methods). Fix any compilation or test failures.
+2. Create WeeklyEventConfigSO and NotificationConfigSO assets in Unity. Assign to GameFlowController. Create ScriptableObject assets for any missing Week 7-8 configs (EconomyConfigSO, etc.).
+3. Play full session including event flow: activate event via Remote Config → play event levels → claim milestone rewards → verify notification scheduling. Complete Gate 5 checklist items.
 
 ## Blockers / Risks
 
 - Risk: Firebase SDK not yet imported — FirebaseAuthManager, CloudSaveManager, RemoteConfigManager are abstractions that need SDK wiring.
 - Risk: Unity IAP package not yet configured — IAPManager purchase flow needs SDK integration for real store transactions.
 - Risk: AdMob SDK not yet integrated — AdManager is pure logic; ad display requires SDK callbacks.
-- Risk: Gate 3 runtime verification still pending (external playtest + Unity Editor testing).
-- Risk: Gate 4 requires IAP sandbox testing on both iOS and Android — needs Apple Developer + Google Play Console setup.
+- Risk: Gate 3 and Gate 4 runtime verification still pending (external playtest + Unity Editor testing).
+- Risk: Gate 5 requires full device matrix testing, performance profiling, and app store asset creation.
+- Risk: NotificationManager uses `INotificationScheduler` interface — platform implementations for iOS/Android not yet built (requires Unity Mobile Notifications package).
 - Blocker: Cloud save Firestore integration requires Firebase project setup and authentication flow.
+- Blocker: Event level templates need theme overlay system implemented in the level loader for ingredient swapping.
 
 ## Decisions Recorded This Session
+
+- `WeeklyEventManager` is pure C# with `Func<bool>` feature flag — event system can be entirely disabled via Remote Config.
+- Event milestone rewards are injected via `MilestoneDefinition` array, not hardcoded — all reward values come from `WeeklyEventConfigSO`.
+- `NotificationManager` uses `INotificationScheduler` interface — platform-specific notification scheduling is fully abstracted for testability.
+- Notification frequency cap is 1 per day with 7-day re-prompt cooldown — prevents notification fatigue.
+- `CurrencyFormatter` is a centralized static utility — all currency display flows through one format function, no duplication across UI scripts.
+- Event level templates use "themed" ingredient placeholder — the theme overlay system will swap this at runtime via Remote Config.
+- 13 new Remote Config keys added for event system — all event behavior is server-configurable without app update.
+
+### Prior Session Decisions (Weeks 7-8)
 
 - `CurrencyManager` is pure C# with zero Unity dependencies — enables EditMode testing of all economy logic.
 - All economy values flow through `EconomyConfigSO` or `RemoteConfigDefaults` — zero hardcoded values in game logic.
@@ -126,9 +173,54 @@
 - `AdManager` uses callback-based No-Ads Pass check (`Func<bool>`) — decoupled from IAPManager implementation.
 - `IAPManager` product catalog is static readonly — product definitions don't change at runtime.
 - `AnalyticsManager` maintains an in-memory event log for debugging — events are inspectable without Firebase DebugView.
-- `BrewSceneSetup` now creates all meta screen GameObjects — workshop, potion shelf, daily brew, store, booster shop, wallet.
+- `BrewSceneSetup` now creates all meta screen GameObjects — workshop, potion shelf, daily brew, store, booster shop, wallet, weekly event.
 
-## Files Touched This Session
+## Files Touched This Session (Week 9-10)
+
+### Created — Core/LiveOps (pure C#)
+
+- `Assets/_Project/Scripts/Core/LiveOps/WeeklyEventManager.cs`
+
+### Created — Core/Services (pure C#)
+
+- `Assets/_Project/Scripts/Core/Services/NotificationManager.cs`
+
+### Created — Utilities (pure C#)
+
+- `Assets/_Project/Scripts/Utilities/CurrencyFormatter.cs`
+
+### Created — Data
+
+- `Assets/_Project/Scripts/Data/LiveOps/WeeklyEventConfigSO.cs`
+- `Assets/_Project/Scripts/Data/Services/NotificationConfigSO.cs`
+
+### Created — Presentation
+
+- `Assets/_Project/Scripts/Presentation/LiveOps/WeeklyEventView.cs`
+
+### Created — Tests
+
+- `Assets/Tests/EditMode/Core/LiveOps/WeeklyEventManagerTests.cs`
+- `Assets/Tests/EditMode/Core/Services/NotificationManagerTests.cs`
+- `Assets/Tests/EditMode/Utilities/CurrencyFormatterTests.cs`
+
+### Created — Level Data
+
+- `levels/events/event_template_01.json` through `event_template_07.json` (7 event level templates)
+
+### Modified
+
+- `Assets/_Project/Scripts/Core/Backend/AnalyticsManager.cs` — added 6 analytics methods (event + notification)
+- `Assets/_Project/Scripts/Presentation/GameFlowController.cs` — WeeklyEventView field + initialization
+- `Assets/_Project/Scripts/Editor/BrewSceneSetup.cs` — WeeklyEvent screen creation + wiring
+- `Assets/_Project/Scripts/Presentation/SettingsPanel.cs` — notifications toggle
+- `Assets/_Project/Scripts/Data/SettingsManager.cs` — NotificationsEnabled property
+- `Assets/_Project/Scripts/Presentation/Economy/WalletUI.cs` — CurrencyFormatter integration
+- `config/firebase/remote-config-defaults.json` — 13 new event Remote Config keys
+
+---
+
+## Files Touched Previous Sessions (Weeks 1-8)
 
 ### Created — Core/Economy (pure C#)
 
@@ -205,7 +297,20 @@
 
 ## Verification Notes
 
-- All new Core classes (Economy, Meta, Ads, Backend) have zero `using UnityEngine;` — pure C# contract maintained.
+### Week 9-10 Verification
+
+- All new Core classes (LiveOps, Services) have zero `using UnityEngine;` — pure C# contract maintained.
+- `CurrencyFormatter` has zero Unity dependencies — pure static utility.
+- `WeeklyEventManager` reward amounts match event-templates.md: 75 Essence/level, 100E at 3 levels, 10G at 5 levels, 250E+25G at all 7 (total 775E + 35G).
+- Event level templates follow event-templates.md spec: E1-E2 easy (20/22 moves, 2 recipes), E3-E5 medium (25/28 moves, 2-3 recipes), E6 hard (28 moves, 3 recipes + blockers), E7 boss (32 moves, 3 recipes + mixed blockers).
+- Remote Config defaults JSON now contains 69 keys (56 original + 13 event keys).
+- `NotificationManager` daily cap (1) and re-prompt cooldown (7 days) match spec.
+- `SettingsManager.NotificationsEnabled` defaults to true (opt-out model).
+- `WalletUI` now uses `CurrencyFormatter.Format()` for compact display.
+
+### Week 7-8 Verification (Prior)
+
+- All prior Core classes (Economy, Meta, Ads, Backend) have zero `using UnityEngine;` — pure C# contract maintained.
 - CurrencyManager.Spend returns false on insufficient balance; balance never goes negative per economy-model.md.
 - RewardCalculator streak multiplier tiers match economy-model.md exactly: 1.0/1.25/1.5/2.0/2.5/3.0 at streaks 1/2/3/5/8/10+.
 - Workshop costs match economy-model.md: 50, 100, 200, 400, 600, 1000, 1500, 2500, 4000, 6000, 8000, 12000 (cumulative 36,350).
@@ -213,13 +318,15 @@
 - DailyBrewManager streak bonuses match economy-model.md: 3-day=1.25x+5G, 5-day=1.5x+10G, 7-day=2.0x+15G.
 - IAPManager catalog matches monetization-plan.md: 4 gem packs, starter bundle ($1.99, 50G+500E+3 Catalysts, max level 15), no-ads pass ($4.99).
 - AdManager daily cap (5), interstitial frequency (3), per-placement limits all match monetization-plan.md.
-- Remote Config defaults JSON contains all 56 keys matching economy-model.md and monetization-plan.md values.
+- Remote Config defaults JSON contains all keys matching economy-model.md and monetization-plan.md values.
 
 ## Handoff Checklist
 
-- Decision log updated
-- This handoff file updated
-- Context snapshot regenerated
-- ADR index validated — 2 new ADRs recorded (0002 offline-first cloud save, 0003 Remote Config as config source)
-- CI/local readiness checks run and results recorded (requires Unity Editor)
-- ScriptableObject assets created and assigned (requires Unity Editor)
+- [x] Decision log updated
+- [x] This handoff file updated
+- [x] Context snapshot regenerated
+- [x] Changelog updated
+- [x] Weekly focus updated
+- [ ] ADR index validated — no new ADRs this session (event system uses existing patterns)
+- [ ] CI/local readiness checks run and results recorded (requires Unity Editor)
+- [ ] ScriptableObject assets created and assigned (requires Unity Editor): WeeklyEventConfigSO, NotificationConfigSO

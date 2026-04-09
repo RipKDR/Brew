@@ -2,8 +2,10 @@ using Brew.Core;
 using Brew.Core.Ads;
 using Brew.Core.Backend;
 using Brew.Core.Economy;
+using Brew.Core.LiveOps;
 using Brew.Core.Meta;
 using Brew.Data;
+using Brew.Presentation.LiveOps;
 using UnityEngine;
 
 namespace Brew.Presentation
@@ -27,6 +29,7 @@ namespace Brew.Presentation
         [SerializeField] private DailyBrewUI _dailyBrewUI;
         [SerializeField] private StoreUI _storeUI;
         [SerializeField] private BoosterShopUI _boosterShopUI;
+        [SerializeField] private WeeklyEventView _weeklyEventView;
 
         [Header("Gameplay")]
         [SerializeField] private BoardPresenter _boardPresenter;
@@ -50,6 +53,7 @@ namespace Brew.Presentation
         private AdManager _adManager;
         private AnalyticsManager _analytics;
         private CloudSaveManager _cloudSave;
+        private WeeklyEventManager _weeklyEvent;
 
         private void Start()
         {
@@ -113,6 +117,9 @@ namespace Brew.Presentation
             if (_workshopView != null) _workshopView.Initialize(_workshop);
             if (_dailyBrewUI != null) _dailyBrewUI.Initialize(_dailyBrew);
             if (_storeUI != null) _storeUI.Initialize(_iapManager, _progress.CurrentLevel);
+
+            if (_weeklyEventView != null && _weeklyEvent != null)
+                _weeklyEventView.Initialize(_weeklyEvent);
 
             if (_boosterShopUI != null && _boardPresenter != null)
             {
