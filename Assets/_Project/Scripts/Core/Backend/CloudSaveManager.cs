@@ -40,18 +40,18 @@ namespace Brew.Core.Backend
 
         public sealed class PlayerSaveData
         {
-            public int Essence;
-            public int Gems;
-            public int CurrentLevel;
-            public int[] CompletedLevels;
-            public int[] StarRatings;
-            public int WorkshopLevel;
-            public int[] UnlockedPotions;
-            public int[] ClaimedMilestones;
-            public int WinStreak;
-            public string LastDailyBrewDate;
-            public int DailyBrewStreak;
-            public string[] PurchasedProducts;
+            public int Essence { get; set; }
+            public int Gems { get; set; }
+            public int CurrentLevel { get; set; }
+            public int[] CompletedLevels { get; set; }
+            public int[] StarRatings { get; set; }
+            public int WorkshopLevel { get; set; }
+            public int[] UnlockedPotions { get; set; }
+            public int[] ClaimedMilestones { get; set; }
+            public int WinStreak { get; set; }
+            public string LastDailyBrewDate { get; set; }
+            public int DailyBrewStreak { get; set; }
+            public string[] PurchasedProducts { get; set; }
 
             public static PlayerSaveData CopyFrom(PlayerSaveData source)
             {

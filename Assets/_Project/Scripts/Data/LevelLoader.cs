@@ -53,6 +53,18 @@ namespace Brew.Data
         }
 
         /// <summary>
+        /// Scans Resources/Levels/ for the highest numbered level file.
+        /// Falls back to 40 if no runtime scan is possible.
+        /// </summary>
+        public static int GetMaxLevelId()
+        {
+            var all = Resources.LoadAll<TextAsset>("Levels");
+            if (all == null || all.Length == 0)
+                return 40;
+            return all.Length;
+        }
+
+        /// <summary>
         /// Loads a level from Unity Resources at path "Levels/level_NNN".
         /// The .json extension must be stripped; file must be a TextAsset.
         /// </summary>

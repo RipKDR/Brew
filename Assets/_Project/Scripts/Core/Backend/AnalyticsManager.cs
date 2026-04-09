@@ -160,8 +160,12 @@ namespace Brew.Core.Backend
                 { "notification_type", notificationType ?? string.Empty }
             });
 
-        public void LogEventStart(string eventId) =>
-            LogEvent("event_start", new Dictionary<string, object> { { "event_id", eventId ?? string.Empty } });
+        public void LogEventStart(string eventId, string eventName) =>
+            LogEvent("event_start", new Dictionary<string, object>
+            {
+                { "event_id", eventId ?? string.Empty },
+                { "event_name", eventName ?? string.Empty }
+            });
 
         public void LogEventLevelComplete(string eventId, int levelIndex, int stars) =>
             LogEvent("event_level_complete", new Dictionary<string, object>
@@ -171,8 +175,12 @@ namespace Brew.Core.Backend
                 { "stars", stars }
             });
 
-        public void LogEventComplete(string eventId) =>
-            LogEvent("event_complete", new Dictionary<string, object> { { "event_id", eventId ?? string.Empty } });
+        public void LogEventComplete(string eventId, int completedLevelCount) =>
+            LogEvent("event_complete", new Dictionary<string, object>
+            {
+                { "event_id", eventId ?? string.Empty },
+                { "completed_levels", completedLevelCount }
+            });
 
         public void LogEventRewardClaimed(string eventId, string rewardType, int amount) =>
             LogEvent("event_reward_claimed", new Dictionary<string, object>

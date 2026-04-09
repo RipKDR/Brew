@@ -12,9 +12,9 @@ namespace Brew.Core
     {
         private readonly Dictionary<BoosterType, int> _charges = new()
         {
-            { BoosterType.Shake, int.MaxValue },
-            { BoosterType.Catalyst, int.MaxValue },
-            { BoosterType.ExtraMoves, int.MaxValue }
+            { BoosterType.Shake, 0 },
+            { BoosterType.Catalyst, 0 },
+            { BoosterType.ExtraMoves, 0 }
         };
 
         private readonly Random _rng;
@@ -135,7 +135,7 @@ namespace Brew.Core
             return true;
         }
 
-        public bool ActivateExtraMoves(MoveTracker moveTracker, int amount = 3)
+        public bool ActivateExtraMoves(MoveTracker moveTracker, int amount)
         {
             if (_extraMovesUsedThisAttempt)
                 return false;

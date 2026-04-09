@@ -37,6 +37,14 @@ namespace Brew.Data
         [SerializeField] private int _dailyBrewEssence = 100;
         [SerializeField] private int _dailyBrewGems = 5;
 
+        [Header("Ads")]
+        [SerializeField] private int _rewardedAdDailyCap = 5;
+        [SerializeField] private int _interstitialFrequency = 3;
+
+        [Header("Gameplay Rewards")]
+        [SerializeField] private int _remainingMoveBonusPerMove = 50;
+        [SerializeField] private int _extraMovesFromAd = 5;
+
         public int[] EssencePerStar => _essencePerStar;
         public StreakTier[] StreakTiers => _streakTiers;
         public int ShakeEssenceCost => _shakeEssenceCost;
@@ -47,6 +55,10 @@ namespace Brew.Data
         public int StreakProtectionGemCost => _streakProtectionGemCost;
         public int DailyBrewEssence => _dailyBrewEssence;
         public int DailyBrewGems => _dailyBrewGems;
+        public int RewardedAdDailyCap => _rewardedAdDailyCap;
+        public int InterstitialFrequency => _interstitialFrequency;
+        public int RemainingMoveBonusPerMove => _remainingMoveBonusPerMove;
+        public int ExtraMovesFromAd => _extraMovesFromAd;
 
         public (int threshold, float multiplier)[] GetStreakTierTuples()
         {

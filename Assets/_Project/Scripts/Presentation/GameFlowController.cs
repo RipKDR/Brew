@@ -43,6 +43,10 @@ namespace Brew.Presentation
         [Header("Config")]
         [SerializeField] private EconomyConfigSO _economyConfig;
         [SerializeField] private WeeklyEventConfigSO _weeklyEventConfig;
+        [SerializeField] private PotionShelfConfigSO _potionShelfConfig;
+        [SerializeField] private WorkshopConfigSO _workshopConfig;
+        [SerializeField] private DailyBrewConfigSO _dailyBrewConfig;
+        [SerializeField] private WinStreakConfigSO _winStreakConfig;
 
         private PlayerProgress _progress;
         private LevelConfig _currentLevelConfig;
@@ -77,41 +81,61 @@ namespace Brew.Presentation
             _analytics = new AnalyticsManager();
             _cloudSave = new CloudSaveManager();
 
+            var streakTiers = _winStreakConfig != null
+                ? _winStreakConfig.BuildTierTuples()
+                : _economyConfig != null
+                    ? _economyConfig.GetStreakTierTuples()
+                    : new (int, float)[] { (1, 1f), (2, 1.25f), (3, 1.5f), (5, 2f), (8, 2.5f), (10, 3f) };
+
             var essencePerStar = _economyConfig != null ? _economyConfig.EssencePerStar : new[] { 0, 30, 50, 80 };
-            var streakTiers = _economyConfig != null
-                ? _economyConfig.GetStreakTierTuples()
-                : new (int, float)[] { (1, 1f), (2, 1.25f), (3, 1.5f), (5, 2f), (8, 2.5f), (10, 3f) };
 
             _rewardCalculator = new RewardCalculator(essencePerStar, streakTiers);
             _winStreak = new WinStreakTracker(streakTiers);
 
-            var milestones = new[]
-            {
-                new PotionShelfMilestoneDefinition(25, 500, 25, "Apprentice"),
-                new PotionShelfMilestoneDefinition(50, 1000, 50, "Brewer"),
-                new PotionShelfMilestoneDefinition(75, 2000, 100, "Alchemist"),
-                new PotionShelfMilestoneDefinition(100, 5000, 250, "Master Brewer")
-            };
-            _potionShelf = new PotionShelfManager(100, milestones);
+            var milestones = _potionShelfConfig != null
+                ? _potionShelfConfig.BuildMilestoneDefinitions()
+                : new[]
+                {
+                    new PotionShelfMilestoneDefinition(25, 500, 25, "Apprentice"),
+                    new PotionShelfMilestoneDefinition(50, 1000, 50, "Brewer"),
+                    new PotionShelfMilestoneDefinition(75, 2000, 100, "Alchemist"),
+                    new PotionShelfMilestoneDefinition(100, 5000, 250, "Master Brewer")
+                };
+            int totalPotions = _potionShelfConfig != null ? _potionShelfConfig.TotalPotions : 100;
+            _potionShelf = new PotionShelfManager(totalPotions, milestones);
 
-            var upgrades = new[]
-            {
-                ("Sweep the Floor", 50), ("Light the Hearth", 100), ("Repair the Workbench", 200),
-                ("Hang the Shelves", 400), ("Install the Cauldron", 600), ("Stock the Herb Rack", 1000),
-                ("Place the Star Map", 1500), ("Add the Crystal Array", 2500), ("Build the Distillery", 4000),
-                ("Enchant the Windows", 6000), ("Summon the Familiar", 8000), ("Master's Flourish", 12000)
-            };
+            var upgrades = _workshopConfig != null
+                ? _workshopConfig.BuildUpgradeTuples()
+                : new (string, int)[]
+                {
+                    ("Sweep the Floor", 50), ("Light the Hearth", 100), ("Repair the Workbench", 200),
+                    ("Hang the Shelves", 400), ("Install the Cauldron", 600), ("Stock the Herb Rack", 1000),
+                    ("Place the Star Map", 1500), ("Add the Crystal Array", 2500), ("Build the Distillery", 4000),
+                    ("Enchant the Windows", 6000), ("Summon the Familiar", 8000), ("Master's Flourish", 12000)
+                };
             _workshop = new WorkshopManager(upgrades, _currencyManager);
 
-            _dailyBrew = new DailyBrewManager(100, 5, new[]
+            if (_dailyBrewConfig != null)
             {
-                new DailyStreakBonusDefinition(3, 1.25f, 5),
-                new DailyStreakBonusDefinition(5, 1.5f, 10),
-                new DailyStreakBonusDefinition(7, 2.0f, 15)
-            });
+                _dailyBrew = new DailyBrewManager(
+                    _dailyBrewConfig.BaseEssence,
+                    _dailyBrewConfig.BaseGems,
+                    _dailyBrewConfig.BuildStreakBonusDefinitions());
+            }
+            else
+            {
+                _dailyBrew = new DailyBrewManager(100, 5, new[]
+                {
+                    new DailyStreakBonusDefinition(3, 1.25f, 5),
+                    new DailyStreakBonusDefinition(5, 1.5f, 10),
+                    new DailyStreakBonusDefinition(7, 2.0f, 15)
+                });
+            }
 
             _iapManager = new IAPManager(_currencyManager);
-            _adManager = new AdManager(5, 3, () => _iapManager.HasNoAdsPass);
+            int adDailyCap = _economyConfig != null ? _economyConfig.RewardedAdDailyCap : 5;
+            int interstitialFreq = _economyConfig != null ? _economyConfig.InterstitialFrequency : 3;
+            _adManager = new AdManager(adDailyCap, interstitialFreq, () => _iapManager.HasNoAdsPass);
 
             _remoteConfig = new RemoteConfigManager(RemoteConfigDefaults.GetAll());
             InitializeWeeklyEvent();
@@ -351,7 +375,8 @@ namespace Brew.Presentation
         private void HandleWin()
         {
             int score = _boardPresenter.ScoreCalculator.TotalScore;
-            int bonus = _boardPresenter.MoveTracker.MovesRemaining * 50;
+            int bonusPerMove = _economyConfig != null ? _economyConfig.RemainingMoveBonusPerMove : 50;
+            int bonus = _boardPresenter.MoveTracker.MovesRemaining * bonusPerMove;
             int stars = ScoreCalculator.CalculateStars(score, _currentLevelConfig.StarThresholds);
 
             if (_isPlayingEventLevel)
@@ -383,8 +408,7 @@ namespace Brew.Presentation
             LocalSaveManager.Save(_progress);
             _cloudSave.MarkDirty();
 
-            bool isTutorial = _currentLevelConfig.LevelId <= 5;
-            _adManager.RecordLevelWin(isTutorial);
+            _adManager.RecordLevelWin(_currentLevelConfig.IsTutorial);
             bool canDouble = _adManager.CanShowRewarded(AdPlacement.DoublePotionReward);
 
             _analytics.LogLevelComplete(_currentLevelConfig.LevelId, stars, score,
@@ -467,6 +491,12 @@ namespace Brew.Presentation
             bool showStreakProtection = _winStreak.CurrentStreak >= 2;
             int streakGemCost = _economyConfig != null ? _economyConfig.StreakProtectionGemCost : 5;
 
+            if (!showStreakProtection && _winStreak.CurrentStreak > 0)
+            {
+                _winStreak.ResetStreak();
+                _analytics.LogStreakUpdate(0, 1f, true);
+            }
+
             _analytics.LogLevelFail(_currentLevelConfig.LevelId,
                 _currentLevelConfig.MoveLimit - _boardPresenter.MoveTracker.MovesRemaining,
                 0, false);
@@ -490,7 +520,8 @@ namespace Brew.Presentation
         private void HandleWatchAdForMoves()
         {
             _adManager.RecordRewardedAdWatched(AdPlacement.FailRecovery);
-            _boardPresenter.MoveTracker.AddMoves(3);
+            int extraMoves = _economyConfig != null ? _economyConfig.ExtraMovesFromAd : 5;
+            _boardPresenter.MoveTracker.AddMoves(extraMoves);
             _analytics.LogAdRewarded("fail_recovery", "extra_moves");
             _levelFailScreen.Hide();
         }
@@ -537,7 +568,8 @@ namespace Brew.Presentation
             _levelCompleteScreen.Hide();
             int nextLevelId = _currentLevelConfig.LevelId + 1;
 
-            if (nextLevelId <= 40)
+            int maxLevel = LevelLoader.GetMaxLevelId();
+            if (nextLevelId <= maxLevel)
                 StartLevel(nextLevelId);
             else
                 ShowLevelSelect();
@@ -571,11 +603,8 @@ namespace Brew.Presentation
         private void OnWorkshopUpgraded(int level, string name)
         {
             int cost = 0;
-            if (_workshop.CurrentLevel > 0 && _workshop.CurrentLevel <= 12)
-            {
-                var costs = new[] { 50, 100, 200, 400, 600, 1000, 1500, 2500, 4000, 6000, 8000, 12000 };
-                cost = costs[_workshop.CurrentLevel - 1];
-            }
+            if (_workshopConfig != null && level > 0 && level <= _workshopConfig.Upgrades.Length)
+                cost = _workshopConfig.Upgrades[level - 1].EssenceCost;
             _analytics.LogWorkshopUpgrade(level, name, cost);
             _cloudSave.MarkDirty();
         }
