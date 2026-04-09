@@ -39,6 +39,7 @@ namespace Brew.Presentation
         [SerializeField] private HudController _hudController;
         [SerializeField] private LevelSelectScreen _levelSelectScreen;
         [SerializeField] private WalletUI _walletUI;
+        [SerializeField] private SettingsPanel _settingsPanel;
 
         [Header("Config")]
         [SerializeField] private EconomyConfigSO _economyConfig;
@@ -156,6 +157,12 @@ namespace Brew.Presentation
 
             if (_weeklyEventView != null && _weeklyEvent != null)
                 _weeklyEventView.Initialize(_weeklyEvent);
+
+            if (_settingsPanel != null)
+            {
+                _settingsPanel.Initialize(_iapManager);
+                _settingsPanel.OnRestorePurchasesRequested += HandleRestorePurchases;
+            }
 
             if (_boosterShopUI != null && _boardPresenter != null)
             {
@@ -301,6 +308,12 @@ namespace Brew.Presentation
             if (_potionShelf != null) _potionShelf.OnMilestoneReached -= OnMilestoneReached;
             if (_workshop != null) _workshop.OnUpgradePurchased -= OnWorkshopUpgraded;
             if (_dailyBrewUI != null) _dailyBrewUI.OnDailyBrewRequested -= HandleDailyBrewRequest;
+            if (_settingsPanel != null) _settingsPanel.OnRestorePurchasesRequested -= HandleRestorePurchases;
+        }
+
+        private void HandleRestorePurchases()
+        {
+            _iapManager?.RestorePurchases(null);
         }
 
         private void ShowLevelSelect()
@@ -477,6 +490,8 @@ namespace Brew.Presentation
             }
         }
 
+        private bool _streakProtectedThisAttempt;
+
         private void HandleLose()
         {
             if (_isPlayingEventLevel)
@@ -490,6 +505,8 @@ namespace Brew.Presentation
             bool canWatchAd = _adManager.CanShowRewarded(AdPlacement.FailRecovery);
             bool showStreakProtection = _winStreak.CurrentStreak >= 2;
             int streakGemCost = _economyConfig != null ? _economyConfig.StreakProtectionGemCost : 5;
+
+            _streakProtectedThisAttempt = false;
 
             if (!showStreakProtection && _winStreak.CurrentStreak > 0)
             {
@@ -530,6 +547,7 @@ namespace Brew.Presentation
         {
             _adManager.RecordRewardedAdWatched(AdPlacement.StreakProtection);
             _analytics.LogAdRewarded("streak_protection", "streak_preserved");
+            _streakProtectedThisAttempt = true;
             _levelFailScreen.HideStreakProtection();
             ReplayCurrentLevel();
         }
@@ -539,6 +557,7 @@ namespace Brew.Presentation
             int cost = _economyConfig != null ? _economyConfig.StreakProtectionGemCost : 5;
             if (_currencyManager.Spend(CurrencyType.Gems, cost, "streak_protection"))
             {
+                _streakProtectedThisAttempt = true;
                 _levelFailScreen.HideStreakProtection();
                 ReplayCurrentLevel();
             }
@@ -577,6 +596,13 @@ namespace Brew.Presentation
 
         private void ReplayCurrentLevel()
         {
+            if (!_streakProtectedThisAttempt && _winStreak.CurrentStreak > 0)
+            {
+                _winStreak.ResetStreak();
+                _analytics.LogStreakUpdate(0, 1f, true);
+            }
+            _streakProtectedThisAttempt = false;
+
             _levelCompleteScreen.Hide();
             _levelFailScreen.Hide();
             StartLevel(_currentLevelConfig.LevelId);

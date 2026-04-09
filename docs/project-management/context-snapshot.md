@@ -1,6 +1,6 @@
 # Brew — Context Snapshot
 
-> Generated: 2026-04-09 (Session 6)
+> Generated: 2026-04-09 (Session 6 — Code Review Sprint)
 > Project summary updated: 2026-04-09
 > Session handoff updated: 2026-04-09
 
@@ -13,33 +13,32 @@
 
 ## Current Milestone Focus
 
-- Milestone: **Content & Polish (Weeks 9-10)** — code complete, working toward Milestone Gate 5
-- Goal: Weekly event system, push notifications, level tuning, CurrencyFormatter, settings expansion, soft launch preparation
+- Milestone: **Content & Polish (Weeks 9-10)** — code review sprint complete, working toward Milestone Gate 5
+- Goal: Unity Editor testing, ScriptableObject asset creation, Gate 5 verification
 - Source plan: `docs/production/mvp-build-plan.md`, `docs/prompts/05-week-9-10-content-and-polish.md`
 
 ## Next 3 Tasks
 
-1. Open project in Unity Editor. Run all EditMode unit tests (27 test files, ~300+ methods). Fix any compilation or test failures.
-2. Create ScriptableObject assets (WeeklyEventConfigSO, NotificationConfigSO, plus any missing Week 7-8 configs). Assign to GameFlowController.
-3. Play full session including event flow: activate event via Remote Config → play event levels → claim milestone rewards → verify notification scheduling. Complete Gate 5 checklist items.
+1. Open project in Unity Editor. Run all EditMode unit tests (28+ test files, ~350+ methods). Fix any compilation or test failures.
+2. Create ScriptableObject assets (EconomyConfigSO, PotionShelfConfigSO, WorkshopConfigSO, DailyBrewConfigSO, WinStreakConfigSO, WeeklyEventConfigSO, NotificationConfigSO). Assign to GameFlowController.
+3. Play full session: campaign levels → event flow → daily brew → workshop → verify streak on fail. Complete Gate 5 checklist.
 
 ## Blockers / Risks
 
-- Risk: Firebase SDK not yet imported — backend managers are pure C# abstractions awaiting SDK wiring.
-- Risk: Unity IAP and AdMob SDKs not yet configured — managers are logic-only stubs.
-- Risk: NotificationManager needs platform-specific INotificationScheduler implementations.
-- Risk: Event theme overlay needs level loader modifications for ingredient swapping.
-- Blocker: Gate 5 requires full device matrix testing and app store asset creation.
+- Risk: Firebase SDK not yet imported — backend managers are pure C# abstractions
+- Risk: Unity IAP and AdMob SDKs not yet configured
+- Risk: BoardPresenter/BoosterBarUI hardcode extra-moves amount (5) instead of config
+- Risk: economy-model.md §3.3-3.4 needs updating to match implementation
+- Blocker: Gate 5 requires Unity Editor runtime testing
 
 ## Decisions This Session
 
-- WeeklyEventManager is pure C# with Func<bool> feature flag — fully disableable via Remote Config.
-- Event milestone rewards injected via MilestoneDefinition, not hardcoded.
-- NotificationManager uses INotificationScheduler interface — platform abstraction for testability.
-- Notification frequency cap: 1/day, 7-day re-prompt cooldown.
-- CurrencyFormatter is centralized static utility — single format function, no duplication.
-- Event level templates use "themed" ingredient placeholder for runtime swapping.
-- 13 new Remote Config keys for event system — all server-configurable.
+- BoosterManager defaults to 0 charges (was int.MaxValue) — must be explicitly granted
+- ActivateExtraMoves requires explicit amount parameter — no hidden defaults
+- Streak resets on fail unless player pays for protection — Retry path now resets streak
+- LevelLoader.GetMaxLevelId() cached to avoid repeated resource loading
+- Level 40 uses 9×10 grid for distinctive finale feel
+- Config SO fallbacks are defensive-only — to be removed after Unity asset creation
 
 ## Code Inventory
 
@@ -59,44 +58,28 @@
 ### Data Layer — 16 files
 
 - BoardConfigSO, AudioConfigSO, ScreenShakeConfigSO
-- EconomyConfigSO, RemoteConfigDefaults
+- EconomyConfigSO (updated: +4 fields), RemoteConfigDefaults
 - PotionShelfConfigSO, WorkshopConfigSO, WinStreakConfigSO, DailyBrewConfigSO
 - WeeklyEventConfigSO, NotificationConfigSO
-- SfxId, LevelLoader, PlayerProgress, LocalSaveManager, SettingsManager
+- SfxId, LevelLoader (updated: +GetMaxLevelId), PlayerProgress, LocalSaveManager, SettingsManager
 
 ### Presentation Layer — 29 files
 
-- BoardPresenter, InputController, TokenView, TokenAnimator
+- BoardPresenter (updated), InputController, TokenView, TokenAnimator
 - HudController, RecipeVialUI
 - LevelCompleteScreen, LevelFailScreen, LevelSelectScreen, LevelButton
-- GameFlowController
+- GameFlowController (major update: config SO wiring, streak fix, settings)
 - AudioManager, AdaptiveAudioController, HapticManager
 - ScreenShakeController, ParticleManager, BrewAnimationController
 - TutorialController, TutorialOverlay
-- BoosterBarUI, BoosterSlotUI, SettingsPanel
+- BoosterBarUI (updated), BoosterSlotUI, SettingsPanel (updated: +3 buttons)
 - PotionShelfView, WorkshopView, DailyBrewUI
 - WalletUI, StoreUI, BoosterShopUI
 - WeeklyEventView
 
-### Utilities — 2 files
+### Tests — 28 files, ~350+ methods
 
-- ObjectPool, CurrencyFormatter
-
-### Editor — 1 file
-
-- BrewSceneSetup
-
-### Tests — 27 files, ~300+ methods
-
-- Core: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver, MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, LevelConfig, BoosterManager
-- Economy: CurrencyManager, RewardCalculator, IAPManager
-- Meta: PotionShelfManager, WorkshopManager, WinStreakTracker, DailyBrewManager
-- LiveOps: WeeklyEventManager
-- Services: NotificationManager
-- Ads: AdManager
-- Backend: CloudSaveManager, RemoteConfigManager
-- Utilities: CurrencyFormatter
-- Data: LevelLoader, LevelDataIntegration
+All prior test files plus updates to BoosterManagerTests
 
 ## ADR Summary
 
@@ -108,8 +91,6 @@
 
 ## Recent Git Commits
 
-- (pending) 2026-04-09 Add Week 9-10 systems: weekly events, notifications, CurrencyFormatter, event levels
-- 3ed5842 2026-04-09 Complete Week 7-8 session close: handoff, changelog, ADRs 0002-0003, context snapshot
-- 11230eb 2026-04-09 Add Presentation layer for meta/economy systems and wire into GameFlowController
-- 751122d 2026-04-09 Fix XML doc cref to use fully qualified BoosterManager reference
-- 1e2aabf 2026-04-09 Add Meta/Economy/Backend/Ads systems and fix 15 bugs from code review
+- (pending) 2026-04-09 Week 10 code review sprint: fix P0/P1 bugs, rebalance levels 36-40, complete settings, soft launch prep
+- 3a197a9 2026-04-09 Wire event system integration, notification adapters, and harden test coverage for Gate 5
+- 722664d 2026-04-09 Add Week 9-10 systems: weekly events, notifications, CurrencyFormatter, event level templates

@@ -1,7 +1,7 @@
 # Brew — Project Summary
 
 > **Living document.** Updated as decisions are made, milestones are reached, and blockers emerge.
-> Last updated: 2026-04-09 (Session 4)
+> Last updated: 2026-04-09 (Session 6)
 
 ---
 
@@ -33,8 +33,8 @@
 | **Milestone 2** — Core Loop        | Week 4      | Complete — Gate 2 runtime testing pending                   |
 | **Milestone 3** — Feel & Juice     | Week 6      | Complete — Gate 3 runtime testing pending                   |
 | **Milestone 4** — Meta & Economy   | Week 8      | Complete — Gate 4 runtime testing pending                   |
-| **Milestone 5** — Content & Polish | Week 10     | In progress — integration wired, Gate 5 prep underway       |
-| Soft launch target                 | TBD         | —                                                           |
+| **Milestone 5** — Content & Polish | Week 10     | In progress — code review complete, levels rebalanced, soft launch plan ready |
+| Soft launch target                 | Week 11+    | Pending Gate 5 pass in Unity Editor                          |
 | Global launch target               | TBD         | —                                                           |
 
 

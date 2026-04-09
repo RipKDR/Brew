@@ -103,6 +103,7 @@ namespace Brew.Core
             };
         }
 
+        [System.Obsolete("Use LevelConfig.IsTutorial instead. This method only checks ID range.")]
         public static bool IsTutorialLevel(int levelId) => levelId >= 1 && levelId <= 5;
 
         private static TutorialLevelDefinition BuildLevel1()
