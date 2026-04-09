@@ -10,6 +10,7 @@ namespace Brew.Presentation
         private GridCoord _gridCoord;
         private CellContent _content;
         private TokenAnimator _animator;
+        private float _cellSize = 1f;
 
         public GridCoord GridCoord => _gridCoord;
         public CellContent Content => _content;
@@ -25,6 +26,7 @@ namespace Brew.Presentation
         {
             _gridCoord = coord;
             _content = content;
+            _cellSize = cellSize;
 
             if (_spriteRenderer == null)
                 _spriteRenderer = GetComponent<SpriteRenderer>();
@@ -41,9 +43,14 @@ namespace Brew.Presentation
         public void UpdateVisual(CellContent content, Color displayColor)
         {
             _content = content;
+
+            if (_spriteRenderer == null)
+                _spriteRenderer = GetComponent<SpriteRenderer>();
+            if (_spriteRenderer == null) return;
+
             _spriteRenderer.color = displayColor;
 
-            float scale = content.IsOrb ? 1.3f : 0.85f;
+            float scale = content.IsOrb ? _cellSize * 1.3f : _cellSize * 0.85f;
             transform.localScale = new Vector3(scale, scale, 1f);
         }
 

@@ -1,95 +1,57 @@
 {
-  "parameters": {
-
-    "essence_per_star_1": {
-      "defaultValue": { "value": "50" }
-    },
-    "essence_per_star_2": {
-      "defaultValue": { "value": "100" }
-    },
-    "essence_per_star_3": {
-      "defaultValue": { "value": "150" }
-    },
-    "gem_daily_brew_reward": {
-      "defaultValue": { "value": "5" }
-    },
-    "workshop_upgrade_costs": {
-      "defaultValue": { "value": "[100, 250, 500, 1000, 2000]" }
-    },
-    "booster_cost_shake_essence": {
-      "defaultValue": { "value": "200" }
-    },
-    "booster_cost_shake_gems": {
-      "defaultValue": { "value": "5" }
-    },
-    "booster_cost_catalyst_essence": {
-      "defaultValue": { "value": "350" }
-    },
-    "booster_cost_catalyst_gems": {
-      "defaultValue": { "value": "8" }
-    },
-    "extra_moves_gem_cost": {
-      "defaultValue": { "value": "10" }
-    },
-
-    "default_move_limit": {
-      "defaultValue": { "value": "25" }
-    },
-    "min_cluster_size": {
-      "defaultValue": { "value": "3" }
-    },
-    "brew_threshold": {
-      "defaultValue": { "value": "7" }
-    },
-    "cascade_settle_delay_ms": {
-      "defaultValue": { "value": "100" }
-    },
-    "max_boosters_per_level": {
-      "defaultValue": { "value": "3" }
-    },
-
-    "rewarded_ad_extra_moves_count": {
-      "defaultValue": { "value": "5" }
-    },
-    "interstitial_frequency": {
-      "defaultValue": { "value": "3" }
-    },
-    "max_rewarded_ads_per_session": {
-      "defaultValue": { "value": "5" }
-    },
-    "ad_cooldown_seconds": {
-      "defaultValue": { "value": "30" }
-    },
-
-    "streak_multipliers": {
-      "defaultValue": { "value": "[1.0, 1.0, 1.25, 1.5, 1.75, 2.0, 2.0, 2.5]" }
-    },
-    "streak_protection_enabled": {
-      "defaultValue": { "value": "true" }
-    },
-
-    "daily_brew_enabled": {
-      "defaultValue": { "value": "true" }
-    },
-    "weekly_events_enabled": {
-      "defaultValue": { "value": "true" }
-    },
-    "workshop_enabled": {
-      "defaultValue": { "value": "true" }
-    },
-    "win_streak_enabled": {
-      "defaultValue": { "value": "true" }
-    },
-
-    "active_event_id": {
-      "defaultValue": { "value": "" }
-    },
-    "event_config": {
-      "defaultValue": { "value": "{}" }
-    },
-
-    "difficulty_modifier": {
-      "defaultValue": { "value": "1.0" }
-    }
-  }
+  "essence_per_star_1": 30,
+  "essence_per_star_2": 50,
+  "essence_per_star_3": 80,
+  "streak_multiplier_2": 1.25,
+  "streak_multiplier_3": 1.5,
+  "streak_multiplier_5": 2.0,
+  "streak_multiplier_8": 2.5,
+  "streak_multiplier_10": 3.0,
+  "shake_essence_cost": 50,
+  "catalyst_essence_cost": 100,
+  "shake_gem_cost": 5,
+  "catalyst_gem_cost": 10,
+  "extra_moves_gem_cost": 10,
+  "streak_protection_gem_cost": 5,
+  "daily_brew_essence": 100,
+  "daily_brew_gems": 5,
+  "rewarded_ad_max_per_session": 5,
+  "interstitial_frequency": 3,
+  "weekly_events_enabled": true,
+  "daily_brew_enabled": true,
+  "workshop_cost_1": 50,
+  "workshop_cost_2": 100,
+  "workshop_cost_3": 200,
+  "workshop_cost_4": 400,
+  "workshop_cost_5": 600,
+  "workshop_cost_6": 1000,
+  "workshop_cost_7": 1500,
+  "workshop_cost_8": 2500,
+  "workshop_cost_9": 4000,
+  "workshop_cost_10": 6000,
+  "workshop_cost_11": 8000,
+  "workshop_cost_12": 12000,
+  "shelf_milestone_25_essence": 500,
+  "shelf_milestone_25_gems": 25,
+  "shelf_milestone_50_essence": 1000,
+  "shelf_milestone_50_gems": 50,
+  "shelf_milestone_75_essence": 2000,
+  "shelf_milestone_75_gems": 100,
+  "shelf_milestone_100_essence": 5000,
+  "shelf_milestone_100_gems": 250,
+  "daily_brew_streak_3_multiplier": 1.25,
+  "daily_brew_streak_5_multiplier": 1.5,
+  "daily_brew_streak_7_multiplier": 2.0,
+  "daily_brew_streak_3_bonus_gems": 5,
+  "daily_brew_streak_5_bonus_gems": 10,
+  "daily_brew_streak_7_bonus_gems": 15,
+  "starter_bundle_gems": 50,
+  "starter_bundle_essence": 500,
+  "starter_bundle_catalysts": 3,
+  "starter_bundle_max_level": 15,
+  "gem_pack_1_amount": 50,
+  "gem_pack_2_amount": 300,
+  "gem_pack_3_amount": 700,
+  "gem_pack_4_amount": 1500,
+  "no_ads_pass_sku": "no_ads"
 }

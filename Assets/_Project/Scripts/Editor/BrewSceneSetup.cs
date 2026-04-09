@@ -1,4 +1,5 @@
 using Brew.Core;
+using Brew.Data;
 using Brew.Presentation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -347,6 +348,9 @@ namespace Brew.Editor
             so.FindProperty("_tokenPrefab").objectReferenceValue = tokenPrefab;
             so.FindProperty("_tokenContainer").objectReferenceValue = container.transform;
             so.FindProperty("_inputController").objectReferenceValue = inputController;
+
+            var boardConfig = LoadOrCreateBoardConfig();
+            so.FindProperty("_boardConfig").objectReferenceValue = boardConfig;
             so.ApplyModifiedProperties();
 
             return boardGo;
@@ -743,6 +747,23 @@ namespace Brew.Editor
             text.GetComponent<Text>().color = Color.white;
 
             return go;
+        }
+
+        private static BoardConfigSO LoadOrCreateBoardConfig()
+        {
+            const string configPath = "Assets/_Project/ScriptableObjects/Config/BoardConfig.asset";
+
+            var existing = AssetDatabase.LoadAssetAtPath<BoardConfigSO>(configPath);
+            if (existing != null)
+                return existing;
+
+            EnsureFolder("Assets/_Project/ScriptableObjects/Config");
+
+            var config = ScriptableObject.CreateInstance<BoardConfigSO>();
+            AssetDatabase.CreateAsset(config, configPath);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Brew] Created BoardConfig asset at {configPath}");
+            return config;
         }
 
         private static void EnsureFolder(string path)

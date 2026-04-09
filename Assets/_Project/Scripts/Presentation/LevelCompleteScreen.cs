@@ -25,8 +25,6 @@ namespace Brew.Presentation
                 _nextLevelButton.onClick.AddListener(() => OnNextLevel?.Invoke());
             if (_replayButton != null)
                 _replayButton.onClick.AddListener(() => OnReplay?.Invoke());
-
-            gameObject.SetActive(false);
         }
 
         public void Show(int totalScore, int bonus, int stars)

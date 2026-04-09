@@ -128,6 +128,12 @@ namespace Brew.Presentation
             if (_inputController != null)
                 _inputController.OnCellTapped -= HandleCellTapped;
 
+            if (_brewAnimator != null)
+                _brewAnimator.StopBrewAnimation();
+
+            StopAllCoroutines();
+            _isResolving = false;
+
             if (_activeViews != null)
             {
                 foreach (var kv in _activeViews)
@@ -503,7 +509,8 @@ namespace Brew.Presentation
 
         private void EnsurePhase(BoardPhase target)
         {
-            while (_stateMachine.CurrentPhase != target)
+            int guard = 20;
+            while (guard-- > 0 && _stateMachine.CurrentPhase != target)
             {
                 _stateMachine.Advance();
             }

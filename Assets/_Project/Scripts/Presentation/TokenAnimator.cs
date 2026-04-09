@@ -140,9 +140,7 @@ namespace Brew.Presentation
                 yield return null;
             }
 
-            float endFactor = _selectedPulseCurve.Evaluate(1f);
-            transform.localScale = logicalBase * endFactor;
-            _baseScale = logicalBase * endFactor;
+            transform.localScale = logicalBase;
             _pulseRoutine = null;
             _idleActive = true;
         }

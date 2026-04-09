@@ -19,8 +19,6 @@ namespace Brew.Presentation
         {
             if (_retryButton != null)
                 _retryButton.onClick.AddListener(() => OnRetry?.Invoke());
-
-            gameObject.SetActive(false);
         }
 
         public void Show()
