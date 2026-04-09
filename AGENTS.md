@@ -203,6 +203,17 @@ Required coverage for all game logic in `Scripts/Core/`:
 1. `docs/game-design/GDD.md` — understand the game
 2. `docs/game-design/core-mechanic.md` — understand the rules (this is the bible)
 
+### Context continuity (required each substantial session):
+
+1. Read `docs/project-management/session-handoff.md` first for current branch focus, blockers, and next actions.
+2. Read `docs/project-management/context-snapshot.md` for condensed project state.
+3. Read `docs/project-management/agent-prompt.md` and follow its resume + completion checklist.
+4. If a cross-cutting architectural decision is made, add/update an ADR in `docs/adr/` and update `docs/adr/README.md`.
+5. Before ending a session, update:
+  - `docs/project-management/session-handoff.md`
+  - `docs/project-management/project-summary.md` (Decision Log only if new decisions were made)
+  - `docs/project-management/context-snapshot.md` (regenerated)
+
 ### By domain:
 
 

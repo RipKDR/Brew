@@ -27,7 +27,7 @@
 
 | #   | Task                                                                                                                                                  | Owner    | Est   |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----- |
-| 1.1 | Create Unity 2022 LTS project. Set folder structure: `Assets/{Scripts, Prefabs, Art, Audio, Data, Scenes, Plugins, Editor}`. Configure .gitignore.    | UD-1     | 0.5 d |
+| 1.1 | Create Unity 6 (6000.1 LTS) project. Set folder structure: `Assets/{Scripts, Prefabs, Art, Audio, Data, Scenes, Plugins, Editor}`. Configure .gitignore.    | UD-1     | 0.5 d |
 | 1.2 | Configure build pipeline: iOS (Xcode export) and Android (Gradle). Verify clean builds on both platforms from a blank scene.                          | UD-1     | 1 d   |
 | 1.3 | Set up CI: GitHub Actions or Unity Cloud Build — auto-build on `main` push, distribute via TestFlight / Firebase App Distribution.                    | UD-2     | 1 d   |
 | 1.4 | Implement `BoardManager`: generates an NxM grid of cells. Configurable via ScriptableObject (`BoardConfig`: width, height, cell size, spacing).       | UD-1     | 1.5 d |
@@ -362,7 +362,7 @@ Every week follows this cadence:
 
 | Tool              | Purpose                           |
 | ----------------- | --------------------------------- |
-| Unity 2022 LTS    | Game engine                       |
+| Unity 6 (6000.1 LTS) | Game engine                    |
 | Firebase          | Auth, Firestore, Analytics, RC    |
 | GitHub             | Version control, CI/CD           |
 | Notion / Sheets   | GDD, level data, economy model   |

@@ -268,9 +268,13 @@ def check_required_docs(project_root: Path) -> CheckResult:
     result = CheckResult("Required Documentation")
 
     required_docs = [
-        "docs/game-design/game-design-document.md",
+        "docs/game-design/GDD.md",
+        "docs/game-design/core-mechanic.md",
         "docs/economy/economy-model.md",
-        "docs/technical/technical-architecture.md",
+        "docs/technical/architecture.md",
+        "docs/production/mvp-build-plan.md",
+        "docs/production/milestone-gates.md",
+        "docs/project-management/project-summary.md",
     ]
 
     for doc in required_docs:
