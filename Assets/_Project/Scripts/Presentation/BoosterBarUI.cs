@@ -86,7 +86,7 @@ namespace Brew.Presentation
                 ClearArmedHighlights();
                 _armedBooster = null;
 
-                if (_boosterManager.ActivateExtraMoves(_moveTracker))
+                if (_boosterManager.ActivateExtraMoves(_moveTracker, 5))
                     OnBoosterArmed?.Invoke(BoosterType.ExtraMoves);
 
                 return;
