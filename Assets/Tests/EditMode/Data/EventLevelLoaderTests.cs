@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Brew.Core;
 using Brew.Data;
 using NUnit.Framework;

@@ -29,6 +29,7 @@ namespace Brew.Core.Services
         public void Schedule(string id, string title, string body, DateTime fireTime)
         {
             EnsureChannel();
+            int notificationId = id.GetHashCode();
             Cancel(id);
             var notification = new Unity.Notifications.Android.AndroidNotification
             {
@@ -39,13 +40,12 @@ namespace Brew.Core.Services
                 LargeIcon = "icon_large"
             };
             Unity.Notifications.Android.AndroidNotificationCenter.SendNotificationWithExplicitID(
-                notification, "brew_default", int.Parse(id.GetHashCode().ToString("X"), System.Globalization.NumberStyles.HexNumber));
+                notification, "brew_default", notificationId);
         }
 
         public void Cancel(string id)
         {
-            Unity.Notifications.Android.AndroidNotificationCenter.CancelNotification(
-                id.GetHashCode());
+            Unity.Notifications.Android.AndroidNotificationCenter.CancelNotification(id.GetHashCode());
         }
 
         public void CancelAll()
@@ -65,7 +65,7 @@ namespace Brew.Core.Services
             Cancel(id);
             var timeTrigger = new Unity.Notifications.iOS.iOSNotificationTimeIntervalTrigger
             {
-                TimeInterval = fireTime - DateTime.Now,
+                TimeInterval = fireTime.ToUniversalTime() - DateTime.UtcNow,
                 Repeats = false
             };
             var notification = new Unity.Notifications.iOS.iOSNotification

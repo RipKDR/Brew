@@ -1,0 +1,16 @@
+{
+  "level_id": 1003,
+  "grid_width": 7,
+  "grid_height": 9,
+  "grid_mask": [],
+  "ingredient_pool": ["ember", "frost", "vine", "themed"],
+  "recipe_targets": [
+    { "ingredient": "ember", "count": 3 },
+    { "ingredient": "vine", "count": 2 }
+  ],
+  "move_limit": 25,
+  "blocker_placements": [],
+  "star_thresholds": [1200, 2400, 3600],
+  "is_tutorial": false,
+  "tutorial_steps": []
+}

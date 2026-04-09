@@ -92,6 +92,10 @@ namespace Brew.Presentation.LiveOps
 
         public void RefreshState(EventState state)
         {
+            HideBanner();
+            HideLevelSelect();
+            HideResults();
+
             switch (state)
             {
                 case EventState.Active:
@@ -101,12 +105,6 @@ namespace Brew.Presentation.LiveOps
                 case EventState.Completed:
                     ShowBanner();
                     ShowResults();
-                    break;
-                case EventState.NotStarted:
-                case EventState.Expired:
-                    HideBanner();
-                    HideLevelSelect();
-                    HideResults();
                     break;
             }
         }

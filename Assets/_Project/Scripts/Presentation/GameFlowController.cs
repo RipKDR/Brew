@@ -1,3 +1,4 @@
+using System;
 using Brew.Core;
 using Brew.Core.Ads;
 using Brew.Core.Backend;
@@ -196,7 +197,7 @@ namespace Brew.Presentation
             _currentEventLevelIndex = eventLevelIndex;
 
             string themedId = _remoteConfig.GetString(RemoteConfigDefaults.EventThemedIngredientId);
-            string path = $"levels/events/event_template_{(eventLevelIndex + 1):D2}";
+            string path = $"EventLevels/event_template_{(eventLevelIndex + 1):D2}";
             var textAsset = Resources.Load<TextAsset>(path);
             if (textAsset == null)
             {
@@ -287,7 +288,7 @@ namespace Brew.Presentation
             _levelFailScreen.Hide();
             _levelSelectScreen.Refresh();
 
-            var utcNow = System.DateTime.UtcNow;
+            var utcNow = DateTime.UtcNow;
             _dailyBrew.CheckNewDay(utcNow);
             _adManager.CheckNewDay(utcNow);
             if (_dailyBrewUI != null) _dailyBrewUI.Refresh();
@@ -421,9 +422,9 @@ namespace Brew.Presentation
             var milestoneRewards = _weeklyEvent.ClaimMilestoneRewards();
             foreach (var (type, amount) in milestoneRewards)
             {
-                if (string.Equals(type, "Essence", System.StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(type, "Essence", StringComparison.OrdinalIgnoreCase))
                     _currencyManager.Add(CurrencyType.Essence, amount, "event_milestone");
-                else if (string.Equals(type, "Gems", System.StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(type, "Gems", StringComparison.OrdinalIgnoreCase))
                     _currencyManager.Add(CurrencyType.Gems, amount, "event_milestone");
             }
 
@@ -439,7 +440,7 @@ namespace Brew.Presentation
         {
             if (!SettingsManager.NotificationsEnabled) return;
 
-            var utcNow = System.DateTime.UtcNow;
+            var utcNow = DateTime.UtcNow;
             _notificationManager.ScheduleStreakAtRisk(
                 utcNow, hasPlayedToday: true, _winStreak.CurrentStreak);
 
@@ -454,6 +455,14 @@ namespace Brew.Presentation
 
         private void HandleLose()
         {
+            if (_isPlayingEventLevel)
+            {
+                _isPlayingEventLevel = false;
+                _analytics.LogLevelFail(_currentLevelConfig.LevelId, 0, 0, false);
+                _levelFailScreen.Show(false, false, 0);
+                return;
+            }
+
             bool canWatchAd = _adManager.CanShowRewarded(AdPlacement.FailRecovery);
             bool showStreakProtection = _winStreak.CurrentStreak >= 2;
             int streakGemCost = _economyConfig != null ? _economyConfig.StreakProtectionGemCost : 5;
@@ -514,7 +523,7 @@ namespace Brew.Presentation
         private void HandleDailyBrewRequest()
         {
             _analytics.LogDailyBrewStart();
-            var (essence, gems) = _dailyBrew.TryComplete(System.DateTime.UtcNow);
+            var (essence, gems) = _dailyBrew.TryComplete(DateTime.UtcNow);
             if (essence > 0)
                 _currencyManager.Add(CurrencyType.Essence, essence, "daily_brew");
             if (gems > 0)
