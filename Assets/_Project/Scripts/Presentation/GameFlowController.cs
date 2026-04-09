@@ -1,4 +1,8 @@
 using Brew.Core;
+using Brew.Core.Ads;
+using Brew.Core.Backend;
+using Brew.Core.Economy;
+using Brew.Core.Meta;
 using Brew.Data;
 using UnityEngine;
 
@@ -7,6 +11,7 @@ namespace Brew.Presentation
     /// <summary>
     /// Top-level controller that orchestrates the game flow:
     /// Level Select -> Gameplay -> Complete/Fail -> Level Select.
+    /// Integrates economy rewards, meta-progression, ads, and analytics.
     /// </summary>
     public class GameFlowController : MonoBehaviour
     {
@@ -16,26 +21,129 @@ namespace Brew.Presentation
         [SerializeField] private LevelCompleteScreen _levelCompleteScreen;
         [SerializeField] private LevelFailScreen _levelFailScreen;
 
+        [Header("Meta Screens")]
+        [SerializeField] private PotionShelfView _potionShelfView;
+        [SerializeField] private WorkshopView _workshopView;
+        [SerializeField] private DailyBrewUI _dailyBrewUI;
+        [SerializeField] private StoreUI _storeUI;
+        [SerializeField] private BoosterShopUI _boosterShopUI;
+
         [Header("Gameplay")]
         [SerializeField] private BoardPresenter _boardPresenter;
         [SerializeField] private HudController _hudController;
         [SerializeField] private LevelSelectScreen _levelSelectScreen;
+        [SerializeField] private WalletUI _walletUI;
+
+        [Header("Config")]
+        [SerializeField] private EconomyConfigSO _economyConfig;
 
         private PlayerProgress _progress;
         private LevelConfig _currentLevelConfig;
 
+        private CurrencyManager _currencyManager;
+        private RewardCalculator _rewardCalculator;
+        private WinStreakTracker _winStreak;
+        private PotionShelfManager _potionShelf;
+        private WorkshopManager _workshop;
+        private DailyBrewManager _dailyBrew;
+        private IAPManager _iapManager;
+        private AdManager _adManager;
+        private AnalyticsManager _analytics;
+        private CloudSaveManager _cloudSave;
+
         private void Start()
         {
             _progress = LocalSaveManager.Load();
+            InitializeSystems();
+            WireEvents();
+            ShowLevelSelect();
+        }
 
+        private void InitializeSystems()
+        {
+            _currencyManager = new CurrencyManager();
+            _analytics = new AnalyticsManager();
+            _cloudSave = new CloudSaveManager();
+
+            var essencePerStar = _economyConfig != null ? _economyConfig.EssencePerStar : new[] { 0, 30, 50, 80 };
+            var streakTiers = _economyConfig != null
+                ? _economyConfig.GetStreakTierTuples()
+                : new (int, float)[] { (1, 1f), (2, 1.25f), (3, 1.5f), (5, 2f), (8, 2.5f), (10, 3f) };
+
+            _rewardCalculator = new RewardCalculator(essencePerStar, streakTiers);
+            _winStreak = new WinStreakTracker(streakTiers);
+
+            var milestones = new[]
+            {
+                new PotionShelfMilestoneDefinition(25, 500, 25, "Apprentice"),
+                new PotionShelfMilestoneDefinition(50, 1000, 50, "Brewer"),
+                new PotionShelfMilestoneDefinition(75, 2000, 100, "Alchemist"),
+                new PotionShelfMilestoneDefinition(100, 5000, 250, "Master Brewer")
+            };
+            _potionShelf = new PotionShelfManager(100, milestones);
+
+            var upgrades = new[]
+            {
+                ("Sweep the Floor", 50), ("Light the Hearth", 100), ("Repair the Workbench", 200),
+                ("Hang the Shelves", 400), ("Install the Cauldron", 600), ("Stock the Herb Rack", 1000),
+                ("Place the Star Map", 1500), ("Add the Crystal Array", 2500), ("Build the Distillery", 4000),
+                ("Enchant the Windows", 6000), ("Summon the Familiar", 8000), ("Master's Flourish", 12000)
+            };
+            _workshop = new WorkshopManager(upgrades, _currencyManager);
+
+            _dailyBrew = new DailyBrewManager(100, 5, new[]
+            {
+                new DailyStreakBonusDefinition(3, 1.25f, 5),
+                new DailyStreakBonusDefinition(5, 1.5f, 10),
+                new DailyStreakBonusDefinition(7, 2.0f, 15)
+            });
+
+            _iapManager = new IAPManager(_currencyManager);
+            _adManager = new AdManager(5, 3, () => _iapManager.HasNoAdsPass);
+
+            InitializeViews();
+        }
+
+        private void InitializeViews()
+        {
             _levelSelectScreen.Initialize(_progress);
-            _levelSelectScreen.OnLevelSelected += StartLevel;
 
+            if (_walletUI != null) _walletUI.Initialize(_currencyManager);
+            if (_potionShelfView != null) _potionShelfView.Initialize(_potionShelf);
+            if (_workshopView != null) _workshopView.Initialize(_workshop);
+            if (_dailyBrewUI != null) _dailyBrewUI.Initialize(_dailyBrew);
+            if (_storeUI != null) _storeUI.Initialize(_iapManager, _progress.CurrentLevel);
+
+            if (_boosterShopUI != null && _boardPresenter != null)
+            {
+                int shakeE = _economyConfig != null ? _economyConfig.ShakeEssenceCost : 50;
+                int catE = _economyConfig != null ? _economyConfig.CatalystEssenceCost : 100;
+                int shakeG = _economyConfig != null ? _economyConfig.ShakeGemCost : 5;
+                int catG = _economyConfig != null ? _economyConfig.CatalystGemCost : 10;
+                int emG = _economyConfig != null ? _economyConfig.ExtraMovesGemCost : 10;
+                _boosterShopUI.Initialize(_currencyManager, _boardPresenter.BoosterManager, shakeE, catE, shakeG, catG, emG);
+            }
+        }
+
+        private void WireEvents()
+        {
+            _levelSelectScreen.OnLevelSelected += StartLevel;
             _levelCompleteScreen.OnNextLevel += AdvanceToNextLevel;
             _levelCompleteScreen.OnReplay += ReplayCurrentLevel;
+            _levelCompleteScreen.OnDoubleRewardAd += HandleDoubleRewardAd;
             _levelFailScreen.OnRetry += ReplayCurrentLevel;
+            _levelFailScreen.OnWatchAdForMoves += HandleWatchAdForMoves;
+            _levelFailScreen.OnProtectStreakAd += HandleProtectStreakAd;
+            _levelFailScreen.OnProtectStreakGems += HandleProtectStreakGems;
+            _levelFailScreen.OnDismissStreakProtection += HandleDismissStreakProtection;
 
-            ShowLevelSelect();
+            _currencyManager.OnBalanceChanged += OnBalanceChanged;
+            _winStreak.OnStreakChanged += OnStreakChanged;
+
+            _potionShelf.OnMilestoneReached += OnMilestoneReached;
+            _workshop.OnUpgradePurchased += OnWorkshopUpgraded;
+
+            if (_dailyBrewUI != null) _dailyBrewUI.OnDailyBrewRequested += HandleDailyBrewRequest;
         }
 
         private void OnDestroy()
@@ -45,9 +153,16 @@ namespace Brew.Presentation
             {
                 _levelCompleteScreen.OnNextLevel -= AdvanceToNextLevel;
                 _levelCompleteScreen.OnReplay -= ReplayCurrentLevel;
+                _levelCompleteScreen.OnDoubleRewardAd -= HandleDoubleRewardAd;
             }
-            if (_levelFailScreen != null) _levelFailScreen.OnRetry -= ReplayCurrentLevel;
-            if (_boardPresenter != null) _boardPresenter.OnLevelOutcome -= HandleLevelOutcome;
+            if (_levelFailScreen != null)
+            {
+                _levelFailScreen.OnRetry -= ReplayCurrentLevel;
+                _levelFailScreen.OnWatchAdForMoves -= HandleWatchAdForMoves;
+                _levelFailScreen.OnProtectStreakAd -= HandleProtectStreakAd;
+                _levelFailScreen.OnProtectStreakGems -= HandleProtectStreakGems;
+                _levelFailScreen.OnDismissStreakProtection -= HandleDismissStreakProtection;
+            }
         }
 
         private void ShowLevelSelect()
@@ -57,6 +172,10 @@ namespace Brew.Presentation
             _levelCompleteScreen.Hide();
             _levelFailScreen.Hide();
             _levelSelectScreen.Refresh();
+
+            _dailyBrew.CheckNewDay(System.DateTime.UtcNow);
+            _adManager.CheckNewDay(System.DateTime.UtcNow);
+            if (_dailyBrewUI != null) _dailyBrewUI.Refresh();
         }
 
         private void StartLevel(int levelId)
@@ -76,6 +195,13 @@ namespace Brew.Presentation
                 _boardPresenter.MoveTracker,
                 _boardPresenter.ScoreCalculator,
                 _boardPresenter.RecipeTracker);
+
+            _hudController.UpdateWalletDisplay(
+                _currencyManager.GetBalance(CurrencyType.Essence),
+                _currencyManager.GetBalance(CurrencyType.Gems));
+            _hudController.UpdateStreakDisplay(_winStreak.CurrentStreak, _winStreak.CurrentMultiplier);
+
+            _analytics.LogLevelStart(levelId);
         }
 
         private void HandleLevelOutcome(LevelOutcome outcome)
@@ -85,20 +211,128 @@ namespace Brew.Presentation
             switch (outcome)
             {
                 case LevelOutcome.Win:
-                    int score = _boardPresenter.ScoreCalculator.TotalScore;
-                    int bonus = _boardPresenter.MoveTracker.MovesRemaining * 50;
-                    int stars = ScoreCalculator.CalculateStars(score, _currentLevelConfig.StarThresholds);
-
-                    _progress.RecordLevelComplete(_currentLevelConfig.LevelId, stars);
-                    LocalSaveManager.Save(_progress);
-
-                    _levelCompleteScreen.Show(score, bonus, stars);
+                    HandleWin();
                     break;
-
                 case LevelOutcome.Lose:
-                    _levelFailScreen.Show();
+                    HandleLose();
                     break;
             }
+        }
+
+        private void HandleWin()
+        {
+            int score = _boardPresenter.ScoreCalculator.TotalScore;
+            int bonus = _boardPresenter.MoveTracker.MovesRemaining * 50;
+            int stars = ScoreCalculator.CalculateStars(score, _currentLevelConfig.StarThresholds);
+
+            _winStreak.IncrementStreak();
+            int essenceEarned = _rewardCalculator.CalculateEssence(stars, _winStreak.CurrentStreak);
+            float streakMult = _winStreak.CurrentMultiplier;
+
+            if (essenceEarned > 0)
+                _currencyManager.Add(CurrencyType.Essence, essenceEarned, "level_complete");
+
+            bool isNewPotion = _potionShelf.TryUnlockPotion(_currentLevelConfig.LevelId);
+            if (isNewPotion)
+            {
+                var newMilestones = _potionShelf.CheckMilestones();
+                foreach (var ms in newMilestones)
+                {
+                    _currencyManager.Add(CurrencyType.Essence, ms.EssenceReward, "shelf_milestone");
+                    if (ms.GemReward > 0)
+                        _currencyManager.Add(CurrencyType.Gems, ms.GemReward, "shelf_milestone");
+                }
+            }
+
+            _progress.RecordLevelComplete(_currentLevelConfig.LevelId, stars);
+            LocalSaveManager.Save(_progress);
+            _cloudSave.MarkDirty();
+
+            bool isTutorial = _currentLevelConfig.LevelId <= 5;
+            _adManager.RecordLevelWin(isTutorial);
+            bool canDouble = _adManager.CanShowRewarded(AdPlacement.DoublePotionReward);
+
+            _analytics.LogLevelComplete(_currentLevelConfig.LevelId, stars, score,
+                _boardPresenter.MoveTracker.MovesRemaining, 0);
+
+            _levelCompleteScreen.Show(score, bonus, stars, essenceEarned, streakMult, isNewPotion, canDouble);
+
+            if (_adManager.ShouldShowInterstitial())
+            {
+                _adManager.RecordInterstitialShown();
+                _analytics.LogAdInterstitial();
+            }
+        }
+
+        private void HandleLose()
+        {
+            bool canWatchAd = _adManager.CanShowRewarded(AdPlacement.FailRecovery);
+            bool showStreakProtection = _winStreak.CurrentStreak >= 2;
+            int streakGemCost = _economyConfig != null ? _economyConfig.StreakProtectionGemCost : 5;
+
+            _analytics.LogLevelFail(_currentLevelConfig.LevelId,
+                _currentLevelConfig.MoveLimit - _boardPresenter.MoveTracker.MovesRemaining,
+                0, false);
+
+            _levelFailScreen.Show(canWatchAd, showStreakProtection, streakGemCost);
+        }
+
+        private void HandleDoubleRewardAd()
+        {
+            _adManager.RecordRewardedAdWatched(AdPlacement.DoublePotionReward);
+            int essenceBonus = _rewardCalculator.CalculateEssence(
+                ScoreCalculator.CalculateStars(_boardPresenter.ScoreCalculator.TotalScore, _currentLevelConfig.StarThresholds),
+                _winStreak.CurrentStreak);
+            if (essenceBonus > 0)
+                _currencyManager.Add(CurrencyType.Essence, essenceBonus, "double_reward_ad");
+
+            _analytics.LogAdRewarded("double_potion_reward", "essence");
+            _levelCompleteScreen.HideDoubleRewardButton();
+        }
+
+        private void HandleWatchAdForMoves()
+        {
+            _adManager.RecordRewardedAdWatched(AdPlacement.FailRecovery);
+            _boardPresenter.MoveTracker.AddMoves(3);
+            _analytics.LogAdRewarded("fail_recovery", "extra_moves");
+            _levelFailScreen.Hide();
+        }
+
+        private void HandleProtectStreakAd()
+        {
+            _adManager.RecordRewardedAdWatched(AdPlacement.StreakProtection);
+            _analytics.LogAdRewarded("streak_protection", "streak_preserved");
+            _levelFailScreen.HideStreakProtection();
+            ReplayCurrentLevel();
+        }
+
+        private void HandleProtectStreakGems()
+        {
+            int cost = _economyConfig != null ? _economyConfig.StreakProtectionGemCost : 5;
+            if (_currencyManager.Spend(CurrencyType.Gems, cost, "streak_protection"))
+            {
+                _levelFailScreen.HideStreakProtection();
+                ReplayCurrentLevel();
+            }
+        }
+
+        private void HandleDismissStreakProtection()
+        {
+            _winStreak.ResetStreak();
+            _analytics.LogStreakUpdate(0, 1f, true);
+            _levelFailScreen.HideStreakProtection();
+        }
+
+        private void HandleDailyBrewRequest()
+        {
+            _analytics.LogDailyBrewStart();
+            var (essence, gems) = _dailyBrew.TryComplete(System.DateTime.UtcNow);
+            if (essence > 0)
+                _currencyManager.Add(CurrencyType.Essence, essence, "daily_brew");
+            if (gems > 0)
+                _currencyManager.Add(CurrencyType.Gems, gems, "daily_brew");
+            _analytics.LogDailyBrewComplete(essence, gems, _dailyBrew.CurrentDailyStreak);
+            _cloudSave.MarkDirty();
         }
 
         private void AdvanceToNextLevel()
@@ -117,6 +351,36 @@ namespace Brew.Presentation
             _levelCompleteScreen.Hide();
             _levelFailScreen.Hide();
             StartLevel(_currentLevelConfig.LevelId);
+        }
+
+        private void OnBalanceChanged(CurrencyType type, int newBalance)
+        {
+            _hudController.UpdateWalletDisplay(
+                _currencyManager.GetBalance(CurrencyType.Essence),
+                _currencyManager.GetBalance(CurrencyType.Gems));
+        }
+
+        private void OnStreakChanged(int streak, float multiplier)
+        {
+            _hudController.UpdateStreakDisplay(streak, multiplier);
+            _analytics.LogStreakUpdate(streak, multiplier, streak == 0);
+        }
+
+        private void OnMilestoneReached(int requiredCount, int essenceReward, int gemReward, string title)
+        {
+            _analytics.LogPotionShelfUnlock(0, _potionShelf.BrewedCount, _potionShelf.CompletionPercent);
+        }
+
+        private void OnWorkshopUpgraded(int level, string name)
+        {
+            int cost = 0;
+            if (_workshop.CurrentLevel > 0 && _workshop.CurrentLevel <= 12)
+            {
+                var costs = new[] { 50, 100, 200, 400, 600, 1000, 1500, 2500, 4000, 6000, 8000, 12000 };
+                cost = costs[_workshop.CurrentLevel - 1];
+            }
+            _analytics.LogWorkshopUpgrade(level, name, cost);
+            _cloudSave.MarkDirty();
         }
     }
 }
