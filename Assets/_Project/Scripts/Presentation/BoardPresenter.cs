@@ -8,12 +8,6 @@ using UnityEngine;
 
 namespace Brew.Presentation
 {
-    /// <summary>
-    /// Visual representation of the board. Reads from BoardModel and manages
-    /// TokenView GameObjects via object pooling. Drives animations for fusion,
-    /// gravity, and brew events. Integrates MoveTracker, ScoreCalculator,
-    /// RecipeTracker, and WinLoseEvaluator for full gameplay loop.
-    /// </summary>
     public class BoardPresenter : MonoBehaviour
     {
         [Header("Configuration")]
@@ -23,6 +17,12 @@ namespace Brew.Presentation
 
         [Header("Input")]
         [SerializeField] private InputController _inputController;
+
+        [Header("Juice (Optional)")]
+        [SerializeField] private ScreenShakeController _screenShake;
+        [SerializeField] private ParticleManager _particleManager;
+        [SerializeField] private BrewAnimationController _brewAnimator;
+        [SerializeField] private TutorialController _tutorialController;
 
         private BoardModel _board;
         private BoardStateMachine _stateMachine;
@@ -36,15 +36,22 @@ namespace Brew.Presentation
         private ScoreCalculator _scoreCalculator;
         private RecipeTracker _recipeTracker;
         private WinLoseEvaluator _winLoseEvaluator;
+        private BoosterManager _boosterManager;
         private LevelConfig _currentLevel;
 
         private readonly Dictionary<GridCoord, TokenView> _activeViews = new();
         private Vector3 _boardOrigin;
         private bool _isResolving;
+        private bool _catalystArmed;
 
         public MoveTracker MoveTracker => _moveTracker;
         public ScoreCalculator ScoreCalculator => _scoreCalculator;
         public RecipeTracker RecipeTracker => _recipeTracker;
+        public BoosterManager BoosterManager => _boosterManager;
+        public BoardModel Board => _board;
+        public ClusterDetector ClusterDetector => _clusterDetector;
+        public TokenSpawner Spawner => _spawner;
+        public int MinClusterSize => _boardConfig.MinClusterSize;
 
         public event Action OnResolutionComplete;
         public event Action<LevelOutcome> OnLevelOutcome;
@@ -55,9 +62,6 @@ namespace Brew.Presentation
                 InitializeGame();
         }
 
-        /// <summary>
-        /// Initializes using defaults from BoardConfigSO (backward-compatible).
-        /// </summary>
         public void InitializeGame()
         {
             var defaultConfig = new LevelConfig(
@@ -73,9 +77,6 @@ namespace Brew.Presentation
             InitializeWithLevel(defaultConfig);
         }
 
-        /// <summary>
-        /// Initializes the board from a LevelConfig loaded via LevelLoader.
-        /// </summary>
         public void InitializeWithLevel(LevelConfig levelConfig)
         {
             _currentLevel = levelConfig ?? throw new ArgumentNullException(nameof(levelConfig));
@@ -100,6 +101,7 @@ namespace Brew.Presentation
             _scoreCalculator = new ScoreCalculator();
             _recipeTracker = new RecipeTracker(levelConfig.RecipeTargets);
             _winLoseEvaluator = new WinLoseEvaluator(_recipeTracker, _moveTracker);
+            _boosterManager = new BoosterManager();
 
             _tokenPool = new ObjectPool<TokenView>(_tokenPrefab, _tokenContainer, _board.CellCount);
 
@@ -116,6 +118,9 @@ namespace Brew.Presentation
             _inputController.OnCellTapped += HandleCellTapped;
 
             _stateMachine.TransitionTo(BoardPhase.PlayerInput);
+
+            if (_tutorialController != null && levelConfig.IsTutorial)
+                _tutorialController.StartTutorial(levelConfig.LevelId);
         }
 
         private void CleanupPreviousGame()
@@ -129,6 +134,8 @@ namespace Brew.Presentation
                     if (_tokenPool != null) _tokenPool.Return(kv.Value);
                 _activeViews.Clear();
             }
+
+            _catalystArmed = false;
         }
 
         private void OnDestroy()
@@ -137,19 +144,72 @@ namespace Brew.Presentation
                 _inputController.OnCellTapped -= HandleCellTapped;
         }
 
+        public void ArmCatalyst() => _catalystArmed = true;
+        public void DisarmCatalyst() => _catalystArmed = false;
+
+        public void ActivateShake()
+        {
+            if (_isResolving || _board == null) return;
+
+            _boosterManager.ActivateShake(_board, _spawner, _clusterDetector, _boardConfig.MinClusterSize);
+            RebuildAllViews();
+
+            if (_screenShake != null) _screenShake.ShakeFusion();
+            HapticManager.MediumImpact();
+        }
+
+        public void ActivateExtraMoves()
+        {
+            if (_moveTracker == null) return;
+            _boosterManager.ActivateExtraMoves(_moveTracker);
+            HapticManager.LightImpact();
+        }
+
         private void HandleCellTapped(GridCoord coord)
         {
             if (_isResolving || !_stateMachine.AcceptsInput)
                 return;
 
+            if (_tutorialController != null && _tutorialController.IsActive)
+            {
+                if (!_tutorialController.IsValidTutorialTap(coord))
+                    return;
+                _tutorialController.NotifyTapPerformed();
+            }
+
+            if (_catalystArmed)
+            {
+                HandleCatalystTap(coord);
+                return;
+            }
+
             var result = _fusionEngine.TryPlayerFusion(coord);
             if (result == null)
+            {
+                HapticManager.SelectionImpact();
                 return;
+            }
 
+            HapticManager.MediumImpact();
             _moveTracker.TryConsumeMove();
             _scoreCalculator.ResetForNewMove();
 
             StartCoroutine(ResolveSequence(result));
+        }
+
+        private void HandleCatalystTap(GridCoord coord)
+        {
+            _catalystArmed = false;
+
+            if (!_boosterManager.ActivateCatalyst(_board, coord))
+            {
+                HapticManager.SelectionImpact();
+                return;
+            }
+
+            HapticManager.MediumImpact();
+
+            RebuildAllViews();
         }
 
         private IEnumerator ResolveSequence(FusionResult initialFusion)
@@ -158,9 +218,19 @@ namespace Brew.Presentation
             _stateMachine.TransitionTo(BoardPhase.Fusing);
 
             _scoreCalculator.OnFusion(initialFusion.ConsumedCells.Count);
-            HandleBrewIfTriggered(initialFusion);
+
+            if (_screenShake != null) _screenShake.ShakeFusion();
+            if (_particleManager != null)
+            {
+                var fusionPos = GridToWorld(initialFusion.OrbCell);
+                var fusionColor = GetDisplayColor(initialFusion.CreatedOrb.Color);
+                _particleManager.PlayFusionSparkles(fusionPos, fusionColor);
+            }
 
             yield return AnimateFusion(initialFusion);
+
+            if (initialFusion.TriggeredBrew)
+                yield return HandleBrewSequence(initialFusion);
 
             int cascadeWave = 0;
             int maxCascadeWaves = _boardConfig.MaxCascadeWaves;
@@ -169,7 +239,7 @@ namespace Brew.Presentation
             {
                 _stateMachine.TransitionTo(BoardPhase.Cascading);
 
-                ResolveChainFusions();
+                yield return ResolveChainFusionsAnimated();
 
                 var (drops, spawns) = _cascadeResolver.ApplyGravityAndRefill();
                 yield return AnimateGravity(drops, spawns);
@@ -177,7 +247,7 @@ namespace Brew.Presentation
                 _stateMachine.TransitionTo(BoardPhase.Settling);
                 yield return new WaitForSeconds(0.05f);
 
-                ResolveChainFusions();
+                yield return ResolveChainFusionsAnimated();
                 RebuildAllViews();
 
                 var cascadeClusters = _clusterDetector.FindAllClusters(_boardConfig.MinClusterSize);
@@ -187,6 +257,8 @@ namespace Brew.Presentation
                 cascadeWave++;
                 _scoreCalculator.OnCascadeWave();
 
+                if (_screenShake != null) _screenShake.ShakeChain(cascadeWave);
+
                 SortClustersBottomToTop(cascadeClusters);
                 foreach (var cluster in cascadeClusters)
                 {
@@ -195,8 +267,18 @@ namespace Brew.Presentation
                     if (cascadeFusion != null)
                     {
                         _scoreCalculator.OnFusion(cascadeFusion.ConsumedCells.Count);
-                        HandleBrewIfTriggered(cascadeFusion);
-                        yield return AnimateFusion(cascadeFusion);
+
+                        if (_particleManager != null)
+                        {
+                            var pos = GridToWorld(cascadeFusion.OrbCell);
+                            var col = GetDisplayColor(cascadeFusion.CreatedOrb.Color);
+                            _particleManager.PlayFusionSparkles(pos, col);
+                        }
+
+                        if (cascadeFusion.TriggeredBrew)
+                            yield return HandleBrewSequence(cascadeFusion);
+                        else
+                            yield return AnimateFusion(cascadeFusion);
                     }
 
                     ResetStateMachineForNextCascade();
@@ -208,7 +290,18 @@ namespace Brew.Presentation
 
             var outcome = _winLoseEvaluator.Evaluate();
             if (outcome == LevelOutcome.Win)
+            {
                 _scoreCalculator.CalculateEndOfLevelBonus(_moveTracker.MovesRemaining);
+
+                if (_screenShake != null) _screenShake.ShakeLevelComplete();
+                if (_particleManager != null)
+                {
+                    int stars = ScoreCalculator.CalculateStars(
+                        _scoreCalculator.TotalScore, _currentLevel.StarThresholds);
+                    _particleManager.PlayLevelCompleteConfetti(stars);
+                }
+                HapticManager.SuccessPattern();
+            }
 
             RebuildAllViews();
 
@@ -226,19 +319,28 @@ namespace Brew.Presentation
                 OnLevelOutcome?.Invoke(outcome);
         }
 
-        private void HandleBrewIfTriggered(FusionResult fusion)
+        private IEnumerator HandleBrewSequence(FusionResult fusion)
         {
-            if (!fusion.TriggeredBrew)
-                return;
-
             var color = fusion.CreatedOrb.Color;
             bool isTarget = _recipeTracker.IsTargetColor(color);
             _scoreCalculator.OnBrew(isTarget);
             _recipeTracker.OnBrew(color);
+
+            if (_brewAnimator != null && _activeViews.TryGetValue(fusion.OrbCell, out var orbView))
+            {
+                yield return _brewAnimator.PlayBrewAnimation(
+                    orbView.transform, color, Vector3.up * 5f);
+            }
+            else
+            {
+                yield return AnimateFusion(fusion);
+            }
+
             _board.SetCell(fusion.OrbCell, CellContent.Empty);
+            RebuildAllViews();
         }
 
-        private void ResolveChainFusions()
+        private IEnumerator ResolveChainFusionsAnimated()
         {
             int safety = 0;
             while (safety < 100)
@@ -253,6 +355,14 @@ namespace Brew.Presentation
                     if (chainResult == null) continue;
 
                     _scoreCalculator.OnChainStep();
+                    HapticManager.MediumImpact();
+
+                    if (_particleManager != null)
+                    {
+                        var pos = GridToWorld(chainResult.SurvivorCell);
+                        var col = GetDisplayColor(_board.GetCell(chainResult.SurvivorCell).Color);
+                        _particleManager.PlayChainIndicator(pos, pos + Vector3.up * 0.5f, col);
+                    }
 
                     if (chainResult.TriggeredBrew)
                     {
@@ -265,6 +375,8 @@ namespace Brew.Presentation
                 }
                 safety++;
             }
+
+            yield return null;
         }
 
         private IEnumerator AnimateFusion(FusionResult fusion)
@@ -361,11 +473,11 @@ namespace Brew.Presentation
 
         internal static Color GetDisplayColor(IngredientColor ingredient) => ingredient switch
         {
-            IngredientColor.Ember => new Color(0.878f, 0.251f, 0.251f),
-            IngredientColor.Frost => new Color(0.251f, 0.502f, 0.878f),
-            IngredientColor.Vine => new Color(0.251f, 0.690f, 0.251f),
-            IngredientColor.Sun => new Color(0.878f, 0.753f, 0.125f),
-            IngredientColor.Shadow => new Color(0.502f, 0.251f, 0.753f),
+            IngredientColor.Ember => new Color(0.878f, 0.353f, 0.227f),   // #E05A3A
+            IngredientColor.Frost => new Color(0.435f, 0.722f, 0.851f),   // #6FB8D9
+            IngredientColor.Vine => new Color(0.427f, 0.686f, 0.369f),    // #6DAF5E
+            IngredientColor.Sun => new Color(0.949f, 0.780f, 0.271f),     // #F2C745
+            IngredientColor.Shadow => new Color(0.420f, 0.306f, 0.608f),  // #6B4E9B
             _ => Color.white
         };
 
