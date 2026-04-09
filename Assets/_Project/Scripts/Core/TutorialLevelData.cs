@@ -48,9 +48,13 @@ namespace Brew.Core
 
         public TutorialBoardSetup(int width, int height, IngredientColor[,] layout)
         {
+            if (layout == null) throw new ArgumentNullException(nameof(layout));
+            if (layout.GetLength(0) != height || layout.GetLength(1) != width)
+                throw new ArgumentException(
+                    $"Layout dimensions [{layout.GetLength(0)},{layout.GetLength(1)}] do not match width={width}, height={height}.");
             Width = width;
             Height = height;
-            Layout = layout ?? throw new ArgumentNullException(nameof(layout));
+            Layout = layout;
         }
     }
 
@@ -103,11 +107,14 @@ namespace Brew.Core
 
         private static TutorialLevelDefinition BuildLevel1()
         {
-            var layout = new IngredientColor[3, 3]
+            // 5x5 board (min for BoardModel), mostly Ember cluster top-left, Frost elsewhere
+            var layout = new IngredientColor[5, 5]
             {
-                { E, E, F },
-                { E, F, F },
-                { F, F, E }
+                { E, E, F, F, F },
+                { E, F, F, E, F },
+                { F, F, E, E, F },
+                { F, E, F, F, E },
+                { F, F, E, F, E }
             };
 
             var steps = new List<TutorialStep>
@@ -144,7 +151,7 @@ namespace Brew.Core
 
             return new TutorialLevelDefinition(
                 1,
-                new TutorialBoardSetup(3, 3, layout),
+                new TutorialBoardSetup(5, 5, layout),
                 new[] { new RecipeTarget(E, 1) },
                 moveLimit: 15,
                 hideMoveCounter: true,
@@ -153,12 +160,14 @@ namespace Brew.Core
 
         private static TutorialLevelDefinition BuildLevel2()
         {
-            var layout = new IngredientColor[4, 4]
+            // 5x5 board with two distinct Frost clusters
+            var layout = new IngredientColor[5, 5]
             {
-                { F, E, E, F },
-                { F, F, E, E },
-                { E, F, F, E },
-                { E, E, F, F }
+                { F, E, E, F, E },
+                { F, F, E, E, F },
+                { E, F, F, E, E },
+                { E, E, F, F, E },
+                { E, E, E, F, F }
             };
 
             var steps = new List<TutorialStep>
@@ -172,7 +181,8 @@ namespace Brew.Core
                     highlightedCells: new[]
                     {
                         new GridCoord(0, 0), new GridCoord(0, 1), new GridCoord(1, 1),
-                        new GridCoord(2, 1), new GridCoord(2, 2), new GridCoord(3, 2), new GridCoord(3, 3)
+                        new GridCoord(1, 2), new GridCoord(2, 2), new GridCoord(2, 3), new GridCoord(3, 3),
+                        new GridCoord(3, 4), new GridCoord(4, 4)
                     }),
 
                 new(TutorialStepType.FreePlay,
@@ -184,7 +194,7 @@ namespace Brew.Core
 
             return new TutorialLevelDefinition(
                 2,
-                new TutorialBoardSetup(4, 4, layout),
+                new TutorialBoardSetup(5, 5, layout),
                 new[] { new RecipeTarget(F, 1) },
                 moveLimit: 12,
                 hideMoveCounter: false,
@@ -193,13 +203,14 @@ namespace Brew.Core
 
         private static TutorialLevelDefinition BuildLevel3()
         {
-            var layout = new IngredientColor[4, 5]
+            // 5x5 board with Vine clusters positioned for chain demo
+            var layout = new IngredientColor[5, 5]
             {
-                { V, E, F, F },
-                { V, V, E, F },
-                { E, F, V, V },
-                { F, E, V, E },
-                { E, F, E, F }
+                { V, E, F, F, E },
+                { V, V, E, F, F },
+                { E, F, V, V, E },
+                { F, E, V, E, F },
+                { E, F, E, F, E }
             };
 
             var steps = new List<TutorialStep>
@@ -219,7 +230,7 @@ namespace Brew.Core
 
                 new(TutorialStepType.HighlightAndWaitForTap,
                     "Fuse them to chain into the orb!",
-                    highlightedCells: new[] { new GridCoord(2, 2), new GridCoord(2, 3), new GridCoord(3, 2) },
+                    highlightedCells: new[] { new GridCoord(2, 2), new GridCoord(3, 2), new GridCoord(2, 3) },
                     fingerIndicatorCell: new GridCoord(2, 2)),
 
                 new(TutorialStepType.ShowText,
@@ -234,7 +245,7 @@ namespace Brew.Core
 
             return new TutorialLevelDefinition(
                 3,
-                new TutorialBoardSetup(4, 5, layout),
+                new TutorialBoardSetup(5, 5, layout),
                 new[] { new RecipeTarget(V, 1) },
                 moveLimit: 14,
                 hideMoveCounter: false,
@@ -280,7 +291,7 @@ namespace Brew.Core
 
         private static TutorialLevelDefinition BuildLevel5()
         {
-            var layout = new IngredientColor[5, 6]
+            var layout = new IngredientColor[6, 5]
             {
                 { E, V, F, F, V },
                 { E, E, V, F, E },

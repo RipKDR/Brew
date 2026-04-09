@@ -1,7 +1,7 @@
 # Brew — Project Summary
 
 > **Living document.** Updated as decisions are made, milestones are reached, and blockers emerge.
-> Last updated: 2026-04-09 (Session 3)
+> Last updated: 2026-04-09 (Session 4)
 
 ---
 
@@ -11,7 +11,7 @@
 | Field         | Value                                                                                                                                               |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Project**   | Brew — Mobile Puzzle Game                                                                                                                           |
-| **Status**    | Core Loop Phase (Weeks 3-4) — Scoring, recipes, moves, win/lose, level loading, save system, UI screens implemented. Gate 2 runtime testing pending |
+| **Status**    | Content & Polish Phase (Weeks 9-10) — integration wiring complete. Event system, notifications, and theme overlay connected. Gate 5 prep in progress. |
 | **Pitch**     | *"Tap clusters to fuse ingredients into glowing orbs. Chain orbs together to brew potions. Craft every recipe before you run out of moves."*        |
 | **Platforms** | iOS (15+), Android (8.0+) — portrait only                                                                                                           |
 | **Engine**    | Unity 6 (6000.1 LTS), C#                                                                                                                            |
@@ -28,12 +28,12 @@
 | Milestone                          | Target Date | Status                                                      |
 | ---------------------------------- | ----------- | ----------------------------------------------------------- |
 | Documentation complete             | 2026-04-09  | Done                                                        |
-| Implementation start               | TBD         | —                                                           |
-| **Milestone 1** — Foundation       | Week 2      | Code complete — Gate 1 runtime testing pending              |
-| **Milestone 2** — Core Loop        | Week 4      | In progress — code complete, Gate 2 runtime testing pending |
-| **Milestone 3** — Feel & Juice     | Week 6      | Not started                                                 |
-| **Milestone 4** — Meta & Economy   | Week 8      | Not started                                                 |
-| **Milestone 5** — Content & Polish | Week 10     | Not started                                                 |
+| Implementation start               | 2026-04-09  | Done                                                        |
+| **Milestone 1** — Foundation       | Week 2      | Complete — Gate 1 runtime testing pending                   |
+| **Milestone 2** — Core Loop        | Week 4      | Complete — Gate 2 runtime testing pending                   |
+| **Milestone 3** — Feel & Juice     | Week 6      | Complete — Gate 3 runtime testing pending                   |
+| **Milestone 4** — Meta & Economy   | Week 8      | Complete — Gate 4 runtime testing pending                   |
+| **Milestone 5** — Content & Polish | Week 10     | In progress — integration wired, Gate 5 prep underway       |
 | Soft launch target                 | TBD         | —                                                           |
 | Global launch target               | TBD         | —                                                           |
 
@@ -139,6 +139,12 @@ See [Milestone Gates](../production/milestone-gates.md) for per-milestone go/no-
 | 2026-04-09 | Level JSON maps "brine" → Sun, "glow" → Shadow                                                         | Pre-authored level JSONs use alternate ingredient names; LevelLoader normalizes to canonical IngredientColor enum                                                                                       | Engineering |
 | 2026-04-09 | LocalSaveManager uses atomic write (temp + rename)                                                     | Prevents save corruption on crash during write; matches build plan risk mitigation for save system                                                                                                      | Engineering |
 | 2026-04-09 | PlayerProgress.SetStars keeps best only                                                                | Replaying a level with fewer stars does not overwrite; consistent with mobile puzzle conventions                                                                                                        | Engineering |
+| 2026-04-09 | CurrencyManager is pure C# with event-driven notifications                                            | Zero Unity dependency enables EditMode testing of all economy logic; events drive UI updates without coupling                                                                                           | Engineering |
+| 2026-04-09 | All economy values from EconomyConfigSO or Remote Config — zero hardcoded                              | Enables tuning during soft launch without code changes; Remote Config overrides ScriptableObject defaults at runtime                                                                                    | Engineering |
+| 2026-04-09 | Offline-first cloud save (ADR 0002)                                                                    | Game fully functional offline; local writes immediate, Firestore sync best-effort; last-write-wins for MVP                                                                                              | Engineering |
+| 2026-04-09 | Remote Config as single config source (ADR 0003)                                                       | All tunable values fetched from Firebase RC with 12h cache; local defaults as fallback; no app update needed for tuning                                                                                 | Engineering |
+| 2026-04-09 | IAPManager product catalog is static readonly                                                          | Product definitions are compile-time constants matching App Store / Play Store SKUs; SKU changes require app update by design                                                                           | Engineering |
+| 2026-04-09 | AdManager uses Func<bool> callback for No-Ads Pass check                                               | Decouples ad logic from IAP implementation; testable with injected predicates                                                                                                                           | Engineering |
 
 
 ---

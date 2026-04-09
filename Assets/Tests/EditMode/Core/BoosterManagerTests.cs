@@ -22,16 +22,20 @@ namespace Brew.Tests.EditMode
             _spawner = new TokenSpawner(new Random(Seed));
             _detector = new ClusterDetector(_board);
             _manager = new BoosterManager(new Random(Seed));
+            _manager.SetCharges(BoosterType.Shake, int.MaxValue);
+            _manager.SetCharges(BoosterType.Catalyst, int.MaxValue);
+            _manager.SetCharges(BoosterType.ExtraMoves, int.MaxValue);
         }
 
         // ── Charges ─────────────────────────────────────────
 
         [Test]
-        public void GetCharges_DefaultsToInfinite()
+        public void GetCharges_DefaultsToZero()
         {
-            Assert.AreEqual(int.MaxValue, _manager.GetCharges(BoosterType.Shake));
-            Assert.AreEqual(int.MaxValue, _manager.GetCharges(BoosterType.Catalyst));
-            Assert.AreEqual(int.MaxValue, _manager.GetCharges(BoosterType.ExtraMoves));
+            var fresh = new BoosterManager();
+            Assert.AreEqual(0, fresh.GetCharges(BoosterType.Shake));
+            Assert.AreEqual(0, fresh.GetCharges(BoosterType.Catalyst));
+            Assert.AreEqual(0, fresh.GetCharges(BoosterType.ExtraMoves));
         }
 
         [Test]
@@ -46,15 +50,16 @@ namespace Brew.Tests.EditMode
         [Test]
         public void TryUseCharge_AtZero_ReturnsFalse()
         {
-            _manager.SetCharges(BoosterType.Shake, 0);
+            var fresh = new BoosterManager();
 
-            Assert.IsFalse(_manager.TryUseCharge(BoosterType.Shake));
-            Assert.AreEqual(0, _manager.GetCharges(BoosterType.Shake));
+            Assert.IsFalse(fresh.TryUseCharge(BoosterType.Shake));
+            Assert.AreEqual(0, fresh.GetCharges(BoosterType.Shake));
         }
 
         [Test]
         public void TryUseCharge_Infinite_DoesNotDecrement()
         {
+            _manager.SetCharges(BoosterType.Catalyst, int.MaxValue);
             Assert.IsTrue(_manager.TryUseCharge(BoosterType.Catalyst));
             Assert.AreEqual(int.MaxValue, _manager.GetCharges(BoosterType.Catalyst));
         }
@@ -206,7 +211,7 @@ namespace Brew.Tests.EditMode
             tracker.TryConsumeMove();
             Assert.AreEqual(9, tracker.MovesRemaining);
 
-            Assert.IsTrue(_manager.ActivateExtraMoves(tracker));
+            Assert.IsTrue(_manager.ActivateExtraMoves(tracker, 3));
             Assert.AreEqual(12, tracker.MovesRemaining);
         }
 
@@ -224,8 +229,8 @@ namespace Brew.Tests.EditMode
         {
             var tracker = new MoveTracker(10);
 
-            Assert.IsTrue(_manager.ActivateExtraMoves(tracker));
-            Assert.IsFalse(_manager.ActivateExtraMoves(tracker));
+            Assert.IsTrue(_manager.ActivateExtraMoves(tracker, 3));
+            Assert.IsFalse(_manager.ActivateExtraMoves(tracker, 3));
             Assert.AreEqual(13, tracker.MovesRemaining);
         }
 
@@ -234,9 +239,9 @@ namespace Brew.Tests.EditMode
         {
             var tracker = new MoveTracker(10);
 
-            Assert.IsTrue(_manager.ActivateExtraMoves(tracker));
+            Assert.IsTrue(_manager.ActivateExtraMoves(tracker, 3));
             _manager.ResetForNewAttempt();
-            Assert.IsTrue(_manager.ActivateExtraMoves(tracker));
+            Assert.IsTrue(_manager.ActivateExtraMoves(tracker, 3));
             Assert.AreEqual(16, tracker.MovesRemaining);
         }
 
@@ -248,7 +253,7 @@ namespace Brew.Tests.EditMode
             BoosterType? firedType = null;
             _manager.OnBoosterActivated += t => firedType = t;
 
-            Assert.IsTrue(_manager.ActivateExtraMoves(tracker));
+            Assert.IsTrue(_manager.ActivateExtraMoves(tracker, 5));
 
             Assert.AreEqual(BoosterType.ExtraMoves, firedType);
         }
@@ -270,7 +275,7 @@ namespace Brew.Tests.EditMode
             Assert.IsNotNull(tokenCoord, "Board should have at least one token.");
             Assert.IsTrue(_manager.ActivateCatalyst(_board, tokenCoord.Value));
 
-            _manager.ActivateExtraMoves(tracker);
+            _manager.ActivateExtraMoves(tracker, 5);
 
             Assert.AreEqual(3, activated.Count);
             Assert.AreEqual(BoosterType.Shake, activated[0]);

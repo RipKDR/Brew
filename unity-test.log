@@ -1,0 +1,25 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.4/staging' branch; Version is '6000.4.1f1 (8535861f39e1) revision 8729990'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26220) Professional' Language: 'en' Physical Memory: 24382 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-H" at "2026-04-09T09:27:19.5044593Z"
+System  architecture: x64
+Process architecture: x64
+Date: 2026-04-09T09:27:19Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.4.1f1\Editor\Unity.exe
+-batchmode
+-nographics
+-projectPath
+T:\Brew
+-runTests
+-testPlatform
+EditMode
+-testResults
+T:\Brew\TestResults.xml
+-logFile
+T:\Brew\unity-test.log
+Successfully changed project path to: T:\Brew
+T:/Brew
+Exiting without the bug reporter. Application will terminate with return code 1

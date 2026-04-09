@@ -12,27 +12,49 @@
   ],
   "recipe_targets": [
     {
+      "ingredient": "brine",
+      "count": 2
+    },
+    {
+      "ingredient": "glow",
+      "count": 2
+    },
+    {
       "ingredient": "vine",
-      "count": 3
+      "count": 2
+    },
+    {
+      "ingredient": "ember",
+      "count": 2
     }
   ],
-  "move_limit": 34,
+  "move_limit": 38,
   "blocker_placements": [
     {
-      "row": 2,
-      "col": 4,
+      "row": 1,
+      "col": 2,
       "type": "stone"
     },
     {
-      "row": 3,
+      "row": 1,
+      "col": 5,
+      "type": "stone"
+    },
+    {
+      "row": 5,
+      "col": 1,
+      "type": "stone"
+    },
+    {
+      "row": 5,
       "col": 6,
       "type": "stone"
     }
   ],
   "star_thresholds": [
-    980,
-    1960,
-    3136
+    2400,
+    4800,
+    7680
   ],
   "is_tutorial": false,
   "tutorial_steps": []

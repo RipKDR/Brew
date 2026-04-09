@@ -6,7 +6,66 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 
 ## [Unreleased]
 
-### Added — Feel & Juice (Gate 3 prep)
+### Added — Integration Wiring (Gate 5 prep)
+
+- **Event Theme Overlay**: `LevelLoader.LoadEventLevel(json, themedIngredientId)` resolves "themed" placeholder in event level JSONs to a concrete ingredient from Remote Config; falls back to Shadow
+- **Notification Platform Adapters**: `UnityNotificationScheduler` (compile-guarded iOS/Android) and `NullNotificationScheduler` (Editor/unsupported fallback) implementing `INotificationScheduler`
+- **Event Level Flow**: `GameFlowController.StartEventLevel()` loads event templates, `HandleEventLevelWin()` grants per-level Essence + milestone rewards via `CurrencyManager`
+- **RemoteConfig Sync**: 48 additional key constants in `RemoteConfigDefaults.cs` (workshop costs, shelf milestones, daily brew streak bonuses, IAP amounts) — now 68 total matching JSON
+- **Event Integration Tests**: `EventLevelLoaderTests` (11 tests: theme resolution, fallback, metadata, key count sync)
+- **AdManager Tests**: 11 new tests covering events, tutorial path, constructor validation, placement edge cases
+- **NotificationManager Tests**: 5 new tests covering EventEndingSoon event, next-day scheduling, null guard, custom params
+- **CurrencyFormatter Tests**: 5 new boundary tests at exact tier transitions
+
+### Changed — Integration Wiring
+
+- `GameFlowController`: constructs `WeeklyEventManager` + `RemoteConfigManager` + `NotificationManager`; event level loading path; notification scheduling after wins and on level select
+- `WeeklyEventView`: added `RefreshState(EventState)` for banner/level-select/results visibility management
+- `LevelLoader`: extended `RawLevelData` with `grid_mask`, `blocker_placements`, `tutorial_steps` for event JSON compatibility
+- `AGENTS.md`: updated phase to "Implementation — Content & Polish", fixed path references to `_Project/Scripts/`
+- `project-summary.md`: milestone table updated (Milestones 1-4 Complete, Milestone 5 In Progress)
+
+### Added — Content & Polish (Gate 5 prep)
+
+- **Weekly Event System**: `WeeklyEventManager` (pure C#, event lifecycle state machine, 7-level completion tracking, milestone rewards at 3/5/all levels), `MilestoneDefinition` data class, `WeeklyEventConfigSO` (level count, reward amounts, move budgets, board size), `WeeklyEventView` (event banner, level select, results, timer countdown)
+- **Push Notifications**: `NotificationManager` (pure C#, `INotificationScheduler` interface, 3 triggers: Daily Brew reminder, Streak at Risk, Event Ending Soon), `NotificationConfigSO` (caps, cooldowns, notification copy), frequency cap (1/day), permission cooldown (7 days)
+- **CurrencyFormatter**: Static utility for compact currency display (exact < 1K, K suffix 1K-999K, M suffix 1M+), integrated into `WalletUI`
+- **Event Level Templates**: 7 event level templates in `levels/events/` (E1-E2 easy, E3-E5 medium, E6 hard, E7 boss) with 7x9 board, themed ingredient slot
+- **Analytics Expansion**: 6 new methods in `AnalyticsManager`: `LogEventStart`, `LogEventLevelComplete`, `LogEventComplete`, `LogEventRewardClaimed`, `LogNotificationScheduled`, `LogNotificationOpened`
+- **Remote Config**: 13 new keys for event system (event_active, event_id, event_name, event_end_timestamp, theme colors, ingredient ID, reward values)
+- **Tests**: `WeeklyEventManagerTests` (~18 methods), `NotificationManagerTests` (~15 methods), `CurrencyFormatterTests` (~12 methods)
+
+### Changed — Content & Polish
+
+- Updated `GameFlowController`: added `WeeklyEventView` SerializeField and initialization
+- Updated `BrewSceneSetup`: creates WeeklyEvent screen in meta screens, wires to GameFlowController
+- Updated `SettingsPanel`: added notifications toggle
+- Updated `SettingsManager`: added `NotificationsEnabled` property (default true)
+- Updated `WalletUI`: uses `CurrencyFormatter.Format()` for compact balance display
+
+### Added — Meta & Economy (Gate 4 prep)
+
+- **Economy Foundation**: `CurrencyType` enum, `CurrencyManager` (pure C#, Add/Spend with events, balance-never-negative), `RewardCalculator` (star × streak multiplier), `EconomyConfigSO` (all tuning values from economy-model.md)
+- **Remote Config**: `RemoteConfigDefaults` static class, `config/firebase/remote-config-defaults.json` (56 keys), `RemoteConfigManager` (default + server merge, 12h stale check)
+- **Potion Shelf**: `PotionShelfManager` (pure C#, brewed potion tracking, 4 milestone tiers with rewards), `PotionShelfConfigSO`, `PotionShelfView` (scrollable grid, milestone bar)
+- **Workshop**: `WorkshopManager` (pure C#, 12 sequential upgrades 50–12,000 Essence), `WorkshopConfigSO`, `WorkshopView` (decoration toggle, purchase flow)
+- **Win Streak**: `WinStreakTracker` (pure C#, 6-tier multiplier 1.0×–3.0×), `WinStreakConfigSO`
+- **Daily Brew**: `DailyBrewManager` (pure C#, UTC-date tracking, streak bonuses at 3/5/7 days), `DailyBrewConfigSO`, `DailyBrewUI` (availability indicator, streak display)
+- **IAP**: `IAPProduct` data class, `IAPManager` (6-product catalog: 4 Gem Packs, Starter Bundle, No-Ads Pass; purchase fulfillment via CurrencyManager)
+- **Ads**: `AdPlacement` enum, `AdManager` (daily cap 5, per-placement limits, interstitial every 3rd win, No-Ads Pass suppression)
+- **Firebase Backend**: `FirebaseAuthManager` (anonymous auth abstraction), `CloudSaveManager` (offline-first PlayerSaveData with dirty/synced flags), `AnalyticsManager` (facade for 18+ event types per event-tracking-plan.md)
+- **Economy UI**: `WalletUI` (real-time balance display), `StoreUI` (IAP product listing), `BoosterShopUI` (Essence + Gem purchase paths)
+- **Tests**: `CurrencyManagerTests`, `RewardCalculatorTests`, `IAPManagerTests`, `AdManagerTests`, `PotionShelfManagerTests`, `WorkshopManagerTests`, `WinStreakTrackerTests`, `DailyBrewManagerTests`, `CloudSaveManagerTests`, `RemoteConfigManagerTests` (~100+ new test methods)
+
+### Changed — Meta & Economy
+
+- Updated `GameFlowController`: full meta/economy/ad/analytics integration — Essence rewards on win, streak tracking, potion shelf unlock, milestone rewards, interstitial triggers, ad-for-moves, streak protection, daily brew flow
+- Updated `LevelCompleteScreen`: Essence earned display, streak multiplier breakdown, double-reward ad button, new potion reveal
+- Updated `LevelFailScreen`: watch-ad-for-moves button, streak protection panel (ad + gem options, dismiss)
+- Updated `HudController`: wallet display (Essence + Gems text), streak flame indicator with multiplier text
+- Updated `BrewSceneSetup`: creates meta screen GameObjects (PotionShelf, Workshop, DailyBrew, Store, BoosterShop, Wallet), wires new serialized references
+
+### Previously Added — Feel & Juice (Gate 3 prep)
 
 - **Booster System**: `BoosterType`, `BoosterManager` (pure C#), `BoosterBarUI`, `BoosterSlotUI` with full Shake/Catalyst/ExtraMoves logic per core-mechanic.md §15
 - **Audio System**: `AudioManager` singleton (8 SFX + 4 music AudioSources, priority voice-stealing, round-robin variants, pitch variation), `AudioConfigSO`, `SfxId` enum (16 SFX types), `AdaptiveAudioController` (tension stems at ≤5 moves, critical state at 1 move, brew ducking)

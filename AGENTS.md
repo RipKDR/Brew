@@ -11,7 +11,7 @@
 - **Ads:** AdMob + AppLovin MAX mediation
 - **IAP:** Unity IAP
 - **CI/CD:** GitHub Actions + Fastlane
-- **Phase:** Pre-production — documentation complete, implementation begins per `docs/production/mvp-build-plan.md`
+- **Phase:** Implementation — Content & Polish (Weeks 9-10), working toward Gate 5 per `docs/production/mvp-build-plan.md`
 
 ---
 
@@ -123,16 +123,16 @@ Assets/
 
 | What you're adding                 | Where it goes                               |
 | ---------------------------------- | ------------------------------------------- |
-| Board/fusion/cascade/scoring logic | `Scripts/Core/` (pure C#, no MonoBehaviour) |
-| Workshop, potion shelf, streaks    | `Scripts/Meta/`                             |
-| Save/load, cloud sync, config      | `Scripts/Data/`                             |
-| Ads, IAP, analytics, auth          | `Scripts/Services/`                         |
-| Anything that touches GameObjects  | `Scripts/Presentation/`                     |
-| Shared helpers, pools, extensions  | `Scripts/Utilities/`                        |
-| Configuration data                 | `ScriptableObjects/Config/`                 |
-| Level definitions                  | `ScriptableObjects/Levels/`                 |
-| Unit tests for game logic          | `Tests/EditMode/`                           |
-| Integration/UI tests               | `Tests/PlayMode/`                           |
+| Board/fusion/cascade/scoring logic | `_Project/Scripts/Core/` (pure C#, no MonoBehaviour) |
+| Workshop, potion shelf, streaks    | `_Project/Scripts/Core/Meta/`                        |
+| Save/load, cloud sync, config      | `_Project/Scripts/Data/`                             |
+| Ads, IAP, analytics, auth          | `_Project/Scripts/Core/Ads/`, `Core/Backend/`, `Core/Services/` |
+| Anything that touches GameObjects  | `_Project/Scripts/Presentation/`                     |
+| Shared helpers, pools, extensions  | `_Project/Scripts/Utilities/`                        |
+| Configuration data                 | `_Project/Scripts/Data/` (ScriptableObjects)         |
+| Level definitions                  | `Resources/Levels/` (JSON) or `_Project/Scripts/Data/` (SOs) |
+| Unit tests for game logic          | `Tests/EditMode/`                                    |
+| Integration/UI tests               | `Tests/PlayMode/`                                    |
 
 
 ---

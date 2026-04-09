@@ -8,27 +8,30 @@
 
 ## Primary Outcome
 
-Complete context system readiness so implementation work can start with deterministic session continuity and CI-backed guardrails.
+Week 9-10 code systems complete. Weekly event system, push notifications, CurrencyFormatter, and level templates in place. Ready for Unity Editor verification and Gate 5 preparation.
 
 ## Must Complete This Week
 
-- [ ] Context continuity artifacts fully in place and cross-linked.
-- [ ] Context snapshot generation script runs cleanly.
-- [ ] Context validation checks pass locally and in CI.
-- [ ] All core docs aligned on canonical engine/version/tooling truth.
+- Run all EditMode unit tests in Unity Editor (27 test files, ~300+ methods). Fix compilation issues.
+- Create ScriptableObject assets for all config SOs (Economy, PotionShelf, Workshop, WinStreak, DailyBrew, WeeklyEvent, Notification).
+- Verify weekly event flow end-to-end: start event → play levels → claim milestones → event expiry.
+- Verify notification scheduling logic with mock scheduler.
+- Begin level 36-40 tuning pass per difficulty framework.
 
 ## Secondary Work
 
-- [ ] Add one-command prep check instructions to README.
-- [ ] Confirm mvp-build-plan references remain current.
+- Implement `INotificationScheduler` platform adapters for iOS and Android (requires Unity Mobile Notifications package).
+- Implement event theme overlay in level loader (ingredient swapping from Remote Config).
+- Begin app store asset preparation (icon, screenshots).
 
 ## Risks to Watch
 
-- Documentation drift between CI and docs map.
-- Session handoff not updated after substantial work.
-- ADR index becoming stale as decisions accumulate.
+- Firebase SDK not yet imported — backend managers are pure C# abstractions.
+- Unity IAP and AdMob SDKs not yet configured — managers are logic-only stubs.
+- NotificationManager needs platform-specific implementations before device testing.
+- Event theme overlay system needs level loader modifications.
 
 ## Owners
 
-- Product/Engineering: Context governance and doc alignment
-- Engineering: CI and automation checks
+- Product/Engineering: Level tuning, event theme design, app store assets
+- Engineering: Unity Editor testing, SDK integration, platform notification adapters

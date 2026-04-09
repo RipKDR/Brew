@@ -44,6 +44,7 @@ Build a level select screen: scrollable grid showing levels 1-40. Locked levels 
 ### 6. Scoring System
 
 Implement `ScoreCalculator` in `Scripts/Core/` with the formula from `core-mechanic.md`:
+
 - Base: `cluster_size × 10` per fusion
 - Chain multiplier: `+0.5` per chain step (§14.1)
 - Cascade multiplier: `+0.5` per cascade wave (§14.2)
@@ -63,6 +64,7 @@ After every settle phase, check if any valid cluster (≥ 3 adjacent same-color 
 ### 2. Blocker Tiles
 
 Implement two blocker types per `docs/game-design/level-design-framework.md`:
+
 - **Stone:** Occupies a cell. Cannot be fused. Cleared when an adjacent brew occurs. Stone cells do not participate in gravity (tokens cannot fall through them). Render with a distinct stone texture.
 - **Ice:** Locks a token in place for 1 turn after an adjacent fusion occurs. The iced token cannot be part of a cluster while locked. After 1 player move passes, the ice cracks and the token returns to normal. Visual: frosted overlay on the token.
 
@@ -79,6 +81,7 @@ Show: stars earned, potions brewed (list with icons), final score, Essence earne
 ### 5. Event Bus Implementation
 
 Implement the typed event bus per `docs/sdk/event-bus-design.md` exactly. Key events to fire this phase:
+
 - `OnFusionComplete` — cluster fused into orb (includes cluster size, color, position)
 - `OnChainFusion` — orbs auto-fused (includes chain step count, resulting token_count)
 - `OnBrewComplete` — orb brewed into potion (includes potion type, whether it was a recipe target)
@@ -99,21 +102,21 @@ Ensure all 40 level JSONs from the `levels/` directory (or ScriptableObjects) lo
 
 Reference `docs/production/milestone-gates.md`, Gate 2 for the authoritative list. Summary:
 
-- [ ] Can play a complete level from start to win or lose
-- [ ] Chain fusion works correctly (adjacent same-type orbs auto-fuse after gravity)
-- [ ] Brew triggers at configured threshold, vial UI updates
-- [ ] Recipe tracking accurately counts brewed potions against targets
-- [ ] Move counter works, level fails at 0 moves with incomplete recipe
-- [ ] Cascades resolve correctly up to cap of 20
-- [ ] Levels load from JSON with distinct configurations
-- [ ] Level complete screen shows star rating; fail screen shows retry
-- [ ] Level select shows correct lock/unlock state and star counts
-- [ ] Progress persists across app restart
-- [ ] No softlocks during gameplay (deadlock detection + shuffle works)
-- [ ] Blockers (Stone, Ice) function as specified
-- [ ] All 40 levels load without errors
-- [ ] Event bus fires correct events at correct times
-- [ ] Scoring formula matches spec
+- Can play a complete level from start to win or lose
+- Chain fusion works correctly (adjacent same-type orbs auto-fuse after gravity)
+- Brew triggers at configured threshold, vial UI updates
+- Recipe tracking accurately counts brewed potions against targets
+- Move counter works, level fails at 0 moves with incomplete recipe
+- Cascades resolve correctly up to cap of 20
+- Levels load from JSON with distinct configurations
+- Level complete screen shows star rating; fail screen shows retry
+- Level select shows correct lock/unlock state and star counts
+- Progress persists across app restart
+- No softlocks during gameplay (deadlock detection + shuffle works)
+- Blockers (Stone, Ice) function as specified
+- All 40 levels load without errors
+- Event bus fires correct events at correct times
+- Scoring formula matches spec
 
 ---
 

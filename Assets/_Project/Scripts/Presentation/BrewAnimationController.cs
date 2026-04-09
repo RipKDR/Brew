@@ -38,6 +38,12 @@ namespace Brew.Presentation
             _screenShake = screenShake;
         }
 
+        public void StopBrewAnimation()
+        {
+            StopAllCoroutines();
+            _isAnimating = false;
+        }
+
         public Coroutine PlayBrewAnimation(Transform orbTransform, IngredientColor color, Vector3 vialTargetPosition)
         {
             if (orbTransform == null) return null;
@@ -137,6 +143,7 @@ namespace Brew.Presentation
 
             var sr = orbTransform.GetComponent<SpriteRenderer>();
             float startAlpha = sr != null ? sr.color.a : 1f;
+            Vector3 celebStartScale = orbTransform.localScale;
 
             float elapsed = 0f;
             while (elapsed < _celebrationDuration)
@@ -148,7 +155,7 @@ namespace Brew.Presentation
                 orbTransform.position = Vector3.Lerp(startPos, vialTarget, curveT);
 
                 float scaleFactor = Mathf.Lerp(1f, 0.3f, t);
-                orbTransform.localScale = orbTransform.localScale.normalized * scaleFactor;
+                orbTransform.localScale = celebStartScale * scaleFactor;
 
                 orbTransform.rotation = Quaternion.Euler(0, 0, Mathf.Sin(t * Mathf.PI * 4) * 5f);
 

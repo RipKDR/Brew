@@ -1,3 +1,5 @@
+using System;
+using Brew.Core.Economy;
 using Brew.Data;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,9 +12,23 @@ namespace Brew.Presentation
         [SerializeField] private Slider _sfxSlider;
         [SerializeField] private Toggle _hapticsToggle;
         [SerializeField] private Toggle _screenShakeToggle;
+        [SerializeField] private Toggle _notificationsToggle;
         [SerializeField] private Button _closeButton;
+        [SerializeField] private Button _privacyPolicyButton;
+        [SerializeField] private Button _creditsButton;
+        [SerializeField] private Button _restorePurchasesButton;
+        [SerializeField] private GameObject _creditsPanel;
+        [SerializeField] private string _privacyPolicyUrl = "https://brew-game.com/privacy";
 
+        private IAPManager _iapManager;
         private bool _isInitializing;
+
+        public event Action OnRestorePurchasesRequested;
+
+        public void Initialize(IAPManager iapManager)
+        {
+            _iapManager = iapManager;
+        }
 
         private void OnEnable()
         {
@@ -43,8 +59,23 @@ namespace Brew.Presentation
                 _screenShakeToggle.onValueChanged.AddListener(OnScreenShakeChanged);
             }
 
+            if (_notificationsToggle != null)
+            {
+                _notificationsToggle.isOn = SettingsManager.NotificationsEnabled;
+                _notificationsToggle.onValueChanged.AddListener(OnNotificationsChanged);
+            }
+
             if (_closeButton != null)
                 _closeButton.onClick.AddListener(Hide);
+
+            if (_privacyPolicyButton != null)
+                _privacyPolicyButton.onClick.AddListener(OnPrivacyPolicyClicked);
+
+            if (_creditsButton != null)
+                _creditsButton.onClick.AddListener(OnCreditsClicked);
+
+            if (_restorePurchasesButton != null)
+                _restorePurchasesButton.onClick.AddListener(OnRestorePurchasesClicked);
 
             _isInitializing = false;
         }
@@ -55,7 +86,11 @@ namespace Brew.Presentation
             if (_sfxSlider != null) _sfxSlider.onValueChanged.RemoveListener(OnSfxVolumeChanged);
             if (_hapticsToggle != null) _hapticsToggle.onValueChanged.RemoveListener(OnHapticsChanged);
             if (_screenShakeToggle != null) _screenShakeToggle.onValueChanged.RemoveListener(OnScreenShakeChanged);
+            if (_notificationsToggle != null) _notificationsToggle.onValueChanged.RemoveListener(OnNotificationsChanged);
             if (_closeButton != null) _closeButton.onClick.RemoveListener(Hide);
+            if (_privacyPolicyButton != null) _privacyPolicyButton.onClick.RemoveListener(OnPrivacyPolicyClicked);
+            if (_creditsButton != null) _creditsButton.onClick.RemoveListener(OnCreditsClicked);
+            if (_restorePurchasesButton != null) _restorePurchasesButton.onClick.RemoveListener(OnRestorePurchasesClicked);
         }
 
         public void Show() => gameObject.SetActive(true);
@@ -84,6 +119,29 @@ namespace Brew.Presentation
         {
             if (_isInitializing) return;
             SettingsManager.ScreenShakeEnabled = value;
+        }
+
+        private void OnNotificationsChanged(bool value)
+        {
+            if (_isInitializing) return;
+            SettingsManager.NotificationsEnabled = value;
+        }
+
+        private void OnPrivacyPolicyClicked()
+        {
+            if (!string.IsNullOrEmpty(_privacyPolicyUrl))
+                Application.OpenURL(_privacyPolicyUrl);
+        }
+
+        private void OnCreditsClicked()
+        {
+            if (_creditsPanel != null)
+                _creditsPanel.SetActive(!_creditsPanel.activeSelf);
+        }
+
+        private void OnRestorePurchasesClicked()
+        {
+            OnRestorePurchasesRequested?.Invoke();
         }
     }
 }

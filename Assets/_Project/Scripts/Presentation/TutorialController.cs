@@ -192,6 +192,8 @@ namespace Brew.Presentation
             yield return new WaitForSeconds(0.3f);
         }
 
+        private bool _freePlayLevelComplete;
+
         private IEnumerator RunFreePlayStep(TutorialStep step)
         {
             if (step.Text != null && _overlay != null)
@@ -203,17 +205,29 @@ namespace Brew.Presentation
 
             OnInputUnrestricted?.Invoke();
             _lastInputTime = Time.time;
+            _freePlayLevelComplete = false;
+
+            if (_boardPresenter != null)
+                _boardPresenter.OnLevelOutcome += OnFreePlayLevelOutcome;
 
             _hintCoroutine = StartCoroutine(RunHintSystem());
 
-            while (IsActive && _currentStepIndex < _definition.Steps.Count - 1)
+            while (IsActive && !_freePlayLevelComplete)
                 yield return null;
+
+            if (_boardPresenter != null)
+                _boardPresenter.OnLevelOutcome -= OnFreePlayLevelOutcome;
 
             if (_hintCoroutine != null)
             {
                 StopCoroutine(_hintCoroutine);
                 _hintCoroutine = null;
             }
+        }
+
+        private void OnFreePlayLevelOutcome(LevelOutcome outcome)
+        {
+            _freePlayLevelComplete = true;
         }
 
         private IEnumerator RunLevelCompleteStep(TutorialStep step)

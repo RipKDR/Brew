@@ -1,5 +1,7 @@
 using Brew.Core;
+using Brew.Data;
 using Brew.Presentation;
+using Brew.Presentation.LiveOps;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -62,10 +64,12 @@ namespace Brew.Editor
             var boosterBarPanel = CreateBoosterBarPanel(canvas.transform);
             var gameplayPanel = CreateGameplayPanel(canvas.transform);
 
+            var metaScreens = CreateMetaScreens(canvas.transform);
+
             CreateEventSystem();
             var flowController = CreateGameFlowController(
                 boardGo, hudPanel, levelSelectPanel,
-                levelCompletePanel, levelFailPanel, gameplayPanel);
+                levelCompletePanel, levelFailPanel, gameplayPanel, metaScreens);
 
             Debug.Log("[Brew] Gameplay scene setup complete.");
         }
@@ -347,6 +351,9 @@ namespace Brew.Editor
             so.FindProperty("_tokenPrefab").objectReferenceValue = tokenPrefab;
             so.FindProperty("_tokenContainer").objectReferenceValue = container.transform;
             so.FindProperty("_inputController").objectReferenceValue = inputController;
+
+            var boardConfig = LoadOrCreateBoardConfig();
+            so.FindProperty("_boardConfig").objectReferenceValue = boardConfig;
             so.ApplyModifiedProperties();
 
             return boardGo;
@@ -668,13 +675,46 @@ namespace Brew.Editor
             return panel;
         }
 
+        private static (GameObject potionShelf, GameObject workshop, GameObject dailyBrew, GameObject store, GameObject boosterShop, GameObject wallet, GameObject weeklyEvent)
+            CreateMetaScreens(Transform canvasTransform)
+        {
+            var potionShelfGo = CreateUIPanel("PotionShelfScreen", canvasTransform);
+            potionShelfGo.AddComponent<PotionShelfView>();
+            potionShelfGo.SetActive(false);
+
+            var workshopGo = CreateUIPanel("WorkshopScreen", canvasTransform);
+            workshopGo.AddComponent<WorkshopView>();
+            workshopGo.SetActive(false);
+
+            var dailyBrewGo = CreateUIPanel("DailyBrewUI", canvasTransform);
+            dailyBrewGo.AddComponent<DailyBrewUI>();
+
+            var storeGo = CreateUIPanel("StoreScreen", canvasTransform);
+            storeGo.AddComponent<StoreUI>();
+            storeGo.SetActive(false);
+
+            var boosterShopGo = CreateUIPanel("BoosterShopScreen", canvasTransform);
+            boosterShopGo.AddComponent<BoosterShopUI>();
+            boosterShopGo.SetActive(false);
+
+            var walletGo = CreateUIPanel("WalletUI", canvasTransform);
+            walletGo.AddComponent<WalletUI>();
+
+            var weeklyEventGo = CreateUIPanel("WeeklyEventScreen", canvasTransform);
+            weeklyEventGo.AddComponent<WeeklyEventView>();
+            weeklyEventGo.SetActive(false);
+
+            return (potionShelfGo, workshopGo, dailyBrewGo, storeGo, boosterShopGo, walletGo, weeklyEventGo);
+        }
+
         private static GameFlowController CreateGameFlowController(
             GameObject boardGo,
             GameObject hudPanel,
             GameObject levelSelectPanel,
             GameObject levelCompletePanel,
             GameObject levelFailPanel,
-            GameObject gameplayPanel)
+            GameObject gameplayPanel,
+            (GameObject potionShelf, GameObject workshop, GameObject dailyBrew, GameObject store, GameObject boosterShop, GameObject wallet, GameObject weeklyEvent) metaScreens)
         {
             var existing = Object.FindAnyObjectByType<GameFlowController>();
             if (existing != null) return existing;
@@ -690,6 +730,15 @@ namespace Brew.Editor
             so.FindProperty("_boardPresenter").objectReferenceValue = boardGo.GetComponent<BoardPresenter>();
             so.FindProperty("_hudController").objectReferenceValue = hudPanel.GetComponent<HudController>();
             so.FindProperty("_levelSelectScreen").objectReferenceValue = levelSelectPanel.GetComponent<LevelSelectScreen>();
+
+            so.FindProperty("_potionShelfView").objectReferenceValue = metaScreens.potionShelf.GetComponent<PotionShelfView>();
+            so.FindProperty("_workshopView").objectReferenceValue = metaScreens.workshop.GetComponent<WorkshopView>();
+            so.FindProperty("_dailyBrewUI").objectReferenceValue = metaScreens.dailyBrew.GetComponent<DailyBrewUI>();
+            so.FindProperty("_storeUI").objectReferenceValue = metaScreens.store.GetComponent<StoreUI>();
+            so.FindProperty("_boosterShopUI").objectReferenceValue = metaScreens.boosterShop.GetComponent<BoosterShopUI>();
+            so.FindProperty("_walletUI").objectReferenceValue = metaScreens.wallet.GetComponent<WalletUI>();
+            so.FindProperty("_weeklyEventView").objectReferenceValue = metaScreens.weeklyEvent.GetComponent<WeeklyEventView>();
+
             so.ApplyModifiedProperties();
 
             return controller;
@@ -743,6 +792,23 @@ namespace Brew.Editor
             text.GetComponent<Text>().color = Color.white;
 
             return go;
+        }
+
+        private static BoardConfigSO LoadOrCreateBoardConfig()
+        {
+            const string configPath = "Assets/_Project/ScriptableObjects/Config/BoardConfig.asset";
+
+            var existing = AssetDatabase.LoadAssetAtPath<BoardConfigSO>(configPath);
+            if (existing != null)
+                return existing;
+
+            EnsureFolder("Assets/_Project/ScriptableObjects/Config");
+
+            var config = ScriptableObject.CreateInstance<BoardConfigSO>();
+            AssetDatabase.CreateAsset(config, configPath);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[Brew] Created BoardConfig asset at {configPath}");
+            return config;
         }
 
         private static void EnsureFolder(string path)

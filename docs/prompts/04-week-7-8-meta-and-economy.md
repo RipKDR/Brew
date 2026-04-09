@@ -158,7 +158,7 @@ Reference: `docs/technical/architecture.md` → Firebase section.
 - Go through `docs/analytics/event-tracking-plan.md` event by event
 - For each event, verify: (a) it fires at the correct trigger point, (b) all required parameters are included, (c) parameter values are correct types
 - Use Firebase DebugView on a real device to confirm events arrive. Log any missing events as P1 bugs
-- Key events that MUST be verified this phase: all `currency_*`, all `iap_*`, all `ad_*`, `workshop_upgrade`, `potion_shelf_unlock`, `streak_update`, `daily_brew_*`
+- Key events that MUST be verified this phase: all `currency_`*, all `iap_*`, all `ad_*`, `workshop_upgrade`, `potion_shelf_unlock`, `streak_update`, `daily_brew_*`
 
 ### 3.6 Remote Config Setup
 
@@ -174,7 +174,9 @@ Reference: `docs/technical/architecture.md` → Firebase section.
 Before proceeding to Week 9-10, verify ALL of the following. Check against `docs/production/milestone-gates.md` Gate 4:
 
 ### Full Session Loop
+
 Play this exact sequence on a real device:
+
 1. Launch game → complete a level → earn Essence and Gems → see streak increment
 2. Open Workshop → purchase an upgrade with Essence → see decoration appear
 3. Return to main menu → complete another level → see streak multiplier boost earnings
@@ -184,6 +186,7 @@ Play this exact sequence on a real device:
 If this loop doesn't feel smooth and connected, it's not ready.
 
 ### IAP Verification
+
 - Complete a purchase of every product on both iOS (sandbox) and Android (test track)
 - Verify receipt validation Cloud Function returns success
 - Verify currency is credited after server confirmation
@@ -192,27 +195,32 @@ If this loop doesn't feel smooth and connected, it's not ready.
 - Verify "Restore Purchases" works on a fresh install with the same account
 
 ### Ad Verification
+
 - Watch a rewarded ad at each of the 4 placements. Verify correct reward is granted
 - Verify frequency cap stops offering ads after 5 in one session
 - Verify interstitial shows after every 3rd level win (not on fail)
 - Verify No-Ads Pass suppresses interstitials but not rewarded ads
 
 ### Analytics Verification
+
 - Enable Firebase DebugView on a test device
 - Play a full session covering all features
 - Confirm every event from `docs/analytics/event-tracking-plan.md` appears with correct parameters
 
 ### Cloud Save Verification
+
 - Play on Device A, reach level 10, purchase a workshop upgrade
 - Sign into same anonymous account on Device B
 - Verify: level progress, currency balances, workshop state, potion shelf all sync correctly
 
 ### Economy Pacing
+
 - Run `python scripts/economy-sim/simulate_economy.py` with current config values
 - Verify: a player completing 10 levels/day finishes the workshop in 30-45 days
 - Verify: daily gem income (Daily Brew + shelf milestones) covers ~1 booster every 2-3 days without IAP
 
 ### Security
+
 - Verify `CurrencyManager.Spend()` rejects negative amounts and amounts exceeding balance
 - Verify currency cannot be earned by replaying already-completed levels (or if it can, it's intentional and capped)
 - Verify IAP receipts are validated server-side, not client-only

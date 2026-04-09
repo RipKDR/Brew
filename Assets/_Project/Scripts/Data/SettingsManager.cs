@@ -10,6 +10,7 @@ namespace Brew.Data
         private const string KeyIsMuted = "Brew_IsMuted";
         private const string KeyHapticsEnabled = "Brew_HapticsEnabled";
         private const string KeyScreenShakeEnabled = "Brew_ScreenShakeEnabled";
+        private const string KeyNotificationsEnabled = "Brew_NotificationsEnabled";
 
         public static event Action OnSettingsChanged;
 
@@ -63,6 +64,17 @@ namespace Brew.Data
             set
             {
                 PlayerPrefs.SetInt(KeyScreenShakeEnabled, value ? 1 : 0);
+                PlayerPrefs.Save();
+                OnSettingsChanged?.Invoke();
+            }
+        }
+
+        public static bool NotificationsEnabled
+        {
+            get => PlayerPrefs.GetInt(KeyNotificationsEnabled, 1) == 1;
+            set
+            {
+                PlayerPrefs.SetInt(KeyNotificationsEnabled, value ? 1 : 0);
                 PlayerPrefs.Save();
                 OnSettingsChanged?.Invoke();
             }

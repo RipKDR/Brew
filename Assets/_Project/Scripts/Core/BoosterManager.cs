@@ -12,9 +12,9 @@ namespace Brew.Core
     {
         private readonly Dictionary<BoosterType, int> _charges = new()
         {
-            { BoosterType.Shake, int.MaxValue },
-            { BoosterType.Catalyst, int.MaxValue },
-            { BoosterType.ExtraMoves, int.MaxValue }
+            { BoosterType.Shake, 0 },
+            { BoosterType.Catalyst, 0 },
+            { BoosterType.ExtraMoves, 0 }
         };
 
         private readonly Random _rng;
@@ -135,7 +135,7 @@ namespace Brew.Core
             return true;
         }
 
-        public bool ActivateExtraMoves(MoveTracker moveTracker, int amount = 3)
+        public bool ActivateExtraMoves(MoveTracker moveTracker, int amount)
         {
             if (_extraMovesUsedThisAttempt)
                 return false;
@@ -169,20 +169,52 @@ namespace Brew.Core
         /// </summary>
         private static void ForcePlaceClusterOfThree(BoardModel board, int minClusterSize)
         {
-            const IngredientColor color = IngredientColor.Ember;
             int run = Math.Max(3, minClusterSize);
             if (run > board.Width)
                 run = board.Width;
+
+            IngredientColor color = FindMostCommonTokenColor(board);
 
             for (int row = 0; row < board.Height; row++)
             {
                 for (int col = 0; col <= board.Width - run; col++)
                 {
+                    bool allTokens = true;
+                    for (int k = 0; k < run; k++)
+                    {
+                        var cell = board.GetCell(new GridCoord(col + k, row));
+                        if (!cell.IsToken) { allTokens = false; break; }
+                    }
+                    if (!allTokens) continue;
+
                     for (int k = 0; k < run; k++)
                         board.SetCell(new GridCoord(col + k, row), CellContent.Token(color));
                     return;
                 }
             }
+        }
+
+        private static IngredientColor FindMostCommonTokenColor(BoardModel board)
+        {
+            var counts = new Dictionary<IngredientColor, int>();
+            for (int c = 0; c < board.Width; c++)
+            {
+                for (int r = 0; r < board.Height; r++)
+                {
+                    var cell = board.GetCell(new GridCoord(c, r));
+                    if (!cell.IsToken) continue;
+                    counts.TryGetValue(cell.Color, out int count);
+                    counts[cell.Color] = count + 1;
+                }
+            }
+
+            IngredientColor best = IngredientColor.Ember;
+            int bestCount = 0;
+            foreach (var kvp in counts)
+            {
+                if (kvp.Value > bestCount) { best = kvp.Key; bestCount = kvp.Value; }
+            }
+            return best;
         }
     }
 }

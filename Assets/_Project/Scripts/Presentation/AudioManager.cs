@@ -21,6 +21,8 @@ namespace Brew.Presentation
         private readonly float[] _stemLevel = new float[MusicStemCount];
 
         private Coroutine _stopMusicRoutine;
+        private Coroutine _duckRoutine;
+        private float[] _preDuckVolumes;
 
         public AudioConfigSO Config => _audioConfig;
 
@@ -109,8 +111,9 @@ namespace Brew.Presentation
                 semi += Random.Range(-entry.PitchVariation, entry.PitchVariation);
             source.pitch = Mathf.Pow(2f, semi / 12f);
 
+            float baseVol = entry.BaseVolume > 0.001f ? entry.BaseVolume : 1f;
             float volMul = IsMuted ? 0f : SfxVolume;
-            source.volume = entry.BaseVolume * volMul;
+            source.volume = baseVol * volMul;
             source.clip = clip;
             source.priority = Mathf.Clamp(50 + requestPriority * 8, 0, 256);
             source.Play();
@@ -197,7 +200,16 @@ namespace Brew.Presentation
 
         public void DuckMusic(float targetDb, float duckDuration, float restoreDuration)
         {
-            StartCoroutine(DuckMusicRoutine(targetDb, duckDuration, restoreDuration));
+            if (_duckRoutine != null)
+            {
+                StopCoroutine(_duckRoutine);
+                if (_preDuckVolumes != null)
+                {
+                    for (int i = 0; i < MusicStemCount; i++)
+                        _musicSources[i].volume = _preDuckVolumes[i];
+                }
+            }
+            _duckRoutine = StartCoroutine(DuckMusicRoutine(targetDb, duckDuration, restoreDuration));
         }
 
         public void RefreshMusicVolumes()
@@ -239,9 +251,9 @@ namespace Brew.Presentation
         private IEnumerator DuckMusicRoutine(float targetDb, float duckDuration, float restoreDuration)
         {
             float duckMultiplier = Mathf.Pow(10f, targetDb / 20f);
-            float[] original = new float[MusicStemCount];
+            _preDuckVolumes = new float[MusicStemCount];
             for (int i = 0; i < MusicStemCount; i++)
-                original[i] = _musicSources[i].volume;
+                _preDuckVolumes[i] = _musicSources[i].volume;
 
             for (int i = 0; i < MusicStemCount; i++)
                 _musicSources[i].volume *= duckMultiplier;
@@ -259,12 +271,15 @@ namespace Brew.Presentation
                 elapsed += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsed / restoreDuration);
                 for (int i = 0; i < MusicStemCount; i++)
-                    _musicSources[i].volume = Mathf.Lerp(ducked[i], original[i], t);
+                    _musicSources[i].volume = Mathf.Lerp(ducked[i], _preDuckVolumes[i], t);
                 yield return null;
             }
 
             for (int i = 0; i < MusicStemCount; i++)
-                _musicSources[i].volume = original[i];
+                _musicSources[i].volume = _preDuckVolumes[i];
+
+            _preDuckVolumes = null;
+            _duckRoutine = null;
         }
 
         private bool TryGetSfxSource(int requestPriority, out AudioSource source)

@@ -20,6 +20,12 @@ namespace Brew.Presentation
         [SerializeField] private Transform _vialContainer;
         [SerializeField] private RecipeVialUI _vialPrefab;
 
+        [Header("Economy")]
+        [SerializeField] private Text _essenceText;
+        [SerializeField] private Text _gemsText;
+        [SerializeField] private Text _streakText;
+        [SerializeField] private GameObject _streakFlameIcon;
+
         private MoveTracker _moveTracker;
         private ScoreCalculator _scoreCalculator;
         private RecipeTracker _recipeTracker;
@@ -146,6 +152,19 @@ namespace Brew.Presentation
             }
 
             rt.localScale = Vector3.one;
+        }
+
+        public void UpdateWalletDisplay(int essence, int gems)
+        {
+            if (_essenceText != null) _essenceText.text = essence.ToString("N0");
+            if (_gemsText != null) _gemsText.text = gems.ToString("N0");
+        }
+
+        public void UpdateStreakDisplay(int streak, float multiplier)
+        {
+            if (_streakFlameIcon != null) _streakFlameIcon.SetActive(streak > 0);
+            if (_streakText != null)
+                _streakText.text = streak > 0 ? $"x{multiplier:F1}" : "";
         }
 
         private void UpdateVialDisplay(IngredientColor color, int remaining)

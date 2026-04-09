@@ -103,7 +103,7 @@ namespace Brew.Presentation
 
         public void ShowText(string text)
         {
-            if (_textBubble == null) return;
+            if (_textBubble == null || _textBubbleContainer == null) return;
             _textBubbleContainer.gameObject.SetActive(true);
             _textBubble.text = text ?? "";
         }
@@ -116,7 +116,7 @@ namespace Brew.Presentation
 
         public void ShowCelebrationText(string text)
         {
-            if (_textBubble == null) return;
+            if (_textBubble == null || _textBubbleContainer == null) return;
             _textBubbleContainer.gameObject.SetActive(true);
             _textBubble.text = text ?? "";
             _textBubble.fontSize = 36;
