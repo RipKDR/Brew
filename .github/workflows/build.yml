@@ -154,7 +154,7 @@ jobs:
 
           xcodebuild -exportArchive \
             -archivePath Brew.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
+            -exportOptionsPlist "$GITHUB_WORKSPACE/ExportOptions.plist" \
             -exportPath export/
 
           fastlane pilot upload \

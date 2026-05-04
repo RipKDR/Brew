@@ -41,9 +41,9 @@ STREAK_THRESHOLDS = [
 DAILY_BREW_ESSENCE = 100
 DAILY_BREW_GEMS = 5
 
-# Workshop upgrade costs (12 tiers, 36 350 total)
-WORKSHOP_COSTS = [50, 100, 200, 400, 600, 1000, 1500, 2500, 4000, 6000, 8000, 12000]
-WORKSHOP_TOTAL = sum(WORKSHOP_COSTS)  # 36 350
+# Workshop upgrade costs (12 tiers, 28 350 total)
+WORKSHOP_COSTS = [50, 100, 200, 400, 600, 900, 1400, 2200, 3000, 4500, 6000, 9000]
+WORKSHOP_TOTAL = sum(WORKSHOP_COSTS)  # 28 350
 
 BOOSTER_SHAKE_ESSENCE = 50
 BOOSTER_CATALYST_ESSENCE = 100
@@ -94,6 +94,7 @@ def simulate(
     workshop_tier = 0
     potions_collected = 0
     total_boosters_used = 0
+    total_levels_played = 0
     workshop_complete_day = None
 
     base_essence_per_level = essence_for_star_avg(star_average)
@@ -106,7 +107,7 @@ def simulate(
     daily_log: list[dict] = []
 
     # Estimate shelf progress based on levels played
-    total_levels_played = 0
+
     shelf_pct_milestones_hit: set[int] = set()
     total_shelf_potions = 100  # assumed full shelf size
 
@@ -326,3 +327,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

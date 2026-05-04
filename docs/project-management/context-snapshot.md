@@ -1,8 +1,7 @@
 # Brew — Context Snapshot
 
-> Generated: 2026-05-04 02:43 UTC
-> Project summary updated: 2026-04-09 (Session 6)
-> Session handoff updated: 2026-04-09 (Session 7)
+> Generated: 2026-05-04
+> Session handoff updated: 2026-05-04
 
 ## Quick Resume
 
@@ -31,9 +30,12 @@
 - Risk: `BoardPresenter.ActivateExtraMoves()` still has default parameter `amount = 5` — callers should pass `_economyConfig.ExtraMovesFromAd`
 - Risk: Firebase EDM4U may conflict with existing packages — test in a clean branch first
 
-## Decisions This Session
+## Decisions This Session (Sessions 8–9)
 
-- No session decisions recorded.
+- Workshop costs rebalanced (tiers 6-12 reduced; total 36,350 → 28,350) to match realistic earn rate of ~740 essence/day — non-payer completes in ~40 days, within 30-45 day target
+- `ConfigAssetGenerator.cs` committed — `Brew > Generate Config Assets` menu creates all Gate 5 SOs in one click
+- `bundleVersion` corrected to `1.0.0` — version validation now passes in CI
+- CI `deploy-ios` job hardened — `ExportOptions.plist` now referenced via `$GITHUB_WORKSPACE` absolute path
 
 ## ADR Summary
 
@@ -173,8 +175,8 @@
 
 ## Recent Git Commits
 
+- (pending) 2026-05-04 Gate 5 double-check: economy fix, version, build path, config generator, docs
+- 6369cf3 2026-05-04 Gate 5 workspace hardening: compile fix, missing level, infra, tests
+- 5787376 2026-05-04 Add workspace review design spec for Gate 5 improvement sprint
 - eaa9406 2026-04-10 Add manual build workflow for Android/iOS builds
 - c95a617 2026-04-09 Extract IAudioConfigSO interface and ISfxEntry from AudioConfigSO
-- b95777b 2026-04-09 Add Unity UGUI/TMP package and audio assets
-- 0d970cf 2026-04-09 Add Firebase, IAP, and Ad SDK bridge layer; upgrade CI/CD pipeline
-- e3b535b 2026-04-09 Merge pull request #3 from RipKDR/cursor/add-changelog-adr-session-handoff

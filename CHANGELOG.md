@@ -6,6 +6,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 
 ## [Unreleased]
 
+### Fixed — Session 9 Double-Check Pass (2026-05-04)
+
+- **Economy CI regression**: `simulate_economy.py` had two template-tag corruptions in working tree (lines 84/106) and a missing `total_levels_played = 0` initialisation — `validate-economy` job now passes clean
+- **Version format**: `ProjectSettings.asset bundleVersion` was `1.0` (not `major.minor.patch`) — changed to `1.0.0`; `validate-levels` now exits 0
+- **iOS export path**: `build.yml` referenced `ExportOptions.plist` from inside `build/iOS/` directory — changed to `$GITHUB_WORKSPACE/ExportOptions.plist`
+- **Workshop cost rebalance**: Tiers 6-12 reduced so non-payer completes workshop in ~40 days (target 30-45); old total 36,350 → 28,350. `WorkshopConfigSO.cs` defaults and `economy-model.md` updated consistently
+- **Editor utility committed**: `ConfigAssetGenerator.cs` (`Brew > Generate Config Assets` menu) was untracked — now committed; generates all Gate 5 ScriptableObject assets in one click
+
+### Added — Session 8 Workspace Hardening (2026-05-04)
+
+- **`level_001.json`**: Level 1 was missing from `Assets/_Project/Resources/Levels/`; all 40 levels now present and schema-valid
+- **`CLAUDE.md`**: Project-level CLAUDE.md added for AI session continuity and hard-rule enforcement
+- **`Fastfile` + `ExportOptions.plist`**: Required iOS build infrastructure that `build.yml` deploy-ios job references
+- **`GameFlowControllerTests.cs`**: 12 EditMode tests covering reward calculation, streak pipeline, ad caps, currency mutation, level-cap guard
+- **`BoardStateMachineIntegrationTests.cs`**: 10 integration tests for full board state machine cycle (Idle→…→CheckWin→Idle) with deterministic seeded board
+- **CI improvements**: `validate-levels` and `validate-economy` step summaries added; `check-secrets` job warns on missing `UNITY_LICENSE`/`ANDROID_KEYSTORE_BASE64`/`ASC_KEY`
+
+### Fixed — Session 8 Workspace Hardening
+
+- **`BrewSceneSetup.cs`**: Restored 4 missing `using` directives removed in uncommitted working-tree diff
+
 ### Fixed — Week 10 Code Review Sprint
 
 - **P0: AnalyticsManager compilation errors**: `LogEventStart` now accepts `(string eventId, string eventName)` and `LogEventComplete` accepts `(string eventId, int completedLevelCount)` — signatures match all call sites in `GameFlowController`
