@@ -228,7 +228,7 @@ These deductions are already factored into the "net" column in section 6.1.
 
 - **Levels:** Unlimited access. No energy gates. A non-payer plays every level and completes the game identically to a payer.
 - **Boosters:** Earned through Essence. A regular non-payer can afford ~1 booster per day without impacting workshop progress significantly.
-- **Recovery:** On fail, the non-payer watches a rewarded ad for +3 moves (once per fail). This is free.
+- **Recovery:** On fail, the non-payer watches a rewarded ad for +5 moves (once per fail). This is free.
 - **Workshop:** Completes in ~36 days at 10 levels/day. Fully achievable.
 - **Shelf:** Same completion rate as payers. No potions are locked behind payment.
 - **Gems:** Earns ~300–400/month from free sources. Enough for ~30–40 booster purchases or ~6–8 streak protections per month.
@@ -302,7 +302,7 @@ These are the parameters designers can adjust without code changes (server-confi
 | Workshop upgrade costs (per tier) | See table | ±50% each | Controls workshop completion timeline |
 | Daily Brew Essence | 100 | 50–300 | Controls daily retention incentive strength |
 | Daily Brew Gems | 5 | 1–15 | Controls free Gem flow rate |
-| Event Essence (total) | 1,275 max | 500–2,500 | Controls weekly supplemental income |
+| Event Essence (total) | 1,450 max | 500–2,500 | Controls weekly supplemental income |
 | Event Gems (total) | 50 max | 20–100 | Controls weekly Gem income for engaged players |
 | Booster Essence cost (Shake/Catalyst) | 50 / 100 | 25–200 | Controls Essence drain rate |
 | Booster Gem cost (Shake/Catalyst) | 5 / 10 | 2–25 | Controls Gem drain rate |

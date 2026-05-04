@@ -18,9 +18,25 @@ namespace Brew.Tests.EditMode
         }
 
         [Test]
-        public void Catalog_HasSixEntries()
+        public void Catalog_HasSevenEntries()
         {
-            Assert.AreEqual(6, IAPManager.Catalog.Count);
+            Assert.AreEqual(7, IAPManager.Catalog.Count);
+        }
+
+        [Test]
+        public void CompletePurchase_WeeklyDeal_GrantsGemsAndEssence()
+        {
+            _iap.CompletePurchase("weekly_deal");
+            Assert.AreEqual(150, _currency.GetBalance(CurrencyType.Gems));
+            Assert.AreEqual(500, _currency.GetBalance(CurrencyType.Essence));
+        }
+
+        [Test]
+        public void WeeklyDeal_IsConsumable_CanBePurchasedMultipleTimes()
+        {
+            _iap.CompletePurchase("weekly_deal");
+            _iap.CompletePurchase("weekly_deal");
+            Assert.AreEqual(300, _currency.GetBalance(CurrencyType.Gems));
         }
 
         [Test]

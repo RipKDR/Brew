@@ -50,51 +50,38 @@
 
 ### Code Review Sprint (Prior Session — Session 6)
 
-**P0 Fixes (Compilation):**
-- Fixed `AnalyticsManager.LogEventStart` signature: now `(string eventId, string eventName)` — was `(string eventId)`
-- Fixed `AnalyticsManager.LogEventComplete` signature: now `(string eventId, int completedLevelCount)` — was `(string eventId)`
+**P1 Bug Fixes:**
+- Removed hardcoded extra moves (=5) from `BoardPresenter.ActivateExtraMoves` — now requires explicit amount parameter
+- `BoosterBarUI` now accepts `extraMovesAmount` via `Initialize()` instead of hardcoded literal 5
+- Renamed `NotificationManager.ScheduleStreakAtRisk` parameter from `localHour` to `utcHour` with XML doc clarifying UTC semantics
+- Added level duration tracking: `GameFlowController` now records `_levelStartTimeUtc` on level/event start and passes real elapsed seconds to `LogLevelComplete` and `LogLevelFail` (was always 0)
 
-**P1 Fixes (Logic):**
-- Closed streak exploit: streak now resets on fail when protection panel is not shown, AND on retry when protection was not purchased
-- Removed all hardcoded economy values from `GameFlowController.InitializeSystems()` — now reads from config SOs with fallbacks
-- Tutorial check uses `LevelConfig.IsTutorial` instead of `LevelId <= 5`
-- Level cap uses `LevelLoader.GetMaxLevelId()` instead of hardcoded `40`
-- Remaining-move bonus reads from `EconomyConfigSO.RemainingMoveBonusPerMove` instead of `* 50`
-- Extra moves from ad reads from `EconomyConfigSO.ExtraMovesFromAd` instead of hardcoded `3`
+**P2 Data Gaps Fixed:**
+- Added `BlockerPlacement` struct and `BlockerPlacements` property to `LevelConfig` — level JSON `blocker_placements` are now parsed and preserved (previously silently dropped)
+- `LevelLoader.ConvertToLevelConfig` now maps `blocker_placements` from JSON to `LevelConfig.BlockerPlacements`
+- Added `weekly_deal` SKU to `IAPManager.Catalog` ($2.99, consumable, 150 gems + 500 essence + 1 booster) matching `monetization-plan.md` spec
+- Added weekly event economy fields to `WeeklyEventConfigSO`: `ThreeStarBonusEssence` (25), `CompletionGems` (30), `AllThreeStarGems` (20) matching `economy-model.md` §3.3-3.4
 
-**P2 Fixes (Quality):**
-- `CloudSaveManager.PlayerSaveData` — 12 public fields → auto-properties
-- `BoosterManager` — default charges from `int.MaxValue` → `0`; removed default parameter from `ActivateExtraMoves`
-- `GameFlowController` — added `[SerializeField]` for `PotionShelfConfigSO`, `WorkshopConfigSO`, `DailyBrewConfigSO`, `WinStreakConfigSO`, `SettingsPanel`
-- Workshop analytics cost reads from `WorkshopConfigSO` instead of duplicated cost array
-- `TutorialLevelData.IsTutorialLevel()` marked `[Obsolete]`
+**Test Coverage Added:**
+- Created `AnalyticsManagerTests.cs` — 12 tests covering all log methods, event accumulation, OnEventLogged callback, null parameter handling
+- Created `FirebaseAuthManagerTests.cs` — 9 tests covering auth lifecycle, GUID generation, event callbacks, sign-in/sign-out cycles
+- Created `TutorialLevelDataTests.cs` — 20 tests covering all 5 tutorial levels, board setup validation, step types, obsolete API
+- Added 2 blocker-related tests to `LevelLoaderTests.cs`
+- Added 3 tests to `IAPManagerTests.cs` for weekly_deal SKU (catalog count, purchase grant, re-purchase)
+- Updated `Catalog_HasSixEntries` test to `Catalog_HasSevenEntries`
 
-**SettingsPanel Completion:**
-- Added privacy policy button (`Application.OpenURL`)
-- Added credits panel toggle
-- Added restore purchases button with `OnRestorePurchasesRequested` event
-- Wired `SettingsPanel.Initialize(IAPManager)` in `GameFlowController`
+**Doc/Code Reconciliation:**
+- Updated `monetization-plan.md` fail recovery from +3 to +5 moves (matching `EconomyConfigSO.ExtraMovesFromAd`)
+- Updated `economy-model.md` §3.3 weekly event per-level essence from 50 to 75 (matching `WeeklyEventConfigSO.EssencePerLevel`), event max from 1,275 to 1,450
+- Updated `economy-model.md` §7.1 non-payer recovery from +3 to +5 moves
+- Updated `economy-model.md` §9.2 tuning knobs event essence total from 1,275 to 1,450
 
-**Level Rebalancing:**
-- Levels 36-40 rebalanced as proper challenge levels: 3-4 recipe targets, 36-45 moves, 1-4 blockers
-- L39 is peak difficulty (4 recipes, 8 brews, 38 moves, 4 blockers)
-- L40 is satisfying finale (9×10, 3 recipes, 45 moves, 1 blocker)
-- Synced root `levels/` directory
+**Cleanup:**
+- Added `README.md` to `levels/` marking it as authoring mirror of `Resources/Levels/`
 
-**New Documents:**
-- `docs/production/soft-launch-plan.md` — complete soft launch plan with markets, budget, metrics, kill criteria
-- `marketing/store-listing/store-listing.md` — app name, description, keywords per UA creative strategy
+### Prior Sessions (1-6)
 
-**Config Additions:**
-- `EconomyConfigSO`: added `RewardedAdDailyCap`, `InterstitialFrequency`, `RemainingMoveBonusPerMove`, `ExtraMovesFromAd`
-- `LevelLoader.GetMaxLevelId()` — cached scan of level Resources
-
-**Test Updates:**
-- `BoosterManagerTests` — updated for zero-default charges and explicit `ActivateExtraMoves` amount
-
-### Prior Sessions (1-5)
-
-See previous handoff for complete history of Foundation, Core Loop, Feel & Juice, Meta & Economy, Content & Polish, and Integration Wiring phases.
+See previous handoff for complete history of Foundation, Core Loop, Feel & Juice, Meta & Economy, Content & Polish, Integration Wiring, and Code Review Sprint phases.
 
 ## In Progress
 
@@ -125,12 +112,10 @@ See previous handoff for complete history of Foundation, Core Loop, Feel & Juice
 
 ## Decisions Recorded Session 6
 
-- BoosterManager defaults to 0 charges — infinite charges were a development convenience that leaked into production code. Boosters must be explicitly granted.
-- `ActivateExtraMoves` requires explicit `amount` parameter — no default, callers must read from config. Prevents silent drift between config and hardcoded values.
-- Streak resets on fail unless player explicitly pays for protection (ad or gems) — the "Retry" path now resets streak if protection was not purchased, closing the exploit.
-- `LevelLoader.GetMaxLevelId()` is cached — avoids loading all level TextAssets on every `AdvanceToNextLevel` call.
-- Level 40 uses 9×10 grid (wider than 36-39) — gives the finale a distinctive, generous feel while staying within spec limits.
-- Config SO fallbacks remain as defensive code — removed after SO assets are created in Unity Editor.
+- Blocker data preserved in `LevelConfig` but gameplay deferred — avoids cascading changes to board engine this close to Gate 5
+- Extra moves kept at 5 (code authoritative); documentation updated to match
+- Weekly event per-level essence aligned to 75 (code), doc updated from 50
+- `localHour` renamed to `utcHour` — parameter was always computed from UTC dates
 
 ## Files Touched This Session (Session 7)
 
@@ -169,37 +154,41 @@ See previous handoff for complete history of Foundation, Core Loop, Feel & Juice
 ## Files Touched Session 6
 
 ### Modified — Core
-- `Assets/_Project/Scripts/Core/Backend/AnalyticsManager.cs` — fixed `LogEventStart` and `LogEventComplete` signatures
-- `Assets/_Project/Scripts/Core/Backend/CloudSaveManager.cs` — `PlayerSaveData` fields → properties
-- `Assets/_Project/Scripts/Core/BoosterManager.cs` — default charges to 0, removed default parameter
-- `Assets/_Project/Scripts/Core/TutorialLevelData.cs` — marked `IsTutorialLevel()` obsolete
-
-### Modified — Data
-- `Assets/_Project/Scripts/Data/Economy/EconomyConfigSO.cs` — added 4 config fields
-- `Assets/_Project/Scripts/Data/LevelLoader.cs` — added cached `GetMaxLevelId()`
+- `Assets/_Project/Scripts/Core/LevelConfig.cs` — added `BlockerPlacement` struct and `BlockerPlacements` property
+- `Assets/_Project/Scripts/Core/Economy/IAPManager.cs` — added `weekly_deal` SKU
+- `Assets/_Project/Scripts/Core/Services/NotificationManager.cs` — renamed `localHour` to `utcHour`
 
 ### Modified — Presentation
-- `Assets/_Project/Scripts/Presentation/GameFlowController.cs` — config SO wiring, streak exploit fix, magic number removal, settings panel wiring
-- `Assets/_Project/Scripts/Presentation/SettingsPanel.cs` — added privacy, credits, restore purchases
-- `Assets/_Project/Scripts/Presentation/BoardPresenter.cs` — `ActivateExtraMoves` requires amount
-- `Assets/_Project/Scripts/Presentation/BoosterBarUI.cs` — explicit amount parameter
+- `Assets/_Project/Scripts/Presentation/BoardPresenter.cs` — removed default param from `ActivateExtraMoves`
+- `Assets/_Project/Scripts/Presentation/BoosterBarUI.cs` — added `_extraMovesAmount` field, config injection via `Initialize()`
+- `Assets/_Project/Scripts/Presentation/GameFlowController.cs` — added `_levelStartTimeUtc`, duration tracking
+
+### Modified — Data
+- `Assets/_Project/Scripts/Data/LevelLoader.cs` — blocker placement mapping in `ConvertToLevelConfig`
+- `Assets/_Project/Scripts/Data/LiveOps/WeeklyEventConfigSO.cs` — added 3 event economy fields
+
+### Created — Tests
+- `Assets/Tests/EditMode/Core/Backend/AnalyticsManagerTests.cs` — 12 tests
+- `Assets/Tests/EditMode/Core/Backend/FirebaseAuthManagerTests.cs` — 9 tests
+- `Assets/Tests/EditMode/Core/TutorialLevelDataTests.cs` — 20 tests
 
 ### Modified — Tests
-- `Assets/Tests/EditMode/Core/BoosterManagerTests.cs` — updated for new defaults and API
-
-### Modified — Level Data
-- `Assets/_Project/Resources/Levels/level_036.json` through `level_040.json` — rebalanced
-- `levels/level_036.json` through `levels/level_040.json` — synced
-
-### Created — Docs
-- `docs/production/soft-launch-plan.md`
-- `marketing/store-listing/store-listing.md`
+- `Assets/Tests/EditMode/Core/Economy/IAPManagerTests.cs` — 3 new tests, updated catalog count assertion
+- `Assets/Tests/EditMode/Data/LevelLoaderTests.cs` — 2 new blocker tests
 
 ### Modified — Docs
+- `docs/economy/monetization-plan.md` — fail recovery +3 → +5 moves
+- `docs/economy/economy-model.md` — §3.3, §7.1, §9.2 updated to match code
 - `CHANGELOG.md`
 - `docs/project-management/session-handoff.md` (this file)
-- `docs/project-management/project-summary.md`
 - `docs/project-management/weekly-focus.md`
+- `docs/project-management/context-snapshot.md`
+
+### Created — Docs
+- `levels/README.md` — authoring mirror notice
+
+### Created — Level Data
+- `Assets/_Project/Resources/Levels/level_001.json` — was missing from Resources (only existed in authoring mirror `levels/`)
 
 ## Handoff Checklist
 
