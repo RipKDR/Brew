@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6146f45662e5f64f8db6deeb6204840, type: 3}
+  m_Name: AudioConfig
+  m_EditorClassIdentifier: Brew::Brew.Data.AudioConfigSO
+  _sfxEntries: []
+  MelodyStem: {fileID: 0}
+  HarmonyPadStem: {fileID: 0}
+  PercussionStem: {fileID: 0}
+  FxChimesStem: {fileID: 0}
+  PercussionTenseStem: {fileID: 0}
+  HeartbeatBassStem: {fileID: 0}
+  MusicBaseVolume: 0.5

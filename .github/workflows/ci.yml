@@ -28,19 +28,20 @@ jobs:
 
       - name: Generate reference levels (if none exist)
         run: |
-          if [ ! -d levels ] || [ -z "$(ls -A levels/*.json 2>/dev/null)" ]; then
+          LEVELS_DIR="Assets/_Project/Resources/Levels"
+          if [ ! -d "$LEVELS_DIR" ] || [ -z "$(ls -A "$LEVELS_DIR"/*.json 2>/dev/null)" ]; then
             echo "No level files found — generating batch 1-40 for validation"
             python scripts/level-generator/generate_level.py \
               --batch-start 1 --batch-end 40 \
               --difficulty-curve --seed 42 \
-              --output-dir levels/
+              --output-dir "$LEVELS_DIR/"
           fi
 
       - name: Validate level files
         run: |
           FIREBASE_PROJECT_ID=ci-placeholder python scripts/build/build_config.py \
             --project-root . \
-            --levels-dir levels/ \
+            --levels-dir Assets/_Project/Resources/Levels/ \
             --level-range 1-40
 
   validate-economy:
@@ -125,6 +126,32 @@ jobs:
             --handoff-file docs/project-management/session-handoff.md \
             --adr-readme docs/adr/README.md \
             --max-handoff-age-days 14
+
+  unity-tests:
+    name: Unity EditMode Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: game-ci/unity-test-runner@v4
+        id: editmode-tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          testMode: EditMode
+          unityVersion: 6000.4.1f1
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: EditMode Test Results
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: editmode-test-results
+          path: ${{ steps.editmode-tests.outputs.artifactsPath }}
 
   lint:
     name: Lint & Code Quality
