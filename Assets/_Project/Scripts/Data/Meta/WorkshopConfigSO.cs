@@ -13,13 +13,13 @@ namespace Brew.Data
             new() { Name = "Repair the Workbench", EssenceCost = 200, Description = string.Empty },
             new() { Name = "Hang the Shelves", EssenceCost = 400, Description = string.Empty },
             new() { Name = "Install the Cauldron", EssenceCost = 600, Description = string.Empty },
-            new() { Name = "Stock the Herb Rack", EssenceCost = 1000, Description = string.Empty },
-            new() { Name = "Place the Star Map", EssenceCost = 1500, Description = string.Empty },
-            new() { Name = "Add the Crystal Array", EssenceCost = 2500, Description = string.Empty },
-            new() { Name = "Build the Distillery", EssenceCost = 4000, Description = string.Empty },
-            new() { Name = "Enchant the Windows", EssenceCost = 6000, Description = string.Empty },
-            new() { Name = "Summon the Familiar", EssenceCost = 8000, Description = string.Empty },
-            new() { Name = "Master's Flourish", EssenceCost = 12000, Description = string.Empty }
+            new() { Name = "Stock the Herb Rack", EssenceCost = 900, Description = string.Empty },
+            new() { Name = "Place the Star Map", EssenceCost = 1400, Description = string.Empty },
+            new() { Name = "Add the Crystal Array", EssenceCost = 2200, Description = string.Empty },
+            new() { Name = "Build the Distillery", EssenceCost = 3000, Description = string.Empty },
+            new() { Name = "Enchant the Windows", EssenceCost = 4500, Description = string.Empty },
+            new() { Name = "Summon the Familiar", EssenceCost = 6000, Description = string.Empty },
+            new() { Name = "Master's Flourish", EssenceCost = 9000, Description = string.Empty }
         };
 
         public WorkshopUpgradeEntry[] Upgrades => _upgrades;

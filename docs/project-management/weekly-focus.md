@@ -2,7 +2,7 @@
 
 > Short-horizon operational focus for the current week.
 > Update this document at least once per week and whenever priorities shift.
-> Week of: 2026-04-09
+> Week of: 2026-05-04
 
 ---
 

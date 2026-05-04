@@ -22,7 +22,7 @@ Brew uses a strict two-currency economy. No additional tokens, tickets, or event
 ```
 SOURCES                                         SINKS
 ─────────────────────                           ─────────────────────
-Level Completion (base)    ──┐                ┌── Workshop Upgrades (12 tiers, 36,350 total)
+Level Completion (base)    ──┐                ┌── Workshop Upgrades (12 tiers, 28,350 total)
   × Star Rating            │                │
   × Win Streak Multiplier  ├──► ESSENCE ◄───┤
 Daily Brew Reward          │    BALANCE     ├── Shake Booster (50 each)
@@ -129,13 +129,13 @@ Gem rewards from weekly events:
 | 3 | Repair the Workbench | 200 | 350 |
 | 4 | Hang the Shelves | 400 | 750 |
 | 5 | Install the Cauldron | 600 | 1,350 |
-| 6 | Stock the Herb Rack | 1,000 | 2,350 |
-| 7 | Place the Star Map | 1,500 | 3,850 |
-| 8 | Add the Crystal Array | 2,500 | 6,350 |
-| 9 | Build the Distillery | 4,000 | 10,350 |
-| 10 | Enchant the Windows | 6,000 | 16,350 |
-| 11 | Summon the Familiar | 8,000 | 24,350 |
-| 12 | Master's Flourish | 12,000 | 36,350 |
+| 6 | Stock the Herb Rack | 900 | 2,250 |
+| 7 | Place the Star Map | 1,400 | 3,650 |
+| 8 | Add the Crystal Array | 2,200 | 5,850 |
+| 9 | Build the Distillery | 3,000 | 8,850 |
+| 10 | Enchant the Windows | 4,500 | 13,350 |
+| 11 | Summon the Familiar | 6,000 | 19,350 |
+| 12 | Master's Flourish | 9,000 | 28,350 |
 
 ### 4.2 Booster Costs
 
@@ -196,15 +196,15 @@ Assumptions: average star rating of 2.2 stars/level, average Win Streak multipli
 
 ### 6.1 Workshop Completion Timeline
 
-Total Workshop cost: **36,350 Essence.**
+Total Workshop cost: **28,350 Essence.**
 
-| Player Type | Daily Essence (Net after ~1 booster/day) | Days to Complete Workshop |
+| Player Type | Daily Essence (Net after boosters) | Days to Complete Workshop |
 |-------------|----------------------------------------|--------------------------|
-| Casual (5 levels/day) | ~407 net | ~89 days |
-| Regular (10 levels/day) | ~1,007 net | ~36 days |
-| Hardcore (20 levels/day) | ~2,882 net | ~13 days |
+| Casual (5 levels/day) | ~350 net | ~81 days |
+| Regular (10 levels/day) | ~740 net | ~40 days |
+| Hardcore (20 levels/day) | ~2,300 net | ~12 days |
 
-**Target: 30–45 days for the regular player.** The regular player at 10 levels/day completes in ~36 days, centered in the target range.
+**Target: 30–45 days for the regular player.** The regular player at 10 levels/day, 0.7 win rate, 2-star average, streak-3 completes in ~40 days, centered in the target range.
 
 Casual players complete in ~3 months. This is acceptable — casual players have lower completion expectations, and workshop progress remains visible throughout.
 

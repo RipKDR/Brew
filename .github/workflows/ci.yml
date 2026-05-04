@@ -43,6 +43,8 @@ jobs:
             --project-root . \
             --levels-dir Assets/_Project/Resources/Levels/ \
             --level-range 1-40
+          echo "### Level Validation" >> $GITHUB_STEP_SUMMARY
+          echo "All levels 1–40 validated against schema." >> $GITHUB_STEP_SUMMARY
 
   validate-economy:
     name: Validate Economy Pacing
@@ -64,6 +66,8 @@ jobs:
             --star-average 2.0 \
             --win-rate 0.7 \
             --streak-average 3
+          echo "### Economy Simulation" >> $GITHUB_STEP_SUMMARY
+          echo "50-day pacing sim passed (regular non-payer, 10 levels/day)." >> $GITHUB_STEP_SUMMARY
 
   validate-docs:
     name: Validate Required Docs
@@ -130,6 +134,7 @@ jobs:
   unity-tests:
     name: Unity EditMode Tests
     runs-on: ubuntu-latest
+    if: ${{ secrets.UNITY_LICENSE != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -214,3 +219,44 @@ jobs:
             echo "  No sensitive files detected."
           fi
           exit $EXIT_CODE
+
+  check-secrets:
+    name: Required Secrets Present
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Warn on missing build secrets
+        env:
+          HAS_UNITY_LICENSE: ${{ secrets.UNITY_LICENSE != '' }}
+          HAS_ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+          HAS_ASC_KEY: ${{ secrets.ASC_KEY != '' }}
+        run: |
+          EXIT_CODE=0
+
+          check_secret() {
+            local name=$1
+            local present=$2
+            if [ "$present" = "true" ]; then
+              echo "  [OK]   $name"
+            else
+              echo "  [MISS] $name — build will fail if this PR targets a release"
+              EXIT_CODE=0  # warning only, non-blocking
+            fi
+          }
+
+          echo "Checking required CI secrets..."
+          check_secret "UNITY_LICENSE"           "$HAS_UNITY_LICENSE"
+          check_secret "ANDROID_KEYSTORE_BASE64" "$HAS_ANDROID_KEYSTORE"
+          check_secret "ASC_KEY"                 "$HAS_ASC_KEY"
+
+          echo ""
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "Secret check complete. Missing secrets are warnings only — they block build.yml, not ci.yml."
+          fi
+
+          echo "### Secret Presence Check" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret | Present |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| UNITY_LICENSE | $HAS_UNITY_LICENSE |" >> $GITHUB_STEP_SUMMARY
+          echo "| ANDROID_KEYSTORE_BASE64 | $HAS_ANDROID_KEYSTORE |" >> $GITHUB_STEP_SUMMARY
+          echo "| ASC_KEY | $HAS_ASC_KEY |" >> $GITHUB_STEP_SUMMARY

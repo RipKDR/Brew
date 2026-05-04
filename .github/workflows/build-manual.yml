@@ -1,0 +1,144 @@
+name: Brew Build (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_android:
+        description: 'Build Android'
+        type: boolean
+        default: true
+      build_ios:
+        description: 'Build iOS'
+        type: boolean
+        default: true
+      version:
+        description: 'Version override (e.g., 1.0.0)'
+        type: string
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  pre-build-checks:
+    name: Pre-Build Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Validate levels
+        run: |
+          python scripts/build/build_config.py \
+            --project-root . \
+            --levels-dir Assets/_Project/Resources/Levels/ \
+            --level-range 1-40
+
+      - name: Validate economy pacing
+        run: |
+          python scripts/economy-sim/simulate_economy.py \
+            --days 50 \
+            --levels-per-day 10 \
+            --star-average 2.0 \
+            --win-rate 0.7 \
+            --streak-average 3 \
+            --quiet
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(grep -oP 'bundleVersion:\s*\K\S+' ProjectSettings/ProjectSettings.asset)
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Building version: ${VERSION}"
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+  build-android:
+    name: Build Android
+    needs: pre-build-checks
+    if: ${{ inputs.build_android }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: Android
+          unityVersion: 6000.4.1f1
+          buildName: Brew
+          versioning: Custom
+          version: ${{ needs.pre-build-checks.outputs.version }}
+          androidAppBundle: true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-build-v${{ needs.pre-build-checks.outputs.version }}
+          path: build/Android
+          retention-days: 14
+
+  build-ios:
+    name: Build iOS
+    needs: pre-build-checks
+    if: ${{ inputs.build_ios }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: iOS
+          unityVersion: 6000.4.1f1
+          buildName: Brew
+          versioning: Custom
+          version: ${{ needs.pre-build-checks.outputs.version }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-v${{ needs.pre-build-checks.outputs.version }}
+          path: build/iOS
+          retention-days: 14
+
+  notify:
+    name: Build Summary
+    needs: [pre-build-checks, build-android, build-ios]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Print build summary
+        run: |
+          VERSION="${{ needs.pre-build-checks.outputs.version }}"
+          ANDROID="${{ needs.build_android.result }}"
+          IOS="${{ needs.build_ios.result }}"
+
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: v${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Android**: ${ANDROID:-skipped}" >> $GITHUB_STEP_SUMMARY
+          echo "- **iOS**: ${IOS:-skipped}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Artifacts are available in the Actions tab for 14 days." >> $GITHUB_STEP_SUMMARY

@@ -4,19 +4,48 @@ using UnityEngine.Serialization;
 
 namespace Brew.Data
 {
-    [CreateAssetMenu(fileName = "AudioConfig", menuName = "Brew/Config/Audio Config")]
-    public class AudioConfigSO : ScriptableObject
+    public interface IAudioConfigSO
     {
+        AudioClip MelodyClip { get; }
+        AudioClip HarmonyClip { get; }
+        AudioClip PercussionClip { get; }
+        AudioClip FxChimesClip { get; }
+        AudioClip PercussionTenseClip { get; }
+        AudioClip HeartbeatClip { get; }
+        global::System.Single MusicBaseVolume { get; }
+
+        global::System.Boolean TryGetSfxEntry(SfxId id, out AudioConfigSO.SfxEntry entry);
+    }
+
+
+    [CreateAssetMenu(fileName = "AudioConfig", menuName = "Brew/Config/Audio Config")]
+    public class AudioConfigSO : ScriptableObject, IAudioConfigSO
+
+    {
+        public interface ISfxEntry
+        {
+            System.Single BaseVolume { get; set; }
+        }
+
+        public interface ISfxEntry1
+        {
+            System.Single BaseVolume { get; set; }
+        }
+
         [Serializable]
-        public struct SfxEntry
+        public struct SfxEntry : ISfxEntry, ISfxEntry1
+
         {
             public SfxId Id;
             public AudioClip[] Clips;
-            [Range(0f, 1f)] public float BaseVolume = 1f;
+            [Range(0f, 1f)] private float baseVolume = 1f;
             [Tooltip("Random pitch offset range in semitones (±).")]
             public float PitchVariation;
             [Tooltip("Lower value = higher priority for voice stealing.")]
             public int Priority;
+
+            public global::System.Single BaseVolume { get => baseVolume; set => baseVolume = value; }
+
         }
 
         [SerializeField] private SfxEntry[] _sfxEntries;
