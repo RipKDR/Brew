@@ -2,7 +2,7 @@
 
 > Canonical continuity file for engineering and AI sessions.
 > Update this file at the end of every substantial work session.
-> Last updated: 2026-04-09 (Session 7)
+> Last updated: 2026-05-04
 
 ---
 
@@ -14,7 +14,7 @@
 
 ## Current Branch + Baseline
 
-- Branch: `master`
+- Branch: `cursor/audio-config-interface-extraction`
 - Baseline tag/commit: Not tagged yet
 - CI expectation: `validate-docs`, `validate-context`, `validate-levels`, `validate-economy`, `lint`, and `unity-tests` should pass
 
