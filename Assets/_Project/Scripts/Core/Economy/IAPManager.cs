@@ -17,7 +17,8 @@ namespace Brew.Core.Economy
             new IAPProduct("gem_700", IAPProductType.Consumable, "$9.99", 700, 0, 0, "Most Popular", -1),
             new IAPProduct("gem_1500", IAPProductType.Consumable, "$19.99", 1500, 0, 0, "Best Deal", -1),
             new IAPProduct("starter_bundle", IAPProductType.NonConsumable, "$1.99", 50, 500, 3, "Starter Bundle", 15),
-            new IAPProduct("no_ads", IAPProductType.NonConsumable, "$4.99", 0, 0, 0, string.Empty, -1)
+            new IAPProduct("no_ads", IAPProductType.NonConsumable, "$4.99", 0, 0, 0, string.Empty, -1),
+            new IAPProduct("weekly_deal", IAPProductType.Consumable, "$2.99", 150, 500, 1, "Weekly Deal", -1)
         };
 
         private readonly CurrencyManager _currency;

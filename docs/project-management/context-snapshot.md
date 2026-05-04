@@ -1,7 +1,8 @@
 # Brew — Context Snapshot
 
-> Generated: 2026-05-04
-> Session handoff updated: 2026-05-04
+> Generated: 2026-04-09 (Session 7 — Gate 5 Code Sprint)
+> Project summary updated: 2026-04-09
+> Session handoff updated: 2026-04-09
 
 ## Quick Resume
 
@@ -12,30 +13,73 @@
 
 ## Current Milestone Focus
 
-- Milestone: **Gate 5 — Soft Launch Readiness** — all code-side integration work complete. Awaiting Unity Editor + device testing.
-- Goal: Import Firebase/IAP/Ad SDKs in Unity, run EditMode tests, create ScriptableObjects, pass Gate 5 criteria
-- Source plan: `docs/production/mvp-build-plan.md`, meta plan at `.cursor/plans/brew_soft_launch_completion_4e5e47b0.plan.md`
+- Milestone: **Content & Polish (Weeks 9-10)** — Gate 5 code sprint complete, working toward Milestone Gate 5
+- Goal: Unity Editor testing, ScriptableObject asset creation, blocker gameplay implementation, Gate 5 verification
+- Source plan: `docs/production/mvp-build-plan.md`, `docs/prompts/05-week-9-10-content-and-polish.md`
 
 ## Next 3 Tasks
 
-1. **Import Firebase Unity SDK in Unity Editor.** Add EDM4U + Firebase packages. Add scripting defines: `FIREBASE_AUTH`, `FIREBASE_ANALYTICS`, `FIREBASE_REMOTE_CONFIG`, `FIREBASE_CRASHLYTICS`, `FIREBASE_FIRESTORE`. Run EditMode tests. Fix any compilation errors.
-2. **Create ScriptableObject assets in Unity.** `EconomyConfigSO`, `PotionShelfConfigSO`, `WorkshopConfigSO`, `DailyBrewConfigSO`, `WinStreakConfigSO`, `WeeklyEventConfigSO`, `NotificationConfigSO`. Assign all to `GameFlowController` inspector fields. Also add `UNITY_IAP` and `ADMOB` defines after importing those SDKs.
-3. **Full playthrough on device.** Campaign levels 1-5, event flow, daily brew, workshop upgrade, streak reset on fail. Verify Firebase Analytics events appear in DebugView. Verify Crashlytics dashboard is active.
+1. Open project in Unity Editor. Run all EditMode unit tests (now 31+ test files, ~400+ methods). Fix any compilation or test failures.
+2. Create ScriptableObject assets (EconomyConfigSO, PotionShelfConfigSO, WorkshopConfigSO, DailyBrewConfigSO, WinStreakConfigSO, WeeklyEventConfigSO, NotificationConfigSO). Assign to GameFlowController.
+3. Implement blocker gameplay in the board engine: add `Blocker` to `CellContentType`, handle in `BoardModel`/`ClusterDetector`/`CascadeResolver`/`BoardPresenter` — levels 36-40 now carry blocker data but gameplay logic is pending.
 
 ## Blockers / Risks
 
-- Blocker: Firebase SDK must be imported in Unity Editor before bridge classes compile with real implementations
-- Blocker: Unity IAP and AdMob SDKs must be imported before `UnityIAPBridge` / `AdMobBridge` compile with real implementations
-- Blocker: Gate 5 requires device matrix testing (8+ devices), app store asset creation (icon, screenshots, video)
-- Risk: `BoardPresenter.ActivateExtraMoves()` still has default parameter `amount = 5` — callers should pass `_economyConfig.ExtraMovesFromAd`
-- Risk: Firebase EDM4U may conflict with existing packages — test in a clean branch first
+- Blocker: Blocker gameplay NOT yet implemented — `LevelConfig.BlockerPlacements` data preserved but `CellContentType` has no `Blocker` variant; levels 36-40 play without blockers
+- Risk: Firebase SDK not yet imported — backend managers are pure C# abstractions
+- Risk: Unity IAP and AdMob SDKs not yet configured
+- Risk: `BoardPresenter.ActivateExtraMoves` no longer has a default parameter — unknown callers must be updated
+- Blocker: Gate 5 requires Unity Editor runtime testing
 
-## Decisions This Session (Sessions 8–9)
+## Decisions This Session
 
-- Workshop costs rebalanced (tiers 6-12 reduced; total 36,350 → 28,350) to match realistic earn rate of ~740 essence/day — non-payer completes in ~40 days, within 30-45 day target
-- `ConfigAssetGenerator.cs` committed — `Brew > Generate Config Assets` menu creates all Gate 5 SOs in one click
-- `bundleVersion` corrected to `1.0.0` — version validation now passes in CI
-- CI `deploy-ios` job hardened — `ExportOptions.plist` now referenced via `$GITHUB_WORKSPACE` absolute path
+- Blocker data preserved in `LevelConfig` but gameplay deferred — avoids cascading changes to board engine this close to Gate 5
+- Extra moves kept at 5 (code authoritative); documentation updated to match
+- Weekly event per-level essence aligned to 75 (code), doc updated from 50
+- `localHour` renamed to `utcHour` — parameter was always computed from UTC dates
+
+## Code Inventory
+
+### Core Layer (pure C#, zero Unity deps) — 36 files
+
+- Enums: IngredientColor, CellContentType, BoardPhase, LevelOutcome, BoosterType, CurrencyType, AdPlacement, EventState, NotificationType
+- Data types: CellContent, GridCoord, RecipeTarget, LevelConfig (updated: +BlockerPlacement, +BlockerPlacements), RecipeProgress, FusionResult, ChainFusionResult, GravityStep, TutorialLevelData, IAPProduct, PotionShelfMilestoneDefinition, DailyStreakBonusDefinition, PlayerSaveData, MilestoneDefinition
+- Logic: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver
+- Game systems: MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, BoosterManager
+- Economy: CurrencyManager, RewardCalculator, IAPManager (updated: +weekly_deal SKU)
+- Meta: PotionShelfManager, WorkshopManager, WinStreakTracker, DailyBrewManager
+- LiveOps: WeeklyEventManager
+- Services: NotificationManager (updated: utcHour param), INotificationScheduler
+- Ads: AdManager
+- Backend: FirebaseAuthManager, CloudSaveManager, RemoteConfigManager, AnalyticsManager
+
+### Data Layer — 16 files
+
+- BoardConfigSO, AudioConfigSO, ScreenShakeConfigSO
+- EconomyConfigSO, RemoteConfigDefaults
+- PotionShelfConfigSO, WorkshopConfigSO, WinStreakConfigSO, DailyBrewConfigSO
+- WeeklyEventConfigSO (updated: +3 event economy fields), NotificationConfigSO
+- SfxId, LevelLoader (updated: +blocker mapping), PlayerProgress, LocalSaveManager, SettingsManager
+
+### Presentation Layer — 29 files
+
+- BoardPresenter (updated: explicit extra-moves amount), InputController, TokenView, TokenAnimator
+- HudController, RecipeVialUI
+- LevelCompleteScreen, LevelFailScreen, LevelSelectScreen, LevelButton
+- GameFlowController (updated: +_levelStartTimeUtc, duration tracking)
+- AudioManager, AdaptiveAudioController, HapticManager
+- ScreenShakeController, ParticleManager, BrewAnimationController
+- TutorialController, TutorialOverlay
+- BoosterBarUI (updated: config-driven extra-moves amount), BoosterSlotUI, SettingsPanel
+- PotionShelfView, WorkshopView, DailyBrewUI
+- WalletUI, StoreUI, BoosterShopUI
+- WeeklyEventView
+
+### Tests — 31 files, ~400+ methods
+
+- New: AnalyticsManagerTests (12), FirebaseAuthManagerTests (9), TutorialLevelDataTests (20)
+- Updated: IAPManagerTests (+3 tests, catalog count assertion), LevelLoaderTests (+2 blocker tests)
+- Prior: BoardModelTests, ClusterDetectorTests, TokenSpawnerTests, FusionEngineTests, CascadeResolverTests, MoveTrackerTests, ScoreCalculatorTests, RecipeTrackerTests, WinLoseEvaluatorTests, BoosterManagerTests, CurrencyManagerTests, RewardCalculatorTests, AdManagerTests, PotionShelfManagerTests, WorkshopManagerTests, WinStreakTrackerTests, DailyBrewManagerTests, CloudSaveManagerTests, RemoteConfigManagerTests, WeeklyEventManagerTests, NotificationManagerTests, CurrencyFormatterTests, EventLevelLoaderTests, LevelConfigTests, BoardStateMachineTests, BoardPresenterTests
 
 ## ADR Summary
 
@@ -175,8 +219,7 @@
 
 ## Recent Git Commits
 
-- (pending) 2026-05-04 Gate 5 double-check: economy fix, version, build path, config generator, docs
-- 6369cf3 2026-05-04 Gate 5 workspace hardening: compile fix, missing level, infra, tests
-- 5787376 2026-05-04 Add workspace review design spec for Gate 5 improvement sprint
-- eaa9406 2026-04-10 Add manual build workflow for Android/iOS builds
-- c95a617 2026-04-09 Extract IAudioConfigSO interface and ISfxEntry from AudioConfigSO
+- (pending) 2026-04-09 Session 7 — Gate 5 code sprint: P1 bug fixes, blocker data, weekly_deal, test coverage, doc reconciliation
+- (pending) 2026-04-09 Week 10 code review sprint: fix P0/P1 bugs, rebalance levels 36-40, complete settings, soft launch prep
+- 3a197a9 2026-04-09 Wire event system integration, notification adapters, and harden test coverage for Gate 5
+- 722664d 2026-04-09 Add Week 9-10 systems: weekly events, notifications, CurrencyFormatter, event level templates

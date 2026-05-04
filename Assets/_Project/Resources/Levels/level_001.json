@@ -1,7 +1,7 @@
 {
   "level_id": 1,
-  "grid_width": 5,
-  "grid_height": 6,
+  "grid_width": 7,
+  "grid_height": 9,
   "grid_mask": [],
   "ingredient_pool": [
     "ember",
@@ -11,15 +11,15 @@
   "recipe_targets": [
     {
       "ingredient": "ember",
-      "count": 1
+      "count": 3
     }
   ],
-  "move_limit": 20,
+  "move_limit": 41,
   "blocker_placements": [],
   "star_thresholds": [
-    200,
-    400,
-    650
+    1120,
+    2240,
+    3584
   ],
   "is_tutorial": true,
   "tutorial_steps": []

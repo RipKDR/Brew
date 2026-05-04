@@ -6,26 +6,39 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 
 ## [Unreleased]
 
-### Fixed — Session 9 Double-Check Pass (2026-05-04)
+### Session 7 — Gate 5 Code Sprint
 
-- **Economy CI regression**: `simulate_economy.py` had two template-tag corruptions in working tree (lines 84/106) and a missing `total_levels_played = 0` initialisation — `validate-economy` job now passes clean
-- **Version format**: `ProjectSettings.asset bundleVersion` was `1.0` (not `major.minor.patch`) — changed to `1.0.0`; `validate-levels` now exits 0
-- **iOS export path**: `build.yml` referenced `ExportOptions.plist` from inside `build/iOS/` directory — changed to `$GITHUB_WORKSPACE/ExportOptions.plist`
-- **Workshop cost rebalance**: Tiers 6-12 reduced so non-payer completes workshop in ~40 days (target 30-45); old total 36,350 → 28,350. `WorkshopConfigSO.cs` defaults and `economy-model.md` updated consistently
-- **Editor utility committed**: `ConfigAssetGenerator.cs` (`Brew > Generate Config Assets` menu) was untracked — now committed; generates all Gate 5 ScriptableObject assets in one click
+#### Added
 
-### Added — Session 8 Workspace Hardening (2026-05-04)
+- **BlockerPlacement data**: `BlockerPlacement` struct and `BlockerPlacements` property on `LevelConfig`; `LevelLoader.ConvertToLevelConfig` now maps `blocker_placements` from level JSON (previously silently dropped)
+- **weekly_deal SKU**: Added to `IAPManager.Catalog` ($2.99 consumable — 150 gems + 500 essence + 1 booster) matching `monetization-plan.md`
+- **Weekly event economy fields**: `WeeklyEventConfigSO` gains `ThreeStarBonusEssence` (25), `CompletionGems` (30), `AllThreeStarGems` (20) per `economy-model.md` §3.3-3.4
+- **Level duration tracking**: `GameFlowController` records `_levelStartTimeUtc` on level/event start; passes real elapsed seconds to `LogLevelComplete` / `LogLevelFail` (was always 0)
+- **AnalyticsManagerTests**: 12 tests — all log methods, event accumulation, OnEventLogged callback, null parameter handling
+- **FirebaseAuthManagerTests**: 9 tests — auth lifecycle, GUID generation, event callbacks, sign-in/sign-out cycles
+- **TutorialLevelDataTests**: 20 tests — all 5 tutorial levels, board setup validation, step types, obsolete API
+- **LevelLoaderTests**: 2 new blocker-placement tests
+- **IAPManagerTests**: 3 new tests for weekly_deal SKU (catalog count, purchase grant, re-purchase)
+- **levels/README.md**: Marks `levels/` as the authoring mirror of `Resources/Levels/`
+- **level_001.json**: Copied to `Assets/_Project/Resources/Levels/` — was only present in authoring mirror, missing from Resources
 
-- **`level_001.json`**: Level 1 was missing from `Assets/_Project/Resources/Levels/`; all 40 levels now present and schema-valid
-- **`CLAUDE.md`**: Project-level CLAUDE.md added for AI session continuity and hard-rule enforcement
-- **`Fastfile` + `ExportOptions.plist`**: Required iOS build infrastructure that `build.yml` deploy-ios job references
-- **`GameFlowControllerTests.cs`**: 12 EditMode tests covering reward calculation, streak pipeline, ad caps, currency mutation, level-cap guard
-- **`BoardStateMachineIntegrationTests.cs`**: 10 integration tests for full board state machine cycle (Idle→…→CheckWin→Idle) with deterministic seeded board
-- **CI improvements**: `validate-levels` and `validate-economy` step summaries added; `check-secrets` job warns on missing `UNITY_LICENSE`/`ANDROID_KEYSTORE_BASE64`/`ASC_KEY`
+#### Fixed
 
-### Fixed — Session 8 Workspace Hardening
+- **P1: BoardPresenter.ActivateExtraMoves hardcoded 5**: Removed default parameter — now requires explicit amount from caller
+- **P1: BoosterBarUI hardcoded extra-moves amount**: Now accepts `extraMovesAmount` via `Initialize()` instead of literal 5
+- **P1: NotificationManager.ScheduleStreakAtRisk `localHour` misnomer**: Renamed to `utcHour` with XML doc clarifying UTC semantics
+- **P1: Level duration always 0**: `GameFlowController` now tracks real elapsed seconds between level start and complete/fail
+- **P2: blocker_placements silently dropped**: `LevelLoader` now parses and preserves blocker data in `LevelConfig`
+- **Doc drift: monetization-plan.md**: Fail recovery updated from +3 to +5 moves (matching `EconomyConfigSO.ExtraMovesFromAd`)
+- **Doc drift: economy-model.md §3.3**: Weekly event per-level essence updated from 50 to 75 (matching `WeeklyEventConfigSO.EssencePerLevel`), event max from 1,275 to 1,450
+- **Doc drift: economy-model.md §7.1**: Non-payer recovery updated from +3 to +5 moves
+- **Doc drift: economy-model.md §9.2**: Tuning knobs event essence total updated from 1,275 to 1,450
 
-- **`BrewSceneSetup.cs`**: Restored 4 missing `using` directives removed in uncommitted working-tree diff
+#### Changed
+
+- **IAPManagerTests**: `Catalog_HasSixEntries` renamed to `Catalog_HasSevenEntries` after weekly_deal addition
+- **BoosterBarUI**: `Initialize()` now takes config-driven extra-moves amount instead of using a constant
+- **GameFlowController**: Records `_levelStartTimeUtc` on level/event start for duration analytics
 
 ### Fixed — Week 10 Code Review Sprint
 
@@ -84,7 +97,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 - **Event Level Templates**: 7 event level templates in `levels/events/` (E1-E2 easy, E3-E5 medium, E6 hard, E7 boss) with 7x9 board, themed ingredient slot
 - **Analytics Expansion**: 6 new methods in `AnalyticsManager`: `LogEventStart`, `LogEventLevelComplete`, `LogEventComplete`, `LogEventRewardClaimed`, `LogNotificationScheduled`, `LogNotificationOpened`
 - **Remote Config**: 13 new keys for event system (event_active, event_id, event_name, event_end_timestamp, theme colors, ingredient ID, reward values)
-- **Tests**: `WeeklyEventManagerTests` (~18 methods), `NotificationManagerTests` (~15 methods), `CurrencyFormatterTests` (~12 methods)
+- **Tests**: `WeeklyEventManagerTests` (~~18 methods), `NotificationManagerTests` (~~15 methods), `CurrencyFormatterTests` (~12 methods)
 
 ### Changed — Content & Polish
 

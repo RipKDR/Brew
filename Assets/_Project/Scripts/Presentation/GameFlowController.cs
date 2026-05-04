@@ -54,6 +54,8 @@ namespace Brew.Presentation
         private bool _isPlayingEventLevel;
         private int _currentEventLevelIndex;
 
+        private DateTime _levelStartTimeUtc;
+
         private CurrencyManager _currencyManager;
         private RewardCalculator _rewardCalculator;
         private WinStreakTracker _winStreak;
@@ -258,6 +260,7 @@ namespace Brew.Presentation
                 _currencyManager.GetBalance(CurrencyType.Essence),
                 _currencyManager.GetBalance(CurrencyType.Gems));
 
+            _levelStartTimeUtc = DateTime.UtcNow;
             _analytics.LogEventStart(_weeklyEvent.EventId, _weeklyEvent.EventName);
         }
 
@@ -367,6 +370,7 @@ namespace Brew.Presentation
                 _currencyManager.GetBalance(CurrencyType.Gems));
             _hudController.UpdateStreakDisplay(_winStreak.CurrentStreak, _winStreak.CurrentMultiplier);
 
+            _levelStartTimeUtc = DateTime.UtcNow;
             _analytics.LogLevelStart(levelId);
         }
 
@@ -424,8 +428,9 @@ namespace Brew.Presentation
             _adManager.RecordLevelWin(_currentLevelConfig.IsTutorial);
             bool canDouble = _adManager.CanShowRewarded(AdPlacement.DoublePotionReward);
 
+            int durationSeconds = (int)(DateTime.UtcNow - _levelStartTimeUtc).TotalSeconds;
             _analytics.LogLevelComplete(_currentLevelConfig.LevelId, stars, score,
-                _boardPresenter.MoveTracker.MovesRemaining, 0);
+                _boardPresenter.MoveTracker.MovesRemaining, durationSeconds);
 
             _levelCompleteScreen.Show(score, bonus, stars, essenceEarned, streakMult, isNewPotion, canDouble);
 
@@ -497,7 +502,8 @@ namespace Brew.Presentation
             if (_isPlayingEventLevel)
             {
                 _isPlayingEventLevel = false;
-                _analytics.LogLevelFail(_currentLevelConfig.LevelId, 0, 0, false);
+                int eventFailDuration = (int)(DateTime.UtcNow - _levelStartTimeUtc).TotalSeconds;
+                _analytics.LogLevelFail(_currentLevelConfig.LevelId, 0, eventFailDuration, false);
                 _levelFailScreen.Show(false, false, 0);
                 return;
             }
@@ -514,9 +520,10 @@ namespace Brew.Presentation
                 _analytics.LogStreakUpdate(0, 1f, true);
             }
 
+            int failDurationSeconds = (int)(DateTime.UtcNow - _levelStartTimeUtc).TotalSeconds;
             _analytics.LogLevelFail(_currentLevelConfig.LevelId,
                 _currentLevelConfig.MoveLimit - _boardPresenter.MoveTracker.MovesRemaining,
-                0, false);
+                failDurationSeconds, false);
 
             _levelFailScreen.Show(canWatchAd, showStreakProtection, streakGemCost);
         }

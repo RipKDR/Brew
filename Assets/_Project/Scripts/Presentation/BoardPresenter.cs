@@ -164,9 +164,9 @@ namespace Brew.Presentation
             HapticManager.MediumImpact();
         }
 
-        public void ActivateExtraMoves(int amount = 5)
+        public void ActivateExtraMoves(int amount)
         {
-            if (_moveTracker == null) return;
+            if (_moveTracker == null || amount <= 0) return;
             _boosterManager.ActivateExtraMoves(_moveTracker, amount);
             HapticManager.LightImpact();
         }

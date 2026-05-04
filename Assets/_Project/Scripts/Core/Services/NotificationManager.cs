@@ -45,13 +45,17 @@ namespace Brew.Core.Services
             RecordScheduled(utcNow, NotificationType.DailyBrew);
         }
 
-        public void ScheduleStreakAtRisk(DateTime utcNow, bool hasPlayedToday, int currentStreak, int localHour = 20)
+        /// <summary>
+        /// Schedules a streak-at-risk notification. <paramref name="utcHour"/> is the hour
+        /// on the UTC calendar day (0-23) at which the notification fires.
+        /// </summary>
+        public void ScheduleStreakAtRisk(DateTime utcNow, bool hasPlayedToday, int currentStreak, int utcHour = 20)
         {
             if (hasPlayedToday) return;
             if (currentStreak <= 0) return;
             if (!CanSchedule(utcNow)) return;
 
-            var fireTime = utcNow.Date.AddHours(localHour);
+            var fireTime = utcNow.Date.AddHours(utcHour);
             if (fireTime <= utcNow)
                 fireTime = fireTime.AddDays(1);
 
