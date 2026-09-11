@@ -387,6 +387,8 @@
 
 > Full criteria defined in `milestone-gates.md`, Gate 5.
 
+Post-Gate-5 sequencing (Editor close-out, soft launch, live-ops, global) lives in [next-stages.md](next-stages.md).
+
 ---
 
 ## Appendix: Weekly Rhythm

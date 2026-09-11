@@ -11,6 +11,7 @@ namespace Brew.Core.Economy
     public sealed class UnityIAPBridge : IDetailedStoreListener
     {
         private readonly IAPManager _iapManager;
+        private readonly IapPendingOperations _pending = new();
         private IStoreController _storeController;
         private IExtensionProvider _extensions;
         private bool _initialized;
@@ -19,6 +20,8 @@ namespace Brew.Core.Economy
 
         public event Action OnInitialized;
         public event Action<string> OnInitializeFailed;
+        public event Action<string> OnPurchaseInitiated;
+        public event Action OnRestored;
 
         public UnityIAPBridge(IAPManager iapManager)
         {
@@ -41,33 +44,33 @@ namespace Brew.Core.Economy
             Debug.Log("[UnityIAPBridge] Initializing Unity IAP...");
         }
 
-        public void PurchaseProduct(string productId)
+        /// <summary>
+        /// Starts a store purchase, or queues it until initialization completes.
+        /// Returns true only when the store sheet was actually opened.
+        /// </summary>
+        public bool PurchaseProduct(string productId)
         {
-            if (!_initialized || _storeController == null)
+            var disposition = _pending.RequestPurchase(productId, CanPurchase);
+            if (disposition == IapPurchaseDisposition.Ignored)
+                return false;
+            if (disposition == IapPurchaseDisposition.Queued)
             {
-                Debug.LogWarning("[UnityIAPBridge] Store not initialized.");
-                return;
+                Debug.Log("[UnityIAPBridge] Purchase queued until store is ready.");
+                return false;
             }
 
-            var product = _storeController.products.WithID(productId);
-            if (product == null || !product.availableToPurchase)
-            {
-                Debug.LogWarning($"[UnityIAPBridge] Product {productId} not available.");
-                return;
-            }
-
-            _storeController.InitiatePurchase(product);
+            return TryInitiatePurchase(productId);
         }
 
         public void RestorePurchases()
         {
-            if (!_initialized) return;
-
-            var apple = _extensions?.GetExtension<IAppleExtensions>();
-            apple?.RestoreTransactions(result =>
+            if (_pending.RequestRestore(_initialized) == IapRestoreDisposition.Queued)
             {
-                Debug.Log($"[UnityIAPBridge] Restore result: {result}");
-            });
+                Debug.Log("[UnityIAPBridge] Restore queued until store is ready.");
+                return;
+            }
+
+            ExecuteRestore();
         }
 
         void IStoreListener.OnInitialized(IStoreController controller, IExtensionProvider extensions)
@@ -76,21 +79,9 @@ namespace Brew.Core.Economy
             _extensions = extensions;
             _initialized = true;
 
-            var ownedIds = new List<string>();
-            foreach (var product in IAPManager.Catalog)
-            {
-                if (product.Type == IAPProductType.NonConsumable)
-                {
-                    var storeProduct = controller.products.WithID(product.ProductId);
-                    if (storeProduct != null && storeProduct.hasReceipt)
-                        ownedIds.Add(product.ProductId);
-                }
-            }
-
-            if (ownedIds.Count > 0)
-                _iapManager.RestorePurchases(ownedIds.ToArray());
-
+            RestoreOwnedFromReceipts();
             OnInitialized?.Invoke();
+            FlushPending();
             Debug.Log("[UnityIAPBridge] Unity IAP initialized.");
         }
 
@@ -125,6 +116,76 @@ namespace Brew.Core.Economy
         {
             Debug.LogWarning($"[UnityIAPBridge] Purchase failed: {product.definition.id} — {failureDescription.message}");
         }
+
+        private bool CanPurchase => _initialized && _storeController != null;
+
+        private void FlushPending()
+        {
+            if (_pending.TryTakeRestore())
+                ExecuteRestore();
+
+            if (_pending.TryTakePurchase(out var productId))
+                TryInitiatePurchase(productId);
+        }
+
+        private bool TryInitiatePurchase(string productId)
+        {
+            if (!CanPurchase)
+            {
+                Debug.LogWarning("[UnityIAPBridge] Store not initialized.");
+                return false;
+            }
+
+            var product = _storeController.products.WithID(productId);
+            if (product == null || !product.availableToPurchase)
+            {
+                Debug.LogWarning($"[UnityIAPBridge] Product {productId} not available.");
+                return false;
+            }
+
+            _storeController.InitiatePurchase(product);
+            OnPurchaseInitiated?.Invoke(productId);
+            return true;
+        }
+
+        private void ExecuteRestore()
+        {
+            var apple = _extensions?.GetExtension<IAppleExtensions>();
+            if (apple != null)
+            {
+                apple.RestoreTransactions(result =>
+                {
+                    Debug.Log($"[UnityIAPBridge] Apple restore result: {result}");
+                    RestoreOwnedFromReceipts();
+                    OnRestored?.Invoke();
+                });
+                return;
+            }
+
+            // Google Play and other stores restore non-consumables via receipts at init.
+            RestoreOwnedFromReceipts();
+            OnRestored?.Invoke();
+        }
+
+        private void RestoreOwnedFromReceipts()
+        {
+            if (_storeController == null)
+                return;
+
+            var ownedIds = new List<string>();
+            foreach (var product in IAPManager.Catalog)
+            {
+                if (product.Type != IAPProductType.NonConsumable)
+                    continue;
+
+                var storeProduct = _storeController.products.WithID(product.ProductId);
+                if (storeProduct != null && storeProduct.hasReceipt)
+                    ownedIds.Add(product.ProductId);
+            }
+
+            if (ownedIds.Count > 0)
+                _iapManager.RestorePurchases(ownedIds.ToArray());
+        }
     }
 #else
     public sealed class UnityIAPBridge
@@ -134,6 +195,8 @@ namespace Brew.Core.Economy
 #pragma warning disable CS0067
         public event Action OnInitialized;
         public event Action<string> OnInitializeFailed;
+        public event Action<string> OnPurchaseInitiated;
+        public event Action OnRestored;
 #pragma warning restore CS0067
 
         public UnityIAPBridge(IAPManager iapManager)
@@ -144,7 +207,7 @@ namespace Brew.Core.Economy
 
         public void Initialize() { }
 
-        public void PurchaseProduct(string productId) { }
+        public bool PurchaseProduct(string productId) => false;
 
         public void RestorePurchases() { }
     }

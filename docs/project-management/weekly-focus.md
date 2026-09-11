@@ -8,37 +8,33 @@
 
 ## Primary Outcome
 
-Gate 5 soft-launch readiness. Stone blocker gameplay and mid-game deadlock recovery are implemented and hardened (init order, analytics, CI stone rules, config generator). Remaining work is Unity Editor verification (tests + ScriptableObjects + SDK import) and device playthrough.
+Gate 5 soft-launch readiness. Next-stage sequencing is documented (`docs/production/next-stages.md`). Deadlock recovery is `DeadlockResolver` with config-capped reshuffles. Store checkout no longer grants IAP locally (ADR 0005). Remaining work is Unity Editor verification (tests + ScriptableObjects + SDK import) and device playthrough.
 
 ## Must Complete This Week
 
-- [x] Document-first blocker reconciliation (core-mechanic, data-model, level-design-framework, ADR 0004)
-- [x] Implement `CellContentType.Stone` + stone factories
-- [x] Segment gravity around stones in `CascadeResolver`
-- [x] Place stones from level JSON; clear on orthogonal brew (both brew paths)
-- [x] Deadlock detect + recover on `TokenSpawner`; hook in `BoardPresenter` after CheckWin
-- [x] Fix adjacent stones in `level_037.json`
-- [x] Add `StoneGameplayTests` EditMode coverage
-- [x] Harden stone init order, deadlock analytics, CI stone rules, idempotent `ConfigAssetGenerator`
-- [ ] Run all EditMode unit tests in Unity Editor — fix any failures from stone/deadlock work
-- [ ] Create ScriptableObject assets (`Brew/Generate Config Assets` or batchmode) and assign to `GameFlowController`
+- [x] Document post-Gate-5 stages (A Editor close-out → B soft launch → C live-ops → D global)
+- [x] Extract `DeadlockResolver`; `BoardConfigSO.MaxReshuffles`; EditMode coverage
+- [x] Stop StoreUI from calling `CompletePurchase` on tap; route through `UnityIAPBridge`
+- [x] ADR 0005 + EditMode coverage for the checkout seam
+- [ ] Run all EditMode unit tests in Unity Editor — including `DeadlockResolverTests`, `StoreCheckoutTests`, and `StoneGameplayTests`
+- [ ] Create ScriptableObject assets (`Brew/Generate Config Assets`) and assign to `GameFlowController`
 - [ ] Import Firebase / Unity IAP / AdMob SDKs and set scripting defines
 
 ## Secondary Work
 
 - Begin app store asset preparation (icon, screenshots)
-- Implement `INotificationScheduler` platform adapters for iOS and Android
-- Full play session including stone levels (e.g. 16, 23, 36–40)
+- Align remaining IAP analytics names (`iap_purchase` → `iap_purchase_complete` / `_fail`)
+- Full play session including stone levels and a shop tap (no local gem grant)
 - Complete Gate 5 checklist items (5.5–5.15)
 
 ## Risks to Watch
 
-- Ice blockers still deferred (ADR 0004) — Depth-phase design assumed ice; soft launch uses stones + move pressure only
+- Without `UNITY_IAP`, Buy is a no-op — do not reintroduce Editor cheats
+- Ice blockers still deferred (ADR 0004)
 - Firebase / IAP / AdMob SDKs not imported — bridges remain no-ops without defines
-- Deadlock reshuffle is functionally correct but has no dedicated VFX yet
 - Unity EditMode suite not yet executed in this environment
 
 ## Owners
 
 - Engineering: Unity Editor test pass, SDK import, SO wiring
-- Product/Engineering: Gate 5 device checklist, store assets
+- Product/Engineering: Gate 5 device checklist, store assets; follow `docs/production/next-stages.md`

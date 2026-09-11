@@ -1,12 +1,12 @@
 # Brew — Context Snapshot
 
-> Generated: 2026-09-11 20:50 UTC
-> Project summary updated: 2026-04-09 (Session 6)
+> Generated: 2026-09-11 21:41 UTC
+> Project summary updated: 2026-09-11 (next-stages + DeadlockResolver + IAP checkout)
 > Session handoff updated: 2026-09-11
 
 ## Quick Resume
 
-- Branch: `cursor/stone-blockers-deadlock-bbef`
+- Branch: `cursor/next-stages-deadlock-iap-8f0e`
 - Canonical handoff: `docs/project-management/session-handoff.md`
 - ADR index: `docs/adr/README.md`
 - Changelog: `CHANGELOG.md`
@@ -14,28 +14,30 @@
 ## Current Milestone Focus
 
 - Milestone: **Gate 5 — Soft Launch Readiness**
-- Goal: Stone blockers + deadlock recovery are code-complete and hardened (init order, analytics, CI stone rules, idempotent config generator). Remaining Gate 5 work needs Unity Editor (SDK import, ScriptableObject assets, EditMode test run) and device playthrough.
-- Source plan: `docs/production/mvp-build-plan.md`
+- Goal: Next-stage sequencing is documented. Deadlock recovery is `DeadlockResolver` (config-capped reshuffles). Store checkout no longer grants currency locally (ADR 0005). Remaining Gate 5 work needs Unity Editor (SDK import, ScriptableObject assets, EditMode test run) and device playthrough.
+- Source plan: `docs/production/next-stages.md` (post-Gate-5 sequence), `docs/production/mvp-build-plan.md`
 
 ## Next 3 Tasks
 
-1. **Run EditMode tests in Unity Editor** (including `StoneGameplayTests` + new analytics test). Fix any compile/test failures.
-2. **Create ScriptableObject assets** via menu `Brew/Generate Config Assets` or batchmode executeMethod above; assign to `GameFlowController`. Import Firebase/IAP/AdMob SDKs + scripting defines.
-3. **Device playthrough** of levels with stones (16–40 subset): verify gravity, brew-clear, deadlock reshuffle UX; then Gate 5.5–5.15 checklist.
+1. **Run EditMode tests in Unity Editor** (including `DeadlockResolverTests`, `StoreCheckoutTests`, `StoneGameplayTests`). Fix any compile/test failures.
+2. **Create ScriptableObject assets** via `Brew/Generate Config Assets`; assign to `GameFlowController`. Import Firebase/IAP/AdMob SDKs + scripting defines.
+3. **Device playthrough** including shop tap (must open store sheet, must not mint Gems without payment) and stone levels 16–40; then Gate 5.5–5.15.
 
 ## Blockers / Risks
 
 - Blocker: Full Unity EditMode suite + SO assignment still require Unity Editor
 - Blocker: Firebase / Unity IAP / AdMob SDKs not imported (bridges compile as no-ops without defines)
-- Risk: Ice from level-design framework remains unimplemented (intentional per ADR 0004)
-- Risk: Deadlock reshuffle has no presentation juice yet (instant rebuild) — acceptable for soft launch correctness
+- Risk: Editor play without `UNITY_IAP` cannot complete a purchase by design (ADR 0005)
+- Risk: Ice blockers still deferred (ADR 0004)
+- Risk: `AnalyticsManager.LogIAPPurchase` still logs `iap_purchase` instead of `iap_purchase_complete` — Stage A follow-up in next-stages.md
 
 ## Decisions This Session
 
-- Soft-launch blockers are **stone-only**, cleared on **adjacent brew** (framework §12)
-- Stones must be placed **before** board populate so cluster guarantees remain valid
-- Deadlock recovery does **not** add a new `BoardPhase`; fires `board_reshuffle` analytics
-- CI rejects top-row and orthogonally adjacent stones
+- Post-Gate-5 work is sequenced in `docs/production/next-stages.md`; do not skip to levels 41–80 or localization before Gate 5 + soft launch
+- Store product taps never call `CompletePurchase` (ADR 0005)
+- `weekly_deal` stays in the catalog; weekly rotation gating is Stage C, not a SKU deletion
+- Deadlock shuffle retries come from `BoardConfigSO.MaxReshuffles`, not a magic number in engine logic
+- ADR 0004 remains stone-only blockers; post-Gate-5 sequencing lives in `next-stages.md`
 
 ## ADR Summary
 
@@ -45,8 +47,28 @@
 | 0002 | Offline-First Cloud Save | accepted | 2026-04-09 |
 | 0003 | Remote Config as Config Source | accepted | 2026-04-09 |
 | 0004 | Stone-Only Blockers for Soft Launch | accepted | 2026-09-11 |
+| 0005 | IAP Store Checkout Path | accepted | 2026-09-11 |
 
 ## Changelog (Unreleased)
+
+### Next stages + deadlock resolver + IAP checkout (2026-09-11)
+
+#### Added
+
+- **Next-stages roadmap**: `docs/production/next-stages.md` sequences Gate 5 close-out → soft launch → live-ops → global
+- **ADR 0005**: Store taps request purchases through `UnityIAPBridge`; `CompletePurchase` is fulfillment-only
+- **DeadlockResolver**: Pure-C# deadlock detection/recovery per core-mechanic.md §11; CheckWin hook in `BoardPresenter`
+- **BoardConfigSO.MaxReshuffles**: Configurable shuffle cap (default 10) before token regeneration
+- **StoreCheckout**: Pure-C# request seam + USD display parser for `iap_purchase_start`
+- **LogIAPPurchaseStart**: Typed analytics method matching `event-tracking-plan.md` `iap_purchase_start`
+- **DeadlockResolverTests**: empty-cluster reshuffle, orb/stone preservation, 10 failed shuffles then regen, win/lose skip
+
+#### Fixed
+
+- **P0: StoreUI granted IAP locally**: Product buttons called `IAPManager.CompletePurchase` on tap. They now fire `OnPurchaseRequested` → `UnityIAPBridge.PurchaseProduct`
+- **Settings/Store restore no-op**: `RestorePurchases(null)` returned immediately; restore now goes through `UnityIAPBridge.RestorePurchases`
+- **IAP Buy/Restore dropped during init**: queued via `IapPendingOperations` until the store is ready; Google Play restore re-scans receipts; `iap_purchase_start` only after the store sheet opens
+- **Deadlock shuffle cap was a magic 10** in `TokenSpawner`; retries now come from `BoardConfigSO.MaxReshuffles`
 
 ### Session 7 — Gate 5 Code Sprint
 
@@ -210,8 +232,8 @@
 
 ## Recent Git Commits
 
-- 80e348c 2026-09-11 feat: implement stone blockers and deadlock recovery for Gate 5
+- 9aa7a17 2026-09-11 Extract DeadlockResolver with config-capped reshuffles.
+- c9a62a7 2026-09-11 Document post-Gate-5 stages and stop local IAP grants from the shop.
+- aa8fd6a 2026-09-12 feat: Gate 5 stone blockers + deadlock recovery (hardened) (#6)
 - facfb69 2026-05-04 Merge pull request #5 from RipKDR/cursor/audio-config-interface-extraction
 - 7016c16 2026-05-04 Merge branch 'master' into cursor/audio-config-interface-extraction
-- 44e1992 2026-05-04 Merge pull request #4 from RipKDR/cursor/add-changelog-adr-session-handoff
-- 7ba19d6 2026-05-04 Merge branch 'master' into cursor/add-changelog-adr-session-handoff

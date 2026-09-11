@@ -206,5 +206,17 @@ namespace Brew.Tests.EditMode
             Assert.AreEqual(true, entry.parameters["recovered"]);
             Assert.AreEqual("deadlock", entry.parameters["reason"]);
         }
+
+        [Test]
+        public void LogIAPPurchaseStart_RecordsSkuPriceAndPlacement()
+        {
+            _manager.LogIAPPurchaseStart("gem_50", 0.99f, "shop");
+
+            var entry = _manager.GetEventLog()[0];
+            Assert.AreEqual("iap_purchase_start", entry.name);
+            Assert.AreEqual("gem_50", entry.parameters["sku"]);
+            Assert.AreEqual(0.99f, entry.parameters["price_usd"]);
+            Assert.AreEqual("shop", entry.parameters["placement"]);
+        }
     }
 }

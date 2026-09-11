@@ -60,6 +60,14 @@ namespace Brew.Core.Backend
                 { "receipt_valid", receiptValid }
             });
 
+        public void LogIAPPurchaseStart(string sku, float priceUsd, string placement) =>
+            LogEvent("iap_purchase_start", new Dictionary<string, object>
+            {
+                { "sku", sku ?? string.Empty },
+                { "price_usd", priceUsd },
+                { "placement", placement ?? string.Empty }
+            });
+
         public void LogAdRewarded(string placement, string rewardType) =>
             LogEvent("ad_rewarded", new Dictionary<string, object>
             {
