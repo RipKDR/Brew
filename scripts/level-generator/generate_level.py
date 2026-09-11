@@ -87,15 +87,23 @@ def calculate_star_thresholds(moves: int, recipe: list[dict]) -> list[int]:
 
 
 def generate_blockers(width: int, height: int, chance: float) -> list[dict]:
+    """Place stones with soft-launch constraints: no top row, no orthogonal adjacency."""
     if chance <= 0:
         return []
-    blockers = []
-    margin = 1  # keep edges clear
-    for r in range(margin, height - margin):
-        for c in range(margin, width - margin):
-            if random.random() < chance * 0.1:
-                blockers.append({"row": r, "col": c, "type": "stone"})
+    blockers: list[dict] = []
+    occupied: set[tuple[int, int]] = set()
+    # row 0 is top — never place stones there (blocks refill entry)
+    for r in range(1, height - 1):
+        for c in range(1, width - 1):
+            if random.random() >= chance * 0.1:
+                continue
+            neighbors = {(r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)}
+            if occupied & neighbors:
+                continue
+            occupied.add((r, c))
+            blockers.append({"row": r, "col": c, "type": "stone"})
     return blockers
+
 
 
 def validate_level(level: dict) -> list[str]:
@@ -120,6 +128,21 @@ def validate_level(level: dict) -> list[str]:
     stars = level["star_thresholds"]
     if len(stars) != 3 or stars != sorted(stars):
         errors.append(f"star_thresholds must be 3 ascending values, got {stars}")
+
+    blockers = level.get("blocker_placements") or []
+    stones = []
+    for b in blockers:
+        if str(b.get("type", "")).lower() != "stone":
+            continue
+        row, col = int(b["row"]), int(b["col"])
+        if row <= 0:
+            errors.append(f"stone at ({row},{col}) cannot be in top row")
+        stones.append((row, col))
+    stone_set = set(stones)
+    for row, col in stone_set:
+        if (row, col + 1) in stone_set or (row + 1, col) in stone_set:
+            errors.append(f"adjacent stones near ({row},{col})")
+
     return errors
 
 

@@ -13,7 +13,7 @@ Designed for CI integration.
 
 Usage:
     python build_config.py
-    python build_config.py --levels-dir levels/ --level-range 1-40
+    python build_config.py --levels-dir Assets/_Project/Resources/Levels/ --level-range 1-40
 """
 
 from __future__ import annotations
@@ -107,6 +107,45 @@ def check_env_vars() -> CheckResult:
     return result
 
 
+
+def validate_stone_placements(data: dict, filename: str, result: "CheckResult") -> None:
+    """Enforce soft-launch stone rules: no top-row stones, no orthogonal adjacency."""
+    blockers = data.get("blocker_placements") or []
+    if not isinstance(blockers, list):
+        result.fail(f"{filename}: blocker_placements must be a list")
+        return
+
+    stones = []
+    for i, b in enumerate(blockers):
+        if not isinstance(b, dict):
+            result.fail(f"{filename}: blocker_placements[{i}] must be an object")
+            continue
+        btype = str(b.get("type", "")).lower()
+        if btype != "stone":
+            continue
+        try:
+            row = int(b["row"])
+            col = int(b["col"])
+        except (KeyError, TypeError, ValueError):
+            result.fail(f"{filename}: stone blocker missing integer row/col at index {i}")
+            continue
+        if row <= 0:
+            result.fail(f"{filename}: stone at ({row},{col}) is in top row (row must be > 0)")
+        stones.append((row, col))
+
+    stone_set = set(stones)
+    if len(stone_set) != len(stones):
+        result.fail(f"{filename}: duplicate stone coordinates")
+
+    for row, col in stone_set:
+        for dr, dc in ((0, 1), (1, 0)):
+            neighbor = (row + dr, col + dc)
+            if neighbor in stone_set:
+                result.fail(
+                    f"{filename}: adjacent stones at ({row},{col}) and {neighbor}"
+                )
+
+
 def check_level_files(levels_dir: Path, level_start: int, level_end: int) -> CheckResult:
     result = CheckResult(f"Level Files ({level_start}-{level_end})")
 
@@ -177,6 +216,8 @@ def check_level_files(levels_dir: Path, level_start: int, level_end: int) -> Che
                     f"{jf.name}: recipe ingredient '{target.get('ingredient')}' "
                     f"not in pool"
                 )
+
+        validate_stone_placements(data, jf.name, result)
 
         valid_count += 1
 
@@ -303,7 +344,7 @@ def main(argv: list[str] | None = None) -> int:
         "--levels-dir",
         type=str,
         default=None,
-        help="Level JSON directory (default: <project-root>/levels/)",
+        help="Level JSON directory (default: <project-root>/Assets/_Project/Resources/Levels/)",
     )
     parser.add_argument(
         "--level-range",
@@ -314,7 +355,11 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     root = Path(args.project_root).resolve()
-    levels_dir = Path(args.levels_dir) if args.levels_dir else root / "levels"
+    levels_dir = (
+        Path(args.levels_dir)
+        if args.levels_dir
+        else root / "Assets/_Project/Resources/Levels"
+    )
 
     start_str, end_str = args.level_range.split("-", 1)
     level_start, level_end = int(start_str), int(end_str)

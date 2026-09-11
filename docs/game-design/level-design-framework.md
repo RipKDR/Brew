@@ -371,18 +371,22 @@ Cross (L34)          Diamond (L36)      Hourglass (L38)
 
 ## 12. Blocker Tile Specifications
 
+> **Soft-launch scope:** Only **Stone** is implemented and authored in shipping level JSON. Ice remains specified here for post soft-launch content; do not author ice placements until the ice overlay is implemented (ADR 0004).
+
 ### Stone
 
 - **Visual**: Grey rock filling the cell
-- **Behavior**: Occupies a cell permanently until cleared. Tokens cannot occupy this cell. Tokens fall around it (gravity skips stone cells).
-- **Clearing**: When any Brew Orb adjacent (4-directional) to a Stone tile triggers a brew, the Stone is destroyed. One brew clears one Stone.
+- **Behavior**: Occupies a cell permanently until cleared. Tokens cannot occupy this cell. Tokens fall around it (gravity skips stone cells; column segments between stones resolve independently).
+- **Clearing**: When any Brew Orb adjacent (4-directional) to a Stone tile triggers a brew, the Stone is destroyed. One brew clears all orthogonally adjacent Stones to that brew cell.
 - **Placement rules**: Never in the top row (would block token entry). Never adjacent to another Stone (prevents impossible clusters). Maximum 4 per level in Expansion, 6 in Mastery.
+- **JSON**: `{ "type": "stone", "row": N, "col": N }` (no `hp` field).
 
-### Ice
+### Ice (post soft-launch)
 
 - **Visual**: Frosted crystal overlay on a normal token
 - **Behavior**: The token underneath is visible but locked — it cannot participate in cluster detection or be tapped. After any fusion occurs in an adjacent cell (4-directional), the ice cracks and is removed at the start of the next turn. The token is then free.
 - **Placement rules**: Never on more than 2 tokens of the same color (prevents recipe-color starvation). Never in corners (too hard to reach). Maximum 4 per level.
+- **Status**: Spec only for soft launch — not loaded into gameplay.
 
 ---
 

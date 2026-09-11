@@ -4,6 +4,7 @@ namespace Brew.Core
     {
         Empty = 0,
         Token = 1,
-        Orb = 2
+        Orb = 2,
+        Stone = 3
     }
 }

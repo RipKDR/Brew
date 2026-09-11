@@ -56,6 +56,12 @@ namespace Brew.Presentation
         public event Action OnResolutionComplete;
         public event Action<LevelOutcome> OnLevelOutcome;
 
+        /// <summary>Fired after an automatic deadlock reshuffle. Argument is recovery success.</summary>
+        public event Action<bool> OnDeadlockRecovered;
+
+        /// <summary>Fired when brew clears one or more adjacent stones. Argument is cleared cells.</summary>
+        public event Action<IReadOnlyList<GridCoord>> OnStonesCleared;
+
         private void Start()
         {
             if (_currentLevel == null)
@@ -106,6 +112,8 @@ namespace Brew.Presentation
             _tokenPool = new ObjectPool<TokenView>(_tokenPrefab, _tokenContainer, _board.CellCount);
 
             CalculateBoardOrigin();
+            // Stones first so PopulateBoard fills around them and can guarantee valid clusters.
+            PlaceStoneBlockers(levelConfig);
             _spawner.PopulateBoard(_board);
             RebuildAllViews();
 
@@ -315,6 +323,19 @@ namespace Brew.Presentation
 
             if (outcome == LevelOutcome.InProgress)
             {
+                if (_spawner.IsDeadlocked(_board))
+                {
+                    bool recovered = _spawner.TryRecoverDeadlock(_board);
+                    if (!recovered)
+                    {
+                        // Last-resort second pass: clear tokens again and repopulate.
+                        recovered = _spawner.TryRecoverDeadlock(_board);
+                    }
+
+                    RebuildAllViews();
+                    OnDeadlockRecovered?.Invoke(recovered);
+                }
+
                 _stateMachine.TransitionTo(BoardPhase.PlayerInput);
             }
 
@@ -342,6 +363,7 @@ namespace Brew.Presentation
                 yield return AnimateFusion(fusion);
             }
 
+            NotifyStonesCleared(StoneClearer.ClearAdjacentStones(_board, fusion.OrbCell));
             _board.SetCell(fusion.OrbCell, CellContent.Empty);
             RebuildAllViews();
         }
@@ -372,11 +394,13 @@ namespace Brew.Presentation
 
                     if (chainResult.TriggeredBrew)
                     {
-                        var color = _board.GetCell(chainResult.SurvivorCell).Color;
+                        var brewCell = chainResult.SurvivorCell;
+                        var color = _board.GetCell(brewCell).Color;
                         bool isTarget = _recipeTracker.IsTargetColor(color);
                         _scoreCalculator.OnBrew(isTarget);
                         _recipeTracker.OnBrew(color);
-                        _board.SetCell(chainResult.SurvivorCell, CellContent.Empty);
+                        NotifyStonesCleared(StoneClearer.ClearAdjacentStones(_board, brewCell));
+                        _board.SetCell(brewCell, CellContent.Empty);
                     }
                 }
                 safety++;
@@ -446,18 +470,54 @@ namespace Brew.Presentation
             var cell = _board.GetCell(coord);
             if (cell.IsEmpty) return;
 
+            var displayColor = GetCellDisplayColor(cell);
+
             if (_activeViews.TryGetValue(coord, out var existing))
             {
-                existing.UpdateVisual(cell, GetDisplayColor(cell.Color));
+                existing.UpdateVisual(cell, displayColor);
                 existing.transform.position = GridToWorld(coord);
                 return;
             }
 
             var view = _tokenPool.Get();
-            view.Initialize(coord, cell, GetDisplayColor(cell.Color), _boardConfig.CellSize);
+            view.Initialize(coord, cell, displayColor, _boardConfig.CellSize);
             view.transform.position = GridToWorld(coord);
             view.SetSortingOrder(coord.Row * _board.Width + coord.Col);
             _activeViews[coord] = view;
+        }
+
+        private void PlaceStoneBlockers(LevelConfig levelConfig)
+        {
+            foreach (var placement in levelConfig.BlockerPlacements)
+            {
+                if (!string.Equals(placement.Type, "stone", System.StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var coord = new GridCoord(placement.Col, placement.Row);
+                if (!_board.InBounds(coord))
+                    continue;
+
+                // Soft-launch placement rules: never top row (blocks spawns).
+                if (coord.Row <= 0)
+                    continue;
+
+                _board.SetCell(coord, CellContent.Stone);
+            }
+        }
+
+        private void NotifyStonesCleared(List<GridCoord> cleared)
+        {
+            if (cleared == null || cleared.Count == 0)
+                return;
+
+            OnStonesCleared?.Invoke(cleared);
+        }
+
+        private static Color GetCellDisplayColor(CellContent cell)
+        {
+            if (cell.IsStone)
+                return new Color(0.45f, 0.45f, 0.48f); // grey stone placeholder
+            return GetDisplayColor(cell.Color);
         }
 
         private void CalculateBoardOrigin()

@@ -37,4 +37,5 @@ Each ADR should include:
 | 0001 | Canonical Unity Version | accepted | 2026-04-09 | [0001-canonical-unity-version.md](0001-canonical-unity-version.md) |
 | 0002 | Offline-First Cloud Save | accepted | 2026-04-09 | [0002-offline-first-cloud-save.md](0002-offline-first-cloud-save.md) |
 | 0003 | Remote Config as Config Source | accepted | 2026-04-09 | [0003-remote-config-as-config-source.md](0003-remote-config-as-config-source.md) |
+| 0004 | Stone-Only Blockers for Soft Launch | accepted | 2026-09-11 | [0004-stone-only-blockers-soft-launch.md](0004-stone-only-blockers-soft-launch.md) |
 

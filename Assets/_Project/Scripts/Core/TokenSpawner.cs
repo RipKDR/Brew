@@ -5,10 +5,13 @@ namespace Brew.Core
 {
     /// <summary>
     /// Populates the board with tokens while avoiding pre-made clusters.
+    /// Also handles mid-game deadlock detection and recovery (core-mechanic.md §11).
     /// Pure C# — no Unity dependencies. Uses injectable System.Random for testability.
     /// </summary>
     public sealed class TokenSpawner
     {
+        private const int MaxReshuffleAttempts = 10;
+
         private static readonly IngredientColor[] AllColors =
         {
             IngredientColor.Ember,
@@ -32,6 +35,7 @@ namespace Brew.Core
 
         /// <summary>
         /// Fills all empty cells in the board with tokens, avoiding clusters >= maxClusterAtSpawn.
+        /// Stones and orbs already on the board are preserved.
         /// Per core-mechanic.md §10.4, max initial cluster size is 5 (no free brews at start).
         /// </summary>
         public void PopulateBoard(BoardModel board, int maxClusterAtSpawn = 5)
@@ -68,6 +72,52 @@ namespace Brew.Core
         public void FillCell(BoardModel board, GridCoord coord)
         {
             board.SetCell(coord, CellContent.Token(GenerateRandomColor()));
+        }
+
+        /// <summary>
+        /// True when the board has no token cluster ≥ 3 and no orb chain group ≥ 2.
+        /// Stones do not create plays by themselves. Per core-mechanic.md §11.1.
+        /// </summary>
+        public bool IsDeadlocked(BoardModel board)
+        {
+            var detector = new ClusterDetector(board);
+            if (detector.FindAllClusters(minClusterSize: 3).Count > 0)
+                return false;
+            if (detector.FindAllOrbChainGroups().Count > 0)
+                return false;
+            return true;
+        }
+
+        /// <summary>
+        /// Attempts to recover from a deadlock by reshuffling token colors in place
+        /// (orbs and stones stay fixed). Falls back to regenerating all tokens while
+        /// preserving orbs/stones. Returns true if a playable board was produced.
+        /// </summary>
+        public bool TryRecoverDeadlock(BoardModel board)
+        {
+            for (int attempt = 0; attempt < MaxReshuffleAttempts; attempt++)
+            {
+                Reshuffle(board);
+                if (!IsDeadlocked(board))
+                    return true;
+            }
+
+            ClearTokensPreserveOrbsAndStones(board);
+            PopulateBoard(board);
+            return !IsDeadlocked(board);
+        }
+
+        private static void ClearTokensPreserveOrbsAndStones(BoardModel board)
+        {
+            for (int c = 0; c < board.Width; c++)
+            {
+                for (int r = 0; r < board.Height; r++)
+                {
+                    var coord = new GridCoord(c, r);
+                    if (board.GetCell(coord).IsToken)
+                        board.SetCell(coord, CellContent.Empty);
+                }
+            }
         }
 
         private IngredientColor ChooseColorAvoidingClusters(BoardModel board, GridCoord coord)

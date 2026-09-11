@@ -172,12 +172,11 @@ All timestamps are ISO 8601 / UTC. All IDs are lowercase alphanumeric with under
   // Constraints
   "move_limit": 25,
 
-  // Blockers (pre-placed obstacles)
+  // Blockers (pre-placed obstacles). Soft-launch ships stone-only.
+  // Schema matches Resources/Levels JSON: { type, row, col } — no hp field.
   "blocker_placements": [
-    { "type": "ice", "x": 3, "y": 2, "hp": 1 },
-    { "type": "ice", "x": 4, "y": 2, "hp": 2 },
-    { "type": "stone", "x": 2, "y": 7, "hp": 1 },
-    { "type": "stone", "x": 5, "y": 7, "hp": 1 }
+    { "type": "stone", "row": 2, "col": 1 },
+    { "type": "stone", "row": 3, "col": 4 }
   ],
 
   // Initial board state (optional — if omitted, board is randomly generated)
@@ -208,14 +207,15 @@ All timestamps are ISO 8601 / UTC. All IDs are lowercase alphanumeric with under
 }
 ```
 
-### Blocker Types (MVP)
+### Blocker Types
 
+| Type    | Soft-launch | Behavior                                                                                                                                 | HP  |
+| ------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| `stone` | **Yes**     | Occupies a cell. Immovable. Gravity falls around it. Cleared when an orthogonally adjacent brew resolves (level-design-framework §12). | n/a |
+| `ice`   | Post-MVP    | Covers a token. Adjacent fusions crack ice. Token underneath revealed when destroyed.                                                    | 1–2 |
+| `lock`  | Post-MVP    | Locks a token in place (cannot fall due to gravity). Destroyed by including the locked token in a fusion.                                | 1   |
 
-| Type    | Behavior                                                                                                         | HP  |
-| ------- | ---------------------------------------------------------------------------------------------------------------- | --- |
-| `ice`   | Covers a token. Adjacent fusions crack ice (1 HP per adjacent fusion). Token underneath revealed when destroyed. | 1–2 |
-| `stone` | Occupies a cell. Cannot be fused. Destroyed by adjacent fusions.                                                 | 1–3 |
-| `lock`  | Locks a token in place (cannot fall due to gravity). Destroyed by including the locked token in a fusion.        | 1   |
+Soft-launch level JSON must not author `ice` or `lock`. See ADR 0004.
 
 
 ---
