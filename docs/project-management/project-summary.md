@@ -1,7 +1,7 @@
 # Brew — Project Summary
 
 > **Living document.** Updated as decisions are made, milestones are reached, and blockers emerge.
-> Last updated: 2026-09-11 (next-stages + IAP checkout)
+> Last updated: 2026-09-11 (next-stages + DeadlockResolver + IAP checkout)
 
 ---
 
@@ -11,7 +11,7 @@
 | Field         | Value                                                                                                                                               |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Project**   | Brew — Mobile Puzzle Game                                                                                                                           |
-| **Status**    | Gate 5 — Soft Launch Readiness. Stone blockers + deadlock recovery code-complete. Store checkout no longer grants locally. Remaining: Unity Editor SDK/SO/device. |
+| **Status**    | Gate 5 — Soft Launch Readiness. Stones (ADR 0004), `DeadlockResolver`, store checkout without local grants (ADR 0005). Remaining: Unity Editor SDK/SO/device. |
 | **Pitch**     | *"Tap clusters to fuse ingredients into glowing orbs. Chain orbs together to brew potions. Craft every recipe before you run out of moves."*        |
 | **Platforms** | iOS (15+), Android (8.0+) — portrait only                                                                                                           |
 | **Engine**    | Unity 6 (6000.1 LTS), C#                                                                                                                            |
@@ -149,6 +149,7 @@ See [Milestone Gates](../production/milestone-gates.md) for per-milestone go/no-
 | 2026-09-11 | Stone-only blockers for soft launch (ADR 0004) | Late levels already authored with stones; ice deferred | Engineering |
 | 2026-09-11 | Store taps request IAP via UnityIAPBridge (ADR 0005) | Local CompletePurchase on tap was an exploit; fulfillment stays on store callback | Engineering |
 | 2026-09-11 | Post-Gate-5 work sequenced in next-stages.md | MVP 10-week plan ends at Gate 5; live-ops and global need an explicit follow-on | Product |
+| 2026-09-11 | Deadlock recovery is DeadlockResolver; MaxReshuffles on BoardConfigSO | core-mechanic.md §11; no magic 10 in engine logic; win/lose skip reshuffle | Engineering |
 
 
 ---

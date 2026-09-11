@@ -12,6 +12,7 @@ namespace Brew.Tests.EditMode.Core
         private TokenSpawner _spawner;
         private CascadeResolver _resolver;
         private ClusterDetector _detector;
+        private DeadlockResolver _deadlock;
 
         [SetUp]
         public void SetUp()
@@ -20,6 +21,7 @@ namespace Brew.Tests.EditMode.Core
             _spawner = new TokenSpawner(new Random(42));
             _resolver = new CascadeResolver(_board, _spawner);
             _detector = new ClusterDetector(_board);
+            _deadlock = new DeadlockResolver(_spawner, maxReshuffles: 10);
         }
 
         [Test]
@@ -135,7 +137,7 @@ namespace Brew.Tests.EditMode.Core
             // Checkerboard-ish tokens with no 3-group, no orbs.
             FillCheckerboardNoClusters();
 
-            Assert.IsTrue(_spawner.IsDeadlocked(_board));
+            Assert.IsTrue(_deadlock.IsDeadlocked(_board));
         }
 
         [Test]
@@ -146,7 +148,7 @@ namespace Brew.Tests.EditMode.Core
             _board.SetCell(new GridCoord(2, 0), CellContent.Token(IngredientColor.Ember));
             FillRemainingWithAlternating();
 
-            Assert.IsFalse(_spawner.IsDeadlocked(_board));
+            Assert.IsFalse(_deadlock.IsDeadlocked(_board));
         }
 
         [Test]
@@ -161,11 +163,11 @@ namespace Brew.Tests.EditMode.Core
             Assert.IsTrue(_board.GetCell(stone).IsStone);
             Assert.IsTrue(_board.GetCell(orb).IsOrb);
 
-            Assert.IsTrue(_spawner.IsDeadlocked(_board));
-            bool recovered = _spawner.TryRecoverDeadlock(_board);
+            Assert.IsTrue(_deadlock.IsDeadlocked(_board));
+            var result = _deadlock.TryRecover(_board, LevelOutcome.InProgress);
 
-            Assert.IsTrue(recovered);
-            Assert.IsFalse(_spawner.IsDeadlocked(_board));
+            Assert.IsTrue(result.Recovered);
+            Assert.IsFalse(_deadlock.IsDeadlocked(_board));
             Assert.IsTrue(_board.GetCell(stone).IsStone);
             Assert.IsTrue(_board.GetCell(orb).IsOrb);
             Assert.AreEqual(IngredientColor.Frost, _board.GetCell(orb).Color);

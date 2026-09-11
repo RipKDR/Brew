@@ -19,4 +19,5 @@ MonoBehaviour:
   _minClusterSize: 3
   _brewThreshold: 6
   _maxCascadeWaves: 20
+  _maxReshuffles: 10
   _availableColors: 0000000001000000020000000300000004000000

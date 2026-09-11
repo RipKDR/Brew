@@ -6,19 +6,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 
 ## [Unreleased]
 
-### Next stages + IAP checkout (2026-09-11)
+### Next stages + deadlock resolver + IAP checkout (2026-09-11)
 
 #### Added
 
 - **Next-stages roadmap**: `docs/production/next-stages.md` sequences Gate 5 close-out → soft launch → live-ops → global
 - **ADR 0005**: Store taps request purchases through `UnityIAPBridge`; `CompletePurchase` is fulfillment-only
+- **DeadlockResolver**: Pure-C# deadlock detection/recovery per core-mechanic.md §11; CheckWin hook in `BoardPresenter`
+- **BoardConfigSO.MaxReshuffles**: Configurable shuffle cap (default 10) before token regeneration
 - **StoreCheckout**: Pure-C# request seam + USD display parser for `iap_purchase_start`
 - **LogIAPPurchaseStart**: Typed analytics method matching `event-tracking-plan.md` `iap_purchase_start`
+- **DeadlockResolverTests**: empty-cluster reshuffle, orb/stone preservation, 10 failed shuffles then regen, win/lose skip
 
 #### Fixed
 
 - **P0: StoreUI granted IAP locally**: Product buttons called `IAPManager.CompletePurchase` on tap. They now fire `OnPurchaseRequested` → `UnityIAPBridge.PurchaseProduct`
 - **Settings/Store restore no-op**: `RestorePurchases(null)` returned immediately; restore now goes through `UnityIAPBridge.RestorePurchases`
+- **Deadlock shuffle cap was a magic 10** in `TokenSpawner`; retries now come from `BoardConfigSO.MaxReshuffles`
 
 ### Session 7 — Gate 5 Code Sprint
 

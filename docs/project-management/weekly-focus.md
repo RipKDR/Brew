@@ -8,14 +8,15 @@
 
 ## Primary Outcome
 
-Gate 5 soft-launch readiness. Next-stage sequencing is documented (`docs/production/next-stages.md`). Store checkout no longer grants IAP locally (ADR 0005). Remaining work is Unity Editor verification (tests + ScriptableObjects + SDK import) and device playthrough.
+Gate 5 soft-launch readiness. Next-stage sequencing is documented (`docs/production/next-stages.md`). Deadlock recovery is `DeadlockResolver` with config-capped reshuffles. Store checkout no longer grants IAP locally (ADR 0005). Remaining work is Unity Editor verification (tests + ScriptableObjects + SDK import) and device playthrough.
 
 ## Must Complete This Week
 
 - [x] Document post-Gate-5 stages (A Editor close-out → B soft launch → C live-ops → D global)
+- [x] Extract `DeadlockResolver`; `BoardConfigSO.MaxReshuffles`; EditMode coverage
 - [x] Stop StoreUI from calling `CompletePurchase` on tap; route through `UnityIAPBridge`
 - [x] ADR 0005 + EditMode coverage for the checkout seam
-- [ ] Run all EditMode unit tests in Unity Editor — including `StoreCheckoutTests` and `StoneGameplayTests`
+- [ ] Run all EditMode unit tests in Unity Editor — including `DeadlockResolverTests`, `StoreCheckoutTests`, and `StoneGameplayTests`
 - [ ] Create ScriptableObject assets (`Brew/Generate Config Assets`) and assign to `GameFlowController`
 - [ ] Import Firebase / Unity IAP / AdMob SDKs and set scripting defines
 

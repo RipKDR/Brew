@@ -9,7 +9,7 @@
 ## Current Milestone Focus
 
 - Milestone: **Gate 5 — Soft Launch Readiness**
-- Goal: Next-stage sequencing is documented. Store checkout no longer grants currency locally (ADR 0005). Remaining Gate 5 work needs Unity Editor (SDK import, ScriptableObject assets, EditMode test run) and device playthrough.
+- Goal: Next-stage sequencing is documented. Deadlock recovery is `DeadlockResolver` (config-capped reshuffles). Store checkout no longer grants currency locally (ADR 0005). Remaining Gate 5 work needs Unity Editor (SDK import, ScriptableObject assets, EditMode test run) and device playthrough.
 - Source plan: `docs/production/next-stages.md` (post-Gate-5 sequence), `docs/production/mvp-build-plan.md`
 
 ## Current Branch + Baseline
@@ -20,18 +20,18 @@
 
 ## Completed Since Last Handoff
 
-### Next stages + IAP checkout (This Session)
+### Next stages + deadlock resolver + IAP checkout (This Session)
 
-- Wrote canonical `docs/production/next-stages.md` (Stages A–D: Editor close-out, soft launch, live-ops, global).
+- Wrote canonical `docs/production/next-stages.md` (Stages A–D) including recorded spec contradictions (blockers, weekly_deal, aliases, grid size, IAP analytics names).
 - ADR 0005: store taps request IAP via `UnityIAPBridge`; `CompletePurchase` is fulfillment after a store callback only.
+- `DeadlockResolver`: CheckWin recovery per core-mechanic.md §11; `BoardConfigSO.MaxReshuffles` (default 10); orbs/stones stay; win/lose skip reshuffle. `TokenSpawner` keeps shuffle/regen primitives only.
 - `StoreCheckout` request seam + USD parse for analytics; `StoreUI` no longer calls `CompletePurchase`.
 - `GameFlowController` constructs `UnityIAPBridge`, wires purchase + restore, logs `iap_purchase_start`.
-- EditMode: `StoreCheckoutTests`, `LogIAPPurchaseStart` test.
-- Continuity: project-summary blockers/decision log, changelog, mvp-build-plan pointer, ADR index.
+- EditMode: `DeadlockResolverTests`, `StoreCheckoutTests`, `LogIAPPurchaseStart` test.
 
-### Prior on master (stone + deadlock)
+### Prior on master
 
-Stone blockers (ADR 0004) and deadlock recovery (`TokenSpawner.TryRecoverDeadlock`) already landed — not reimplemented here.
+Stone blockers (ADR 0004) already landed. Deadlock behavior existed on `TokenSpawner`; this session extracted `DeadlockResolver` so the shuffle cap is config-driven.
 
 ## In Progress
 
@@ -39,7 +39,7 @@ Stone blockers (ADR 0004) and deadlock recovery (`TokenSpawner.TryRecoverDeadloc
 
 ## Next 3 Tasks
 
-1. **Run EditMode tests in Unity Editor** (including `StoreCheckoutTests` + `StoneGameplayTests`). Fix any compile/test failures.
+1. **Run EditMode tests in Unity Editor** (including `DeadlockResolverTests`, `StoreCheckoutTests`, `StoneGameplayTests`). Fix any compile/test failures.
 2. **Create ScriptableObject assets** via `Brew/Generate Config Assets`; assign to `GameFlowController`. Import Firebase/IAP/AdMob SDKs + scripting defines.
 3. **Device playthrough** including shop tap (must open store sheet, must not mint Gems without payment) and stone levels 16–40; then Gate 5.5–5.15.
 
@@ -56,6 +56,8 @@ Stone blockers (ADR 0004) and deadlock recovery (`TokenSpawner.TryRecoverDeadloc
 - Post-Gate-5 work is sequenced in `docs/production/next-stages.md`; do not skip to levels 41–80 or localization before Gate 5 + soft launch
 - Store product taps never call `CompletePurchase` (ADR 0005)
 - `weekly_deal` stays in the catalog; weekly rotation gating is Stage C, not a SKU deletion
+- Deadlock shuffle retries come from `BoardConfigSO.MaxReshuffles`, not a magic number in engine logic
+- ADR 0004 remains stone-only blockers; post-Gate-5 sequencing lives in `next-stages.md`
 
 ## Files Touched This Session
 
@@ -63,13 +65,16 @@ Stone blockers (ADR 0004) and deadlock recovery (`TokenSpawner.TryRecoverDeadloc
 - `docs/production/mvp-build-plan.md`
 - `docs/adr/0005-iap-store-checkout-path.md`
 - `docs/adr/README.md`
-- `docs/plans/2026-09-11-next-stages-store-checkout.md`
+- `Assets/_Project/Scripts/Core/DeadlockResolver.cs`
+- `Assets/_Project/Scripts/Core/TokenSpawner.cs`
+- `Assets/_Project/Scripts/Data/BoardConfigSO.cs`
+- `Assets/_Project/Scripts/Presentation/BoardPresenter.cs`
 - `Assets/_Project/Scripts/Core/Economy/StoreCheckout.cs`
 - `Assets/_Project/Scripts/Presentation/Economy/StoreUI.cs`
 - `Assets/_Project/Scripts/Presentation/GameFlowController.cs`
 - `Assets/_Project/Scripts/Core/Backend/AnalyticsManager.cs`
+- `Assets/Tests/EditMode/Core/DeadlockResolverTests.cs`
 - `Assets/Tests/EditMode/Core/Economy/StoreCheckoutTests.cs`
-- `Assets/Tests/EditMode/Core/Backend/AnalyticsManagerTests.cs`
 - Continuity: `session-handoff.md`, `weekly-focus.md`, `project-summary.md`, `context-snapshot.md`, `CHANGELOG.md`
 
 ## Handoff Checklist

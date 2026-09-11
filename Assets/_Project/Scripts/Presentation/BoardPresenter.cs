@@ -30,6 +30,7 @@ namespace Brew.Presentation
         private FusionEngine _fusionEngine;
         private CascadeResolver _cascadeResolver;
         private TokenSpawner _spawner;
+        private DeadlockResolver _deadlockResolver;
         private ObjectPool<TokenView> _tokenPool;
 
         private MoveTracker _moveTracker;
@@ -98,6 +99,8 @@ namespace Brew.Presentation
             _stateMachine = new BoardStateMachine();
             _clusterDetector = new ClusterDetector(_board);
             _spawner = new TokenSpawner(rng, colors);
+            _deadlockResolver = new DeadlockResolver(
+                _spawner, _boardConfig.MaxReshuffles, _boardConfig.MinClusterSize);
             _fusionEngine = new FusionEngine(
                 _board, _clusterDetector,
                 _boardConfig.MinClusterSize, _boardConfig.BrewThreshold);
@@ -317,27 +320,20 @@ namespace Brew.Presentation
                 HapticManager.SuccessPattern();
             }
 
+            // Reshuffle during CheckWin, before Idle → PlayerInput. Win/lose skip recovery.
+            if (outcome == LevelOutcome.InProgress)
+            {
+                var recovery = _deadlockResolver.TryRecover(_board, outcome);
+                if (recovery.Attempted)
+                    OnDeadlockRecovered?.Invoke(recovery.Recovered);
+            }
+
             RebuildAllViews();
 
             _stateMachine.TransitionTo(BoardPhase.Idle);
 
             if (outcome == LevelOutcome.InProgress)
-            {
-                if (_spawner.IsDeadlocked(_board))
-                {
-                    bool recovered = _spawner.TryRecoverDeadlock(_board);
-                    if (!recovered)
-                    {
-                        // Last-resort second pass: clear tokens again and repopulate.
-                        recovered = _spawner.TryRecoverDeadlock(_board);
-                    }
-
-                    RebuildAllViews();
-                    OnDeadlockRecovered?.Invoke(recovered);
-                }
-
                 _stateMachine.TransitionTo(BoardPhase.PlayerInput);
-            }
 
             _isResolving = false;
             OnResolutionComplete?.Invoke();

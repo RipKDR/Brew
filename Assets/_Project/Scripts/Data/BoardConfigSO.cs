@@ -22,6 +22,8 @@ namespace Brew.Data
         [SerializeField] private int _minClusterSize = 3;
         [SerializeField] private int _brewThreshold = 6;
         [SerializeField] private int _maxCascadeWaves = 20;
+        [SerializeField, Tooltip("Consecutive deadlock reshuffles before regenerating tokens. Orbs and stones stay.")]
+        private int _maxReshuffles = 10;
 
         [Header("Available Ingredients")]
         [SerializeField] private IngredientColor[] _availableColors =
@@ -40,6 +42,11 @@ namespace Brew.Data
         public int MinClusterSize => _minClusterSize;
         public int BrewThreshold => _brewThreshold;
         public int MaxCascadeWaves => _maxCascadeWaves;
+        /// <summary>
+        /// Consecutive deadlock reshuffles before token regeneration (core-mechanic.md §11.4).
+        /// Uninitialized assets deserialize as 0; treat that as the design default of 10.
+        /// </summary>
+        public int MaxReshuffles => _maxReshuffles > 0 ? _maxReshuffles : 10;
         public IngredientColor[] AvailableColors => _availableColors;
 
         private void OnValidate()
@@ -51,6 +58,7 @@ namespace Brew.Data
             _minClusterSize = Mathf.Max(2, _minClusterSize);
             _brewThreshold = Mathf.Max(2, _brewThreshold);
             _maxCascadeWaves = Mathf.Clamp(_maxCascadeWaves, 1, 50);
+            _maxReshuffles = Mathf.Clamp(_maxReshuffles, 1, 50);
         }
     }
 }

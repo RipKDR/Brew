@@ -9,7 +9,9 @@
 
 ## Current position
 
-Code-side Gate 5 systems exist: core loop, meta/economy, weekly events, Firebase/IAP/AdMob **bridges**, stone blockers (ADR 0004), and deadlock recovery (`TokenSpawner.TryRecoverDeadlock`). The game is **not** soft-launch ready until Unity Editor SDK import, ScriptableObject assignment, device matrix, and store assets land.
+Code-side Gate 5 systems exist: core loop, meta/economy, weekly events, Firebase/IAP/AdMob **bridges**, stone blockers (ADR 0004), deadlock recovery (`DeadlockResolver` + `BoardConfigSO.MaxReshuffles`), and store checkout that does not grant IAP locally (ADR 0005). The game is **not** soft-launch ready until Unity Editor SDK import, ScriptableObject assignment, device matrix, and store assets land.
+
+Post-Gate-5 **sequencing** lives in this document (not ADR 0004 — that number is stone-only blockers).
 
 This document sequences what happens next. It does not add currencies, match-3 mechanics, or undocumented meta layers.
 
@@ -34,7 +36,7 @@ Stage D  Scale and global
 1. Import Firebase + EDM4U. Scripting defines: `FIREBASE_AUTH`, `FIREBASE_ANALYTICS`, `FIREBASE_REMOTE_CONFIG`, `FIREBASE_CRASHLYTICS`, `FIREBASE_FIRESTORE`.
 2. Import Unity IAP + AdMob. Defines: `UNITY_IAP`, `ADMOB`.
 3. Generate config assets: menu `Brew/Generate Config Assets` or Unity batchmode `Brew.Editor.ConfigAssetGenerator.GenerateAllConfigAssets`. Assign all SOs on `GameFlowController`.
-4. Run the full EditMode suite in the Editor (including `StoneGameplayTests`).
+4. Run the full EditMode suite in the Editor (including `DeadlockResolverTests`, `StoreCheckoutTests`, `StoneGameplayTests`).
 5. Device playthrough: campaign 1–5, a stone level (16+), event, daily brew, workshop, streak fail. Verify Firebase DebugView and Crashlytics.
 
 ### A2. Gate 5 checklist (mixed)
@@ -46,8 +48,8 @@ Per [milestone-gates.md](milestone-gates.md) 5.1–5.15: zero P0, ≤3 P1, all 4
 | Item | Status |
 |------|--------|
 | Stone blockers | Done (ADR 0004) |
-| Deadlock reshuffle | Done (`TokenSpawner` + `BoardPresenter` after CheckWin) |
-| Store tap must not grant IAP locally | This stage — `StoreCheckout` + `UnityIAPBridge.PurchaseProduct` |
+| Deadlock reshuffle | Done — `DeadlockResolver` during CheckWin; shuffle cap from `BoardConfigSO.MaxReshuffles` (default 10); orbs/stones stay; win/lose skip recovery |
+| Store tap must not grant IAP locally | Done — `StoreCheckout` + `UnityIAPBridge.PurchaseProduct` (ADR 0005) |
 | Cloud Functions (`verifyPurchase`, `syncPlayerState`, `deleteAccount`) | Stage D (before scaling UA) |
 | Ice blockers | Post soft-launch (ADR 0004) |
 | Deadlock reshuffle juice (overlay / scatter) | Soft-launch polish; correctness already ships |
@@ -89,9 +91,11 @@ Only after green-light (D1 ≥ 40%, D7 ≥ 15%, D30 ≥ 6%, LTV/CPI > 2×, crash
 
 ## Known contradictions (do not silently "fix" in engine)
 
-1. **`weekly_deal`:** code catalog has the SKU; monetization-plan §2.4 says it is post-MVP / not in catalog. Stage C implements weekly gating; until then leave the SKU in the catalog.
-2. **Grid size:** [level-design-framework.md](../game-design/level-design-framework.md) still lists 3–7×3–8; engine/`core-mechanic.md` is 5–9×5–11. Engine is source of truth.
-3. **IAP analytics:** tracking plan uses `iap_purchase_start` / `iap_purchase_complete` / `iap_purchase_fail`; `AnalyticsManager.LogIAPPurchase` still logs `iap_purchase`. Align names before DebugView sign-off (5.15).
+1. **Blockers:** `core-mechanic.md` historically said no blocked/wall cells in MVP. Late campaign JSON already ships stones. **ADR 0004** ships stone-only; ice/lock/HP stay deferred. Do not strip stones to match the old MVP sentence.
+2. **`weekly_deal`:** code catalog has the SKU; monetization-plan §2.4 says it is post-MVP / not in catalog. Stage C implements weekly gating; until then leave the SKU in the catalog.
+3. **Ingredient aliases:** JSON `brine` / `glow` map to Sun / Shadow in `LevelLoader`. Canonical names stay Ember / Frost / Vine / Sun / Shadow. Stage C cleanup: migrate JSON to canonical names when touching those files.
+4. **Grid size:** [level-design-framework.md](../game-design/level-design-framework.md) still lists 3–7×3–8; engine/`core-mechanic.md` is 5–9×5–11. Engine is source of truth.
+5. **IAP analytics:** tracking plan uses `iap_purchase_start` / `iap_purchase_complete` / `iap_purchase_fail`; `AnalyticsManager.LogIAPPurchase` still logs `iap_purchase`. Align names before DebugView sign-off (5.15).
 
 ---
 

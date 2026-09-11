@@ -5,13 +5,11 @@ namespace Brew.Core
 {
     /// <summary>
     /// Populates the board with tokens while avoiding pre-made clusters.
-    /// Also handles mid-game deadlock detection and recovery (core-mechanic.md §11).
+    /// Deadlock recovery lives on <see cref="DeadlockResolver"/>; this class supplies shuffle and regen primitives.
     /// Pure C# — no Unity dependencies. Uses injectable System.Random for testability.
     /// </summary>
     public sealed class TokenSpawner
     {
-        private const int MaxReshuffleAttempts = 10;
-
         private static readonly IngredientColor[] AllColors =
         {
             IngredientColor.Ember,
@@ -75,36 +73,21 @@ namespace Brew.Core
         }
 
         /// <summary>
-        /// True when the board has no token cluster ≥ 3 and no orb chain group ≥ 2.
-        /// Stones do not create plays by themselves. Per core-mechanic.md §11.1.
+        /// Fisher-Yates shuffles token colors in place. Orbs, stones, and empty cells stay.
+        /// Used by <see cref="DeadlockResolver"/> and spawn-time cluster guarantees.
         /// </summary>
-        public bool IsDeadlocked(BoardModel board)
+        public void ReshuffleTokenColors(BoardModel board)
         {
-            var detector = new ClusterDetector(board);
-            if (detector.FindAllClusters(minClusterSize: 3).Count > 0)
-                return false;
-            if (detector.FindAllOrbChainGroups().Count > 0)
-                return false;
-            return true;
+            Reshuffle(board);
         }
 
         /// <summary>
-        /// Attempts to recover from a deadlock by reshuffling token colors in place
-        /// (orbs and stones stay fixed). Falls back to regenerating all tokens while
-        /// preserving orbs/stones. Returns true if a playable board was produced.
+        /// Removes all tokens and refills around orbs and stones (core-mechanic.md §11.4).
         /// </summary>
-        public bool TryRecoverDeadlock(BoardModel board)
+        public void RegenerateTokensPreservingOrbsAndStones(BoardModel board)
         {
-            for (int attempt = 0; attempt < MaxReshuffleAttempts; attempt++)
-            {
-                Reshuffle(board);
-                if (!IsDeadlocked(board))
-                    return true;
-            }
-
             ClearTokensPreserveOrbsAndStones(board);
             PopulateBoard(board);
-            return !IsDeadlocked(board);
         }
 
         private static void ClearTokensPreserveOrbsAndStones(BoardModel board)
