@@ -85,6 +85,7 @@ jobs:
             "docs/technical/architecture.md"
             "docs/production/mvp-build-plan.md"
             "docs/production/milestone-gates.md"
+            "docs/production/next-stages.md"
             "docs/project-management/project-summary.md"
             "docs/project-management/glossary.md"
             "docs/project-management/style-guide.md"

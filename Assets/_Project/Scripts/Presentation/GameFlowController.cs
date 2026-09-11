@@ -63,6 +63,7 @@ namespace Brew.Presentation
         private WorkshopManager _workshop;
         private DailyBrewManager _dailyBrew;
         private IAPManager _iapManager;
+        private UnityIAPBridge _iapBridge;
         private AdManager _adManager;
         private AnalyticsManager _analytics;
         private CloudSaveManager _cloudSave;
@@ -136,6 +137,8 @@ namespace Brew.Presentation
             }
 
             _iapManager = new IAPManager(_currencyManager);
+            _iapBridge = new UnityIAPBridge(_iapManager);
+            _iapBridge.Initialize();
             int adDailyCap = _economyConfig != null ? _economyConfig.RewardedAdDailyCap : 5;
             int interstitialFreq = _economyConfig != null ? _economyConfig.InterstitialFrequency : 3;
             _adManager = new AdManager(adDailyCap, interstitialFreq, () => _iapManager.HasNoAdsPass);
@@ -155,7 +158,12 @@ namespace Brew.Presentation
             if (_potionShelfView != null) _potionShelfView.Initialize(_potionShelf);
             if (_workshopView != null) _workshopView.Initialize(_workshop);
             if (_dailyBrewUI != null) _dailyBrewUI.Initialize(_dailyBrew);
-            if (_storeUI != null) _storeUI.Initialize(_iapManager, _progress.CurrentLevel);
+            if (_storeUI != null)
+            {
+                _storeUI.Initialize(_iapManager, _progress.CurrentLevel);
+                _storeUI.OnPurchaseRequested += HandleStorePurchaseRequested;
+                _storeUI.OnRestoreRequested += HandleRestorePurchases;
+            }
 
             if (_weeklyEventView != null && _weeklyEvent != null)
                 _weeklyEventView.Initialize(_weeklyEvent);
@@ -324,11 +332,36 @@ namespace Brew.Presentation
             if (_workshop != null) _workshop.OnUpgradePurchased -= OnWorkshopUpgraded;
             if (_dailyBrewUI != null) _dailyBrewUI.OnDailyBrewRequested -= HandleDailyBrewRequest;
             if (_settingsPanel != null) _settingsPanel.OnRestorePurchasesRequested -= HandleRestorePurchases;
+            if (_storeUI != null)
+            {
+                _storeUI.OnPurchaseRequested -= HandleStorePurchaseRequested;
+                _storeUI.OnRestoreRequested -= HandleRestorePurchases;
+            }
+        }
+
+        private void HandleStorePurchaseRequested(string productId)
+        {
+            IAPProduct product = null;
+            foreach (var entry in IAPManager.Catalog)
+            {
+                if (entry.ProductId == productId)
+                {
+                    product = entry;
+                    break;
+                }
+            }
+
+            float priceUsd = 0f;
+            if (product != null)
+                StoreCheckout.TryParseUsdPrice(product.PriceDisplay, out priceUsd);
+
+            _analytics?.LogIAPPurchaseStart(productId, priceUsd, "shop");
+            _iapBridge?.PurchaseProduct(productId);
         }
 
         private void HandleRestorePurchases()
         {
-            _iapManager?.RestorePurchases(null);
+            _iapBridge?.RestorePurchases();
         }
 
         private void ShowLevelSelect()

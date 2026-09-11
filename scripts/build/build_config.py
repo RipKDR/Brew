@@ -315,6 +315,7 @@ def check_required_docs(project_root: Path) -> CheckResult:
         "docs/technical/architecture.md",
         "docs/production/mvp-build-plan.md",
         "docs/production/milestone-gates.md",
+        "docs/production/next-stages.md",
         "docs/project-management/project-summary.md",
     ]
 

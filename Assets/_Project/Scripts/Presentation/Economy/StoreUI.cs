@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Brew.Core.Economy;
 using UnityEngine;
@@ -7,6 +8,7 @@ namespace Brew.Presentation
 {
     /// <summary>
     /// IAP store modal. Displays available gem packs, starter bundle, and no-ads pass.
+    /// Product taps request a store purchase; they never fulfill locally (ADR 0005).
     /// </summary>
     public class StoreUI : MonoBehaviour
     {
@@ -18,8 +20,9 @@ namespace Brew.Presentation
         private IAPManager _iapManager;
         private int _currentLevel;
 
-        public event System.Action OnCloseRequested;
-        public event System.Action OnRestoreRequested;
+        public event Action OnCloseRequested;
+        public event Action OnRestoreRequested;
+        public event Action<string> OnPurchaseRequested;
 
         public void Initialize(IAPManager iapManager, int currentLevel)
         {
@@ -57,7 +60,8 @@ namespace Brew.Presentation
                 if (button != null)
                 {
                     string pid = product.ProductId;
-                    button.onClick.AddListener(() => _iapManager.CompletePurchase(pid));
+                    button.onClick.AddListener(() =>
+                        StoreCheckout.RequestPurchase(pid, id => OnPurchaseRequested?.Invoke(id)));
                 }
             }
         }

@@ -1,7 +1,7 @@
 # Brew — Project Summary
 
 > **Living document.** Updated as decisions are made, milestones are reached, and blockers emerge.
-> Last updated: 2026-04-09 (Session 6)
+> Last updated: 2026-09-11 (next-stages + IAP checkout)
 
 ---
 
@@ -11,7 +11,7 @@
 | Field         | Value                                                                                                                                               |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Project**   | Brew — Mobile Puzzle Game                                                                                                                           |
-| **Status**    | Content & Polish Phase (Weeks 9-10) — integration wiring complete. Event system, notifications, and theme overlay connected. Gate 5 prep in progress. |
+| **Status**    | Gate 5 — Soft Launch Readiness. Stone blockers + deadlock recovery code-complete. Store checkout no longer grants locally. Remaining: Unity Editor SDK/SO/device. |
 | **Pitch**     | *"Tap clusters to fuse ingredients into glowing orbs. Chain orbs together to brew potions. Craft every recipe before you run out of moves."*        |
 | **Platforms** | iOS (15+), Android (8.0+) — portrait only                                                                                                           |
 | **Engine**    | Unity 6 (6000.1 LTS), C#                                                                                                                            |
@@ -33,8 +33,8 @@
 | **Milestone 2** — Core Loop        | Week 4      | Complete — Gate 2 runtime testing pending                   |
 | **Milestone 3** — Feel & Juice     | Week 6      | Complete — Gate 3 runtime testing pending                   |
 | **Milestone 4** — Meta & Economy   | Week 8      | Complete — Gate 4 runtime testing pending                   |
-| **Milestone 5** — Content & Polish | Week 10     | In progress — code review complete, levels rebalanced, soft launch plan ready |
-| Soft launch target                 | Week 11+    | Pending Gate 5 pass in Unity Editor                          |
+| **Milestone 5** — Content & Polish | Week 10     | Code-complete pending Unity Editor + device Gate 5 |
+| Soft launch target                 | Week 11+    | See [next-stages.md](../production/next-stages.md) |
 | Global launch target               | TBD         | —                                                           |
 
 
@@ -112,9 +112,11 @@ See [Milestone Gates](../production/milestone-gates.md) for per-milestone go/no-
 ## Current Blockers
 
 
-| #   | Blocker                   | Owner | Status |
-| --- | ------------------------- | ----- | ------ |
-| —   | *(none — ready to begin)* | —     | —      |
+| #   | Blocker | Owner | Status |
+| --- | ------- | ----- | ------ |
+| 1 | Unity Editor: Firebase / IAP / AdMob SDK import + scripting defines | Engineering | Open |
+| 2 | ScriptableObject assets not assigned on GameFlowController | Engineering | Open — generator exists (`Brew/Generate Config Assets`) |
+| 3 | Device matrix / Gate 5.5–5.15 | QA + GP | Open |
 
 
 ---
@@ -144,7 +146,9 @@ See [Milestone Gates](../production/milestone-gates.md) for per-milestone go/no-
 | 2026-04-09 | Offline-first cloud save (ADR 0002)                                                                    | Game fully functional offline; local writes immediate, Firestore sync best-effort; last-write-wins for MVP                                                                                              | Engineering |
 | 2026-04-09 | Remote Config as single config source (ADR 0003)                                                       | All tunable values fetched from Firebase RC with 12h cache; local defaults as fallback; no app update needed for tuning                                                                                 | Engineering |
 | 2026-04-09 | IAPManager product catalog is static readonly                                                          | Product definitions are compile-time constants matching App Store / Play Store SKUs; SKU changes require app update by design                                                                           | Engineering |
-| 2026-04-09 | AdManager uses Func<bool> callback for No-Ads Pass check                                               | Decouples ad logic from IAP implementation; testable with injected predicates                                                                                                                           | Engineering |
+| 2026-09-11 | Stone-only blockers for soft launch (ADR 0004) | Late levels already authored with stones; ice deferred | Engineering |
+| 2026-09-11 | Store taps request IAP via UnityIAPBridge (ADR 0005) | Local CompletePurchase on tap was an exploit; fulfillment stays on store callback | Engineering |
+| 2026-09-11 | Post-Gate-5 work sequenced in next-stages.md | MVP 10-week plan ends at Gate 5; live-ops and global need an explicit follow-on | Product |
 
 
 ---
@@ -200,6 +204,8 @@ See [Milestone Gates](../production/milestone-gates.md) for per-milestone go/no-
 | MVP Build Plan  | [docs/production/mvp-build-plan.md](../production/mvp-build-plan.md)   |
 | Milestone Gates | [docs/production/milestone-gates.md](../production/milestone-gates.md) |
 | Risk Register   | [docs/production/risk-register.md](../production/risk-register.md)     |
+| Soft Launch Plan | [docs/production/soft-launch-plan.md](../production/soft-launch-plan.md) |
+| Next Stages | [docs/production/next-stages.md](../production/next-stages.md) |
 
 
 ### Creative

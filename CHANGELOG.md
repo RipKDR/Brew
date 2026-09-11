@@ -6,6 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 
 ## [Unreleased]
 
+### Next stages + IAP checkout (2026-09-11)
+
+#### Added
+
+- **Next-stages roadmap**: `docs/production/next-stages.md` sequences Gate 5 close-out → soft launch → live-ops → global
+- **ADR 0005**: Store taps request purchases through `UnityIAPBridge`; `CompletePurchase` is fulfillment-only
+- **StoreCheckout**: Pure-C# request seam + USD display parser for `iap_purchase_start`
+- **LogIAPPurchaseStart**: Typed analytics method matching `event-tracking-plan.md` `iap_purchase_start`
+
+#### Fixed
+
+- **P0: StoreUI granted IAP locally**: Product buttons called `IAPManager.CompletePurchase` on tap. They now fire `OnPurchaseRequested` → `UnityIAPBridge.PurchaseProduct`
+- **Settings/Store restore no-op**: `RestorePurchases(null)` returned immediately; restore now goes through `UnityIAPBridge.RestorePurchases`
+
 ### Session 7 — Gate 5 Code Sprint
 
 #### Added
