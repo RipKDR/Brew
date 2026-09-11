@@ -138,6 +138,9 @@ namespace Brew.Presentation
 
             _iapManager = new IAPManager(_currencyManager);
             _iapBridge = new UnityIAPBridge(_iapManager);
+            _iapBridge.OnInitialized += HandleIapCatalogReady;
+            _iapBridge.OnRestored += HandleIapCatalogReady;
+            _iapBridge.OnPurchaseInitiated += HandlePurchaseInitiated;
             _iapBridge.Initialize();
             int adDailyCap = _economyConfig != null ? _economyConfig.RewardedAdDailyCap : 5;
             int interstitialFreq = _economyConfig != null ? _economyConfig.InterstitialFrequency : 3;
@@ -337,9 +340,21 @@ namespace Brew.Presentation
                 _storeUI.OnPurchaseRequested -= HandleStorePurchaseRequested;
                 _storeUI.OnRestoreRequested -= HandleRestorePurchases;
             }
+
+            if (_iapBridge != null)
+            {
+                _iapBridge.OnInitialized -= HandleIapCatalogReady;
+                _iapBridge.OnRestored -= HandleIapCatalogReady;
+                _iapBridge.OnPurchaseInitiated -= HandlePurchaseInitiated;
+            }
         }
 
         private void HandleStorePurchaseRequested(string productId)
+        {
+            _iapBridge?.PurchaseProduct(productId);
+        }
+
+        private void HandlePurchaseInitiated(string productId)
         {
             IAPProduct product = null;
             foreach (var entry in IAPManager.Catalog)
@@ -356,7 +371,11 @@ namespace Brew.Presentation
                 StoreCheckout.TryParseUsdPrice(product.PriceDisplay, out priceUsd);
 
             _analytics?.LogIAPPurchaseStart(productId, priceUsd, "shop");
-            _iapBridge?.PurchaseProduct(productId);
+        }
+
+        private void HandleIapCatalogReady()
+        {
+            _storeUI?.Refresh();
         }
 
         private void HandleRestorePurchases()

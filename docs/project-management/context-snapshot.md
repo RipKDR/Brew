@@ -1,6 +1,6 @@
 # Brew — Context Snapshot
 
-> Generated: 2026-09-11 21:37 UTC
+> Generated: 2026-09-11 21:41 UTC
 > Project summary updated: 2026-09-11 (next-stages + DeadlockResolver + IAP checkout)
 > Session handoff updated: 2026-09-11
 
@@ -67,6 +67,7 @@
 
 - **P0: StoreUI granted IAP locally**: Product buttons called `IAPManager.CompletePurchase` on tap. They now fire `OnPurchaseRequested` → `UnityIAPBridge.PurchaseProduct`
 - **Settings/Store restore no-op**: `RestorePurchases(null)` returned immediately; restore now goes through `UnityIAPBridge.RestorePurchases`
+- **IAP Buy/Restore dropped during init**: queued via `IapPendingOperations` until the store is ready; Google Play restore re-scans receipts; `iap_purchase_start` only after the store sheet opens
 - **Deadlock shuffle cap was a magic 10** in `TokenSpawner`; retries now come from `BoardConfigSO.MaxReshuffles`
 
 ### Session 7 — Gate 5 Code Sprint
@@ -231,8 +232,8 @@
 
 ## Recent Git Commits
 
+- 9aa7a17 2026-09-11 Extract DeadlockResolver with config-capped reshuffles.
 - c9a62a7 2026-09-11 Document post-Gate-5 stages and stop local IAP grants from the shop.
 - aa8fd6a 2026-09-12 feat: Gate 5 stone blockers + deadlock recovery (hardened) (#6)
 - facfb69 2026-05-04 Merge pull request #5 from RipKDR/cursor/audio-config-interface-extraction
 - 7016c16 2026-05-04 Merge branch 'master' into cursor/audio-config-interface-extraction
-- 44e1992 2026-05-04 Merge pull request #4 from RipKDR/cursor/add-changelog-adr-session-handoff

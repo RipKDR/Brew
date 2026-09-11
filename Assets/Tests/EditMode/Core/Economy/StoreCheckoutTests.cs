@@ -7,7 +7,7 @@ namespace Brew.Tests.EditMode
     public class StoreCheckoutTests
     {
         [Test]
-        public void RequestPurchase_InvokesInitiator_DoesNotGrantCurrency()
+        public void RequestPurchase_InvokesInitiatorOnly_DoesNotFulfill()
         {
             var currency = new CurrencyManager();
             var iap = new IAPManager(currency);
@@ -18,6 +18,20 @@ namespace Brew.Tests.EditMode
             Assert.AreEqual("gem_50", requested);
             Assert.AreEqual(0, currency.GetBalance(CurrencyType.Gems));
             Assert.IsFalse(iap.HasPurchased("gem_50"));
+
+            iap.CompletePurchase("gem_50");
+            Assert.AreEqual(50, currency.GetBalance(CurrencyType.Gems));
+        }
+
+        [Test]
+        public void RequestPurchase_WhenInitiatorIsCompletePurchase_WouldGrant_SoStoreMustNotWireThat()
+        {
+            var currency = new CurrencyManager();
+            var iap = new IAPManager(currency);
+
+            StoreCheckout.RequestPurchase("gem_50", iap.CompletePurchase);
+
+            Assert.AreEqual(50, currency.GetBalance(CurrencyType.Gems));
         }
 
         [Test]

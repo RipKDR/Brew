@@ -23,7 +23,7 @@
 ### Next stages + deadlock resolver + IAP checkout (This Session)
 
 - Wrote canonical `docs/production/next-stages.md` (Stages A–D) including recorded spec contradictions (blockers, weekly_deal, aliases, grid size, IAP analytics names).
-- ADR 0005: store taps request IAP via `UnityIAPBridge`; `CompletePurchase` is fulfillment after a store callback only.
+- ADR 0005: store taps request IAP via `UnityIAPBridge`; `CompletePurchase` is fulfillment after a store callback only. Buy/Restore before init are queued; Google Play restore re-scans receipts.
 - `DeadlockResolver`: CheckWin recovery per core-mechanic.md §11; `BoardConfigSO.MaxReshuffles` (default 10); orbs/stones stay; win/lose skip reshuffle. `TokenSpawner` keeps shuffle/regen primitives only.
 - `StoreCheckout` request seam + USD parse for analytics; `StoreUI` no longer calls `CompletePurchase`.
 - `GameFlowController` constructs `UnityIAPBridge`, wires purchase + restore, logs `iap_purchase_start`.

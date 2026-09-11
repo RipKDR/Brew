@@ -16,12 +16,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 - **BoardConfigSO.MaxReshuffles**: Configurable shuffle cap (default 10) before token regeneration
 - **StoreCheckout**: Pure-C# request seam + USD display parser for `iap_purchase_start`
 - **LogIAPPurchaseStart**: Typed analytics method matching `event-tracking-plan.md` `iap_purchase_start`
+- **IapPendingOperations**: Queues Buy/Restore until Unity IAP finishes initializing
 - **DeadlockResolverTests**: empty-cluster reshuffle, orb/stone preservation, 10 failed shuffles then regen, win/lose skip
 
 #### Fixed
 
 - **P0: StoreUI granted IAP locally**: Product buttons called `IAPManager.CompletePurchase` on tap. They now fire `OnPurchaseRequested` → `UnityIAPBridge.PurchaseProduct`
 - **Settings/Store restore no-op**: `RestorePurchases(null)` returned immediately; restore now goes through `UnityIAPBridge.RestorePurchases`
+- **IAP Buy/Restore dropped during init**: queued via `IapPendingOperations` until the store is ready; Google Play restore re-scans receipts; `iap_purchase_start` only after the store sheet opens
 - **Deadlock shuffle cap was a magic 10** in `TokenSpawner`; retries now come from `BoardConfigSO.MaxReshuffles`
 
 ### Session 7 — Gate 5 Code Sprint
