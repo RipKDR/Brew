@@ -57,5 +57,12 @@ At completion:
 - Required docs remain consistent and linked.
 - Context snapshot regenerated successfully.
 - Context validation script passes.
-- Build/config validation scripts pass.
+- Build/config validation scripts pass (`python scripts/build/build_config.py --levels-dir Assets/_Project/Resources/Levels`).
 - Any remaining risks are documented in handoff.
+
+## Config Asset Generation (Editor / Batchmode)
+
+Idempotent generator creates missing SOs under `Assets/_Project/ScriptableObjects/Config` (including Audio + Board):
+
+- Menu: `Brew/Generate Config Assets`
+- Batchmode: `Unity -batchmode -quit -projectPath . -executeMethod Brew.Editor.ConfigAssetGenerator.GenerateAllConfigAssets`

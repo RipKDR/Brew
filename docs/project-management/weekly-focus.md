@@ -8,7 +8,7 @@
 
 ## Primary Outcome
 
-Gate 5 soft-launch readiness. Stone blocker gameplay and mid-game deadlock recovery are implemented in pure C# with EditMode tests. Remaining work is Unity Editor verification (tests + ScriptableObjects + SDK import) and device playthrough.
+Gate 5 soft-launch readiness. Stone blocker gameplay and mid-game deadlock recovery are implemented and hardened (init order, analytics, CI stone rules, config generator). Remaining work is Unity Editor verification (tests + ScriptableObjects + SDK import) and device playthrough.
 
 ## Must Complete This Week
 
@@ -19,8 +19,9 @@ Gate 5 soft-launch readiness. Stone blocker gameplay and mid-game deadlock recov
 - [x] Deadlock detect + recover on `TokenSpawner`; hook in `BoardPresenter` after CheckWin
 - [x] Fix adjacent stones in `level_037.json`
 - [x] Add `StoneGameplayTests` EditMode coverage
+- [x] Harden stone init order, deadlock analytics, CI stone rules, idempotent `ConfigAssetGenerator`
 - [ ] Run all EditMode unit tests in Unity Editor — fix any failures from stone/deadlock work
-- [ ] Create ScriptableObject assets and assign to `GameFlowController`
+- [ ] Create ScriptableObject assets (`Brew/Generate Config Assets` or batchmode) and assign to `GameFlowController`
 - [ ] Import Firebase / Unity IAP / AdMob SDKs and set scripting defines
 
 ## Secondary Work

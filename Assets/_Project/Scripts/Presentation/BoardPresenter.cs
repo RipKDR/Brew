@@ -56,6 +56,12 @@ namespace Brew.Presentation
         public event Action OnResolutionComplete;
         public event Action<LevelOutcome> OnLevelOutcome;
 
+        /// <summary>Fired after an automatic deadlock reshuffle. Argument is recovery success.</summary>
+        public event Action<bool> OnDeadlockRecovered;
+
+        /// <summary>Fired when brew clears one or more adjacent stones. Argument is cleared cells.</summary>
+        public event Action<IReadOnlyList<GridCoord>> OnStonesCleared;
+
         private void Start()
         {
             if (_currentLevel == null)
@@ -106,8 +112,9 @@ namespace Brew.Presentation
             _tokenPool = new ObjectPool<TokenView>(_tokenPrefab, _tokenContainer, _board.CellCount);
 
             CalculateBoardOrigin();
-            _spawner.PopulateBoard(_board);
+            // Stones first so PopulateBoard fills around them and can guarantee valid clusters.
             PlaceStoneBlockers(levelConfig);
+            _spawner.PopulateBoard(_board);
             RebuildAllViews();
 
             _inputController.Initialize(
@@ -318,8 +325,15 @@ namespace Brew.Presentation
             {
                 if (_spawner.IsDeadlocked(_board))
                 {
-                    _spawner.TryRecoverDeadlock(_board);
+                    bool recovered = _spawner.TryRecoverDeadlock(_board);
+                    if (!recovered)
+                    {
+                        // Last-resort second pass: clear tokens again and repopulate.
+                        recovered = _spawner.TryRecoverDeadlock(_board);
+                    }
+
                     RebuildAllViews();
+                    OnDeadlockRecovered?.Invoke(recovered);
                 }
 
                 _stateMachine.TransitionTo(BoardPhase.PlayerInput);
@@ -349,7 +363,7 @@ namespace Brew.Presentation
                 yield return AnimateFusion(fusion);
             }
 
-            StoneClearer.ClearAdjacentStones(_board, fusion.OrbCell);
+            NotifyStonesCleared(StoneClearer.ClearAdjacentStones(_board, fusion.OrbCell));
             _board.SetCell(fusion.OrbCell, CellContent.Empty);
             RebuildAllViews();
         }
@@ -385,7 +399,7 @@ namespace Brew.Presentation
                         bool isTarget = _recipeTracker.IsTargetColor(color);
                         _scoreCalculator.OnBrew(isTarget);
                         _recipeTracker.OnBrew(color);
-                        StoneClearer.ClearAdjacentStones(_board, brewCell);
+                        NotifyStonesCleared(StoneClearer.ClearAdjacentStones(_board, brewCell));
                         _board.SetCell(brewCell, CellContent.Empty);
                     }
                 }
@@ -483,8 +497,20 @@ namespace Brew.Presentation
                 if (!_board.InBounds(coord))
                     continue;
 
+                // Soft-launch placement rules: never top row (blocks spawns).
+                if (coord.Row <= 0)
+                    continue;
+
                 _board.SetCell(coord, CellContent.Stone);
             }
+        }
+
+        private void NotifyStonesCleared(List<GridCoord> cleared)
+        {
+            if (cleared == null || cleared.Count == 0)
+                return;
+
+            OnStonesCleared?.Invoke(cleared);
         }
 
         private static Color GetCellDisplayColor(CellContent cell)

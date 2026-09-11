@@ -286,10 +286,22 @@ namespace Brew.Presentation
 
             if (_weeklyEventView != null)
                 _weeklyEventView.OnEventLevelSelected += StartEventLevel;
+
+            if (_boardPresenter != null)
+                _boardPresenter.OnDeadlockRecovered += HandleDeadlockRecovered;
+        }
+
+        private void HandleDeadlockRecovered(bool recovered)
+        {
+            int levelId = _currentLevelConfig != null ? _currentLevelConfig.LevelId : 0;
+            _analytics?.LogBoardReshuffle(levelId, recovered, "deadlock");
         }
 
         private void OnDestroy()
         {
+            if (_boardPresenter != null)
+                _boardPresenter.OnDeadlockRecovered -= HandleDeadlockRecovered;
+
             if (_levelSelectScreen != null) _levelSelectScreen.OnLevelSelected -= StartLevel;
             if (_levelCompleteScreen != null)
             {

@@ -6,100 +6,67 @@ using UnityEngine;
 
 namespace Brew.Editor
 {
+    /// <summary>
+    /// Generates missing config ScriptableObject assets under Assets/_Project/ScriptableObjects/Config.
+    /// Idempotent: existing assets are left unchanged.
+    /// Batchmode: Unity -batchmode -quit -projectPath . -executeMethod Brew.Editor.ConfigAssetGenerator.GenerateAllConfigAssets
+    /// </summary>
     public static class ConfigAssetGenerator
     {
+        private const string ConfigFolder = "Assets/_Project/ScriptableObjects/Config";
+
         [MenuItem("Brew/Generate Config Assets")]
         public static void GenerateAllConfigAssets()
         {
             EnsureConfigFolderExists();
 
-            GenerateEconomyConfig();
-            GeneratePotionShelfConfig();
-            GenerateWorkshopConfig();
-            GenerateDailyBrewConfig();
-            GenerateWinStreakConfig();
-            GenerateWeeklyEventConfig();
-            GenerateNotificationConfig();
-            GenerateScreenShakeConfig();
+            CreateIfMissing<EconomyConfigSO>("EconomyConfig.asset");
+            CreateIfMissing<PotionShelfConfigSO>("PotionShelfConfig.asset");
+            CreateIfMissing<WorkshopConfigSO>("WorkshopConfig.asset");
+            CreateIfMissing<DailyBrewConfigSO>("DailyBrewConfig.asset");
+            CreateIfMissing<WinStreakConfigSO>("WinStreakConfig.asset");
+            CreateIfMissing<WeeklyEventConfigSO>("WeeklyEventConfig.asset");
+            CreateIfMissing<NotificationConfigSO>("NotificationConfig.asset");
+            CreateIfMissing<ScreenShakeConfigSO>("ScreenShakeConfig.asset");
+            CreateIfMissing<AudioConfigSO>("AudioConfig.asset");
+            CreateIfMissing<BoardConfigSO>("BoardConfig.asset");
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log("[Brew] All config assets generated successfully.");
+            Debug.Log("[Brew] Config asset generation complete (missing assets created; existing left unchanged).");
         }
-
-        private const string ConfigFolder = "Assets/_Project/ScriptableObjects/Config";
 
         private static void EnsureConfigFolderExists()
         {
-            if (!AssetDatabase.IsValidFolder(ConfigFolder))
+            if (AssetDatabase.IsValidFolder(ConfigFolder))
+                return;
+
+            var parentFolder = ConfigFolder.Substring(0, ConfigFolder.LastIndexOf('/'));
+            var folderName = ConfigFolder.Substring(ConfigFolder.LastIndexOf('/') + 1);
+
+            if (!AssetDatabase.IsValidFolder(parentFolder))
             {
-                var parentFolder = ConfigFolder.Substring(0, ConfigFolder.LastIndexOf('/'));
-                var folderName = ConfigFolder.Substring(ConfigFolder.LastIndexOf('/') + 1);
-                AssetDatabase.CreateFolder(parentFolder, folderName);
+                var root = parentFolder.Substring(0, parentFolder.LastIndexOf('/'));
+                var mid = parentFolder.Substring(parentFolder.LastIndexOf('/') + 1);
+                if (!AssetDatabase.IsValidFolder(parentFolder))
+                    AssetDatabase.CreateFolder(root, mid);
             }
+
+            AssetDatabase.CreateFolder(parentFolder, folderName);
         }
 
-        private static void GenerateEconomyConfig()
+        private static void CreateIfMissing<T>(string fileName) where T : ScriptableObject
         {
-            var path = $"{ConfigFolder}/EconomyConfig.asset";
-            var config = ScriptableObject.CreateInstance<EconomyConfigSO>();
-            AssetDatabase.CreateAsset(config, path);
-            Debug.Log($"[Brew] Created {path}");
-        }
+            var path = $"{ConfigFolder}/{fileName}";
+            var existing = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (existing != null)
+            {
+                Debug.Log($"[Brew] Skip existing {path}");
+                return;
+            }
 
-        private static void GeneratePotionShelfConfig()
-        {
-            var path = $"{ConfigFolder}/PotionShelfConfig.asset";
-            var config = ScriptableObject.CreateInstance<PotionShelfConfigSO>();
-            AssetDatabase.CreateAsset(config, path);
-            Debug.Log($"[Brew] Created {path}");
-        }
-
-        private static void GenerateWorkshopConfig()
-        {
-            var path = $"{ConfigFolder}/WorkshopConfig.asset";
-            var config = ScriptableObject.CreateInstance<WorkshopConfigSO>();
-            AssetDatabase.CreateAsset(config, path);
-            Debug.Log($"[Brew] Created {path}");
-        }
-
-        private static void GenerateDailyBrewConfig()
-        {
-            var path = $"{ConfigFolder}/DailyBrewConfig.asset";
-            var config = ScriptableObject.CreateInstance<DailyBrewConfigSO>();
-            AssetDatabase.CreateAsset(config, path);
-            Debug.Log($"[Brew] Created {path}");
-        }
-
-        private static void GenerateWinStreakConfig()
-        {
-            var path = $"{ConfigFolder}/WinStreakConfig.asset";
-            var config = ScriptableObject.CreateInstance<WinStreakConfigSO>();
-            AssetDatabase.CreateAsset(config, path);
-            Debug.Log($"[Brew] Created {path}");
-        }
-
-        private static void GenerateWeeklyEventConfig()
-        {
-            var path = $"{ConfigFolder}/WeeklyEventConfig.asset";
-            var config = ScriptableObject.CreateInstance<WeeklyEventConfigSO>();
-            AssetDatabase.CreateAsset(config, path);
-            Debug.Log($"[Brew] Created {path}");
-        }
-
-        private static void GenerateNotificationConfig()
-        {
-            var path = $"{ConfigFolder}/NotificationConfig.asset";
-            var config = ScriptableObject.CreateInstance<NotificationConfigSO>();
-            AssetDatabase.CreateAsset(config, path);
-            Debug.Log($"[Brew] Created {path}");
-        }
-
-        private static void GenerateScreenShakeConfig()
-        {
-            var path = $"{ConfigFolder}/ScreenShakeConfig.asset";
-            var config = ScriptableObject.CreateInstance<ScreenShakeConfigSO>();
+            var config = ScriptableObject.CreateInstance<T>();
             AssetDatabase.CreateAsset(config, path);
             Debug.Log($"[Brew] Created {path}");
         }

@@ -190,6 +190,14 @@ namespace Brew.Core.Backend
                 { "amount", amount }
             });
 
+        public void LogBoardReshuffle(int levelId, bool recovered, string reason) =>
+            LogEvent("board_reshuffle", new Dictionary<string, object>
+            {
+                { "level_id", levelId },
+                { "recovered", recovered },
+                { "reason", reason ?? "deadlock" }
+            });
+
         public List<(string name, Dictionary<string, object> parameters)> GetEventLog() => _eventLog;
 
         private void LogEvent(string eventName, Dictionary<string, object> parameters)

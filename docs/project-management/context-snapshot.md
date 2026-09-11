@@ -1,6 +1,6 @@
 # Brew — Context Snapshot
 
-> Generated: 2026-09-11 20:24 UTC
+> Generated: 2026-09-11 20:50 UTC
 > Project summary updated: 2026-04-09 (Session 6)
 > Session handoff updated: 2026-09-11
 
@@ -14,13 +14,13 @@
 ## Current Milestone Focus
 
 - Milestone: **Gate 5 — Soft Launch Readiness**
-- Goal: Stone blockers + deadlock recovery are now code-complete. Remaining Gate 5 work needs Unity Editor (SDK import, ScriptableObject assets, EditMode test run) and device playthrough.
+- Goal: Stone blockers + deadlock recovery are code-complete and hardened (init order, analytics, CI stone rules, idempotent config generator). Remaining Gate 5 work needs Unity Editor (SDK import, ScriptableObject assets, EditMode test run) and device playthrough.
 - Source plan: `docs/production/mvp-build-plan.md`
 
 ## Next 3 Tasks
 
-1. **Run EditMode tests in Unity Editor** (including `StoneGameplayTests`). Fix any compile/test failures from stone/deadlock changes.
-2. **Create ScriptableObject assets** via `Brew/Generate Config Assets` and assign to `GameFlowController`. Import Firebase/IAP/AdMob SDKs + scripting defines.
+1. **Run EditMode tests in Unity Editor** (including `StoneGameplayTests` + new analytics test). Fix any compile/test failures.
+2. **Create ScriptableObject assets** via menu `Brew/Generate Config Assets` or batchmode executeMethod above; assign to `GameFlowController`. Import Firebase/IAP/AdMob SDKs + scripting defines.
 3. **Device playthrough** of levels with stones (16–40 subset): verify gravity, brew-clear, deadlock reshuffle UX; then Gate 5.5–5.15 checklist.
 
 ## Blockers / Risks
@@ -32,10 +32,10 @@
 
 ## Decisions This Session
 
-- Soft-launch blockers are **stone-only**, cleared on **adjacent brew** (framework §12), not HP/fusion damage from older data-model draft
-- Shipped JSON `{type,row,col}` is canonical; `hp` / `x` / `y` deferred
-- Deadlock recovery does **not** add a new `BoardPhase`; it runs as CheckWin → Idle side path when outcome is still in progress
-- Adjacent stones in level 37 violated placement rules — content fixed rather than relaxing the rule
+- Soft-launch blockers are **stone-only**, cleared on **adjacent brew** (framework §12)
+- Stones must be placed **before** board populate so cluster guarantees remain valid
+- Deadlock recovery does **not** add a new `BoardPhase`; fires `board_reshuffle` analytics
+- CI rejects top-row and orthogonally adjacent stones
 
 ## ADR Summary
 
@@ -210,8 +210,8 @@
 
 ## Recent Git Commits
 
+- 80e348c 2026-09-11 feat: implement stone blockers and deadlock recovery for Gate 5
 - facfb69 2026-05-04 Merge pull request #5 from RipKDR/cursor/audio-config-interface-extraction
 - 7016c16 2026-05-04 Merge branch 'master' into cursor/audio-config-interface-extraction
 - 44e1992 2026-05-04 Merge pull request #4 from RipKDR/cursor/add-changelog-adr-session-handoff
 - 7ba19d6 2026-05-04 Merge branch 'master' into cursor/add-changelog-adr-session-handoff
-- 5e631ed 2026-05-04 ci: skip unity-tests when UNITY_LICENSE secret is absent

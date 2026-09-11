@@ -194,5 +194,17 @@ namespace Brew.Tests.EditMode
 
             Assert.AreEqual(string.Empty, log[7].parameters["event_id"]);
         }
+
+        [Test]
+        public void LogBoardReshuffle_RecordsLevelRecoveredAndReason()
+        {
+            _manager.LogBoardReshuffle(23, true, "deadlock");
+
+            var entry = _manager.GetEventLog()[0];
+            Assert.AreEqual("board_reshuffle", entry.name);
+            Assert.AreEqual(23, entry.parameters["level_id"]);
+            Assert.AreEqual(true, entry.parameters["recovered"]);
+            Assert.AreEqual("deadlock", entry.parameters["reason"]);
+        }
     }
 }

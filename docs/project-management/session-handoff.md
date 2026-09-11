@@ -9,7 +9,7 @@
 ## Current Milestone Focus
 
 - Milestone: **Gate 5 — Soft Launch Readiness**
-- Goal: Stone blockers + deadlock recovery are now code-complete. Remaining Gate 5 work needs Unity Editor (SDK import, ScriptableObject assets, EditMode test run) and device playthrough.
+- Goal: Stone blockers + deadlock recovery are code-complete and hardened (init order, analytics, CI stone rules, idempotent config generator). Remaining Gate 5 work needs Unity Editor (SDK import, ScriptableObject assets, EditMode test run) and device playthrough.
 - Source plan: `docs/production/mvp-build-plan.md`
 
 ## Current Branch + Baseline
@@ -17,10 +17,21 @@
 - Branch: `cursor/stone-blockers-deadlock-bbef`
 - Baseline tag/commit: Not tagged yet
 - CI expectation: `validate-docs`, `validate-context`, `validate-levels`, `validate-economy`, `lint`, and `unity-tests` should pass
+- PR: https://github.com/RipKDR/Brew/pull/6 (draft)
 
 ## Completed Since Last Handoff
 
-### Stone Blockers + Deadlock Recovery (This Session)
+### Hardening Pass (This Session)
+
+- **Stone init order:** `BoardPresenter` places stones **before** `PopulateBoard` so fill/cluster guarantees work around fixed stones; EditMode test covers preserve-stones + valid cluster.
+- **Deadlock contract:** `OnDeadlockRecovered(bool)`; second `TryRecoverDeadlock` if first fails; `GameFlowController` wires event → `AnalyticsManager.LogBoardReshuffle`.
+- **Stone clear feedback:** `OnStonesCleared`; brew paths notify after adjacent clear; top-row stones skipped in `PlaceStoneBlockers`.
+- **Analytics:** `board_reshuffle` in `docs/analytics/event-tracking-plan.md` + `LogBoardReshuffle` + EditMode test.
+- **CI / generator:** `validate_stone_placements` in `scripts/build/build_config.py` (no top-row, no orthogonal adjacency); default `--levels-dir` → `Assets/_Project/Resources/Levels`; safer stone generation + validation in `scripts/level-generator/generate_level.py`.
+- **Config assets:** Idempotent `ConfigAssetGenerator` (Audio + Board included). Batchmode:
+  `Unity -batchmode -quit -projectPath . -executeMethod Brew.Editor.ConfigAssetGenerator.GenerateAllConfigAssets`
+
+### Stone Blockers + Deadlock Recovery (Prior On Branch)
 
 **Docs / ADR (document-first):**
 - Updated `docs/game-design/core-mechanic.md` §1.3 — added `STONE` cell type; ice/lock deferred
@@ -33,27 +44,21 @@
 - `StoneClearer.ClearAdjacentStones` — orthogonal brew clear
 - `CascadeResolver` — segment gravity around fixed stones; refill fills empties in every segment
 - `TokenSpawner.IsDeadlocked` / `TryRecoverDeadlock` — reshuffle tokens (orbs/stones fixed), then regenerate tokens if needed
-- `BoardPresenter` — places stones from `LevelConfig.BlockerPlacements` after populate; clears stones on both brew paths; recovers deadlock after CheckWin when still in progress; grey stone display color
+- `BoardPresenter` — stones before populate; clear on brew; deadlock after CheckWin; grey stone display
 - `TokenView` — stone scale (1.0× cell)
 
-**Content fix:**
-- `level_037.json` — separated adjacent stones at (2,3)/(2,4); moved second stone to (4,6)
-
-**Tests:**
-- `Assets/Tests/EditMode/Core/StoneGameplayTests.cs` — placement, gravity around stones, refill above/below stones, adjacent clear, cluster ignore, deadlock detect/recover
-
-### Prior Session Summary
-
-SDK bridge layer, monetization bridges, CI/CD game-ci wiring, and Gate 5 code review fixes remain as previously handed off. Unity Editor still required for SDK import and SO asset creation.
+**Content / tests:**
+- `level_037.json` — non-adjacent stones; no top-row
+- `Assets/Tests/EditMode/Core/StoneGameplayTests.cs`
 
 ## In Progress
 
-- None in this agent session. Awaiting Unity Editor verification of new EditMode tests.
+- None in this agent session. Awaiting Unity Editor verification of EditMode suite.
 
 ## Next 3 Tasks
 
-1. **Run EditMode tests in Unity Editor** (including `StoneGameplayTests`). Fix any compile/test failures from stone/deadlock changes.
-2. **Create ScriptableObject assets** via `Brew/Generate Config Assets` and assign to `GameFlowController`. Import Firebase/IAP/AdMob SDKs + scripting defines.
+1. **Run EditMode tests in Unity Editor** (including `StoneGameplayTests` + new analytics test). Fix any compile/test failures.
+2. **Create ScriptableObject assets** via menu `Brew/Generate Config Assets` or batchmode executeMethod above; assign to `GameFlowController`. Import Firebase/IAP/AdMob SDKs + scripting defines.
 3. **Device playthrough** of levels with stones (16–40 subset): verify gravity, brew-clear, deadlock reshuffle UX; then Gate 5.5–5.15 checklist.
 
 ## Blockers / Risks
@@ -65,36 +70,23 @@ SDK bridge layer, monetization bridges, CI/CD game-ci wiring, and Gate 5 code re
 
 ## Decisions Recorded This Session
 
-- Soft-launch blockers are **stone-only**, cleared on **adjacent brew** (framework §12), not HP/fusion damage from older data-model draft
-- Shipped JSON `{type,row,col}` is canonical; `hp` / `x` / `y` deferred
-- Deadlock recovery does **not** add a new `BoardPhase`; it runs as CheckWin → Idle side path when outcome is still in progress
-- Adjacent stones in level 37 violated placement rules — content fixed rather than relaxing the rule
+- Soft-launch blockers are **stone-only**, cleared on **adjacent brew** (framework §12)
+- Stones must be placed **before** board populate so cluster guarantees remain valid
+- Deadlock recovery does **not** add a new `BoardPhase`; fires `board_reshuffle` analytics
+- CI rejects top-row and orthogonally adjacent stones
 
-## Files Touched This Session
+## Files Touched This Session (Hardening)
 
-### Docs
-- `docs/game-design/core-mechanic.md`
-- `docs/game-design/level-design-framework.md`
-- `docs/technical/data-model.md`
-- `docs/adr/0004-stone-only-blockers-soft-launch.md`
-- `docs/adr/README.md`
-- `docs/project-management/session-handoff.md`
-- `docs/project-management/weekly-focus.md`
-- `docs/project-management/context-snapshot.md`
-
-### Core / Presentation
-- `Assets/_Project/Scripts/Core/CellContentType.cs`
-- `Assets/_Project/Scripts/Core/CellContent.cs`
-- `Assets/_Project/Scripts/Core/StoneClearer.cs`
-- `Assets/_Project/Scripts/Core/CascadeResolver.cs`
-- `Assets/_Project/Scripts/Core/TokenSpawner.cs`
-- `Assets/_Project/Scripts/Core/LevelConfig.cs`
 - `Assets/_Project/Scripts/Presentation/BoardPresenter.cs`
-- `Assets/_Project/Scripts/Presentation/TokenView.cs`
-
-### Content / Tests
-- `Assets/_Project/Resources/Levels/level_037.json`
+- `Assets/_Project/Scripts/Presentation/GameFlowController.cs`
+- `Assets/_Project/Scripts/Core/Backend/AnalyticsManager.cs`
+- `Assets/_Project/Scripts/Editor/ConfigAssetGenerator.cs`
 - `Assets/Tests/EditMode/Core/StoneGameplayTests.cs`
+- `Assets/Tests/EditMode/Core/Backend/AnalyticsManagerTests.cs`
+- `docs/analytics/event-tracking-plan.md`
+- `scripts/build/build_config.py`
+- `scripts/level-generator/generate_level.py`
+- Continuity: `session-handoff.md`, `weekly-focus.md`, `context-snapshot.md`, `agent-prompt.md`
 
 ## Handoff Checklist
 

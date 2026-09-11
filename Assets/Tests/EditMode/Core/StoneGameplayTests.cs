@@ -23,10 +23,8 @@ namespace Brew.Tests.EditMode.Core
         }
 
         [Test]
-        public void PlaceStones_FromBlockerPlacements_OverwritesCells()
+        public void PlaceStones_ThenPopulate_PreservesStonesAndHasValidCluster()
         {
-            _spawner.PopulateBoard(_board);
-
             var placements = new[]
             {
                 new BlockerPlacement("stone", row: 3, col: 2),
@@ -34,11 +32,17 @@ namespace Brew.Tests.EditMode.Core
                 new BlockerPlacement("ice", row: 1, col: 1) // ignored for soft launch
             };
 
+            // Mirrors BoardPresenter init order: stones first, then populate around them.
             PlaceStones(_board, placements);
+            _spawner.PopulateBoard(_board);
 
             Assert.IsTrue(_board.GetCell(new GridCoord(2, 3)).IsStone);
             Assert.IsTrue(_board.GetCell(new GridCoord(4, 5)).IsStone);
             Assert.IsFalse(_board.GetCell(new GridCoord(1, 1)).IsStone);
+            Assert.GreaterOrEqual(
+                _detector.FindAllClusters(minClusterSize: 3).Count,
+                1,
+                "PopulateBoard after stones must leave at least one valid cluster.");
         }
 
         [Test]

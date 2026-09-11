@@ -280,6 +280,27 @@ Fires when all recipe targets are fulfilled and the victory screen appears.
 }
 ```
 
+### `board_reshuffle`
+
+Fires when the board automatically recovers from a deadlock (no valid token cluster ≥ 3 and no orb chain ≥ 2) after resolution settles. Soft-launch only uses reason `"deadlock"`.
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `level_id` | int | Current level | `23` |
+| `recovered` | bool | Whether reshuffle/regen produced a playable board | `true` |
+| `reason` | string | Trigger identifier | `"deadlock"` |
+
+```json
+{
+  "event": "board_reshuffle",
+  "params": {
+    "level_id": 23,
+    "recovered": true,
+    "reason": "deadlock"
+  }
+}
+```
+
 ### `level_fail`
 
 Fires when all moves are exhausted without completing all recipes.
