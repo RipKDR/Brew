@@ -1,85 +1,41 @@
 # Brew — Context Snapshot
 
-> Generated: 2026-04-09 (Session 7 — Gate 5 Code Sprint)
-> Project summary updated: 2026-04-09
-> Session handoff updated: 2026-04-09
+> Generated: 2026-09-11 20:24 UTC
+> Project summary updated: 2026-04-09 (Session 6)
+> Session handoff updated: 2026-09-11
 
 ## Quick Resume
 
-- Branch: `cursor/audio-config-interface-extraction`
+- Branch: `cursor/stone-blockers-deadlock-bbef`
 - Canonical handoff: `docs/project-management/session-handoff.md`
 - ADR index: `docs/adr/README.md`
 - Changelog: `CHANGELOG.md`
 
 ## Current Milestone Focus
 
-- Milestone: **Content & Polish (Weeks 9-10)** — Gate 5 code sprint complete, working toward Milestone Gate 5
-- Goal: Unity Editor testing, ScriptableObject asset creation, blocker gameplay implementation, Gate 5 verification
-- Source plan: `docs/production/mvp-build-plan.md`, `docs/prompts/05-week-9-10-content-and-polish.md`
+- Milestone: **Gate 5 — Soft Launch Readiness**
+- Goal: Stone blockers + deadlock recovery are now code-complete. Remaining Gate 5 work needs Unity Editor (SDK import, ScriptableObject assets, EditMode test run) and device playthrough.
+- Source plan: `docs/production/mvp-build-plan.md`
 
 ## Next 3 Tasks
 
-1. Open project in Unity Editor. Run all EditMode unit tests (now 31+ test files, ~400+ methods). Fix any compilation or test failures.
-2. Create ScriptableObject assets (EconomyConfigSO, PotionShelfConfigSO, WorkshopConfigSO, DailyBrewConfigSO, WinStreakConfigSO, WeeklyEventConfigSO, NotificationConfigSO). Assign to GameFlowController.
-3. Implement blocker gameplay in the board engine: add `Blocker` to `CellContentType`, handle in `BoardModel`/`ClusterDetector`/`CascadeResolver`/`BoardPresenter` — levels 36-40 now carry blocker data but gameplay logic is pending.
+1. **Run EditMode tests in Unity Editor** (including `StoneGameplayTests`). Fix any compile/test failures from stone/deadlock changes.
+2. **Create ScriptableObject assets** via `Brew/Generate Config Assets` and assign to `GameFlowController`. Import Firebase/IAP/AdMob SDKs + scripting defines.
+3. **Device playthrough** of levels with stones (16–40 subset): verify gravity, brew-clear, deadlock reshuffle UX; then Gate 5.5–5.15 checklist.
 
 ## Blockers / Risks
 
-- Blocker: Blocker gameplay NOT yet implemented — `LevelConfig.BlockerPlacements` data preserved but `CellContentType` has no `Blocker` variant; levels 36-40 play without blockers
-- Risk: Firebase SDK not yet imported — backend managers are pure C# abstractions
-- Risk: Unity IAP and AdMob SDKs not yet configured
-- Risk: `BoardPresenter.ActivateExtraMoves` no longer has a default parameter — unknown callers must be updated
-- Blocker: Gate 5 requires Unity Editor runtime testing
+- Blocker: Full Unity EditMode suite + SO assignment still require Unity Editor
+- Blocker: Firebase / Unity IAP / AdMob SDKs not imported (bridges compile as no-ops without defines)
+- Risk: Ice from level-design framework remains unimplemented (intentional per ADR 0004)
+- Risk: Deadlock reshuffle has no presentation juice yet (instant rebuild) — acceptable for soft launch correctness
 
 ## Decisions This Session
 
-- Blocker data preserved in `LevelConfig` but gameplay deferred — avoids cascading changes to board engine this close to Gate 5
-- Extra moves kept at 5 (code authoritative); documentation updated to match
-- Weekly event per-level essence aligned to 75 (code), doc updated from 50
-- `localHour` renamed to `utcHour` — parameter was always computed from UTC dates
-
-## Code Inventory
-
-### Core Layer (pure C#, zero Unity deps) — 36 files
-
-- Enums: IngredientColor, CellContentType, BoardPhase, LevelOutcome, BoosterType, CurrencyType, AdPlacement, EventState, NotificationType
-- Data types: CellContent, GridCoord, RecipeTarget, LevelConfig (updated: +BlockerPlacement, +BlockerPlacements), RecipeProgress, FusionResult, ChainFusionResult, GravityStep, TutorialLevelData, IAPProduct, PotionShelfMilestoneDefinition, DailyStreakBonusDefinition, PlayerSaveData, MilestoneDefinition
-- Logic: BoardModel, ClusterDetector, TokenSpawner, BoardStateMachine, FusionEngine, CascadeResolver
-- Game systems: MoveTracker, ScoreCalculator, RecipeTracker, WinLoseEvaluator, BoosterManager
-- Economy: CurrencyManager, RewardCalculator, IAPManager (updated: +weekly_deal SKU)
-- Meta: PotionShelfManager, WorkshopManager, WinStreakTracker, DailyBrewManager
-- LiveOps: WeeklyEventManager
-- Services: NotificationManager (updated: utcHour param), INotificationScheduler
-- Ads: AdManager
-- Backend: FirebaseAuthManager, CloudSaveManager, RemoteConfigManager, AnalyticsManager
-
-### Data Layer — 16 files
-
-- BoardConfigSO, AudioConfigSO, ScreenShakeConfigSO
-- EconomyConfigSO, RemoteConfigDefaults
-- PotionShelfConfigSO, WorkshopConfigSO, WinStreakConfigSO, DailyBrewConfigSO
-- WeeklyEventConfigSO (updated: +3 event economy fields), NotificationConfigSO
-- SfxId, LevelLoader (updated: +blocker mapping), PlayerProgress, LocalSaveManager, SettingsManager
-
-### Presentation Layer — 29 files
-
-- BoardPresenter (updated: explicit extra-moves amount), InputController, TokenView, TokenAnimator
-- HudController, RecipeVialUI
-- LevelCompleteScreen, LevelFailScreen, LevelSelectScreen, LevelButton
-- GameFlowController (updated: +_levelStartTimeUtc, duration tracking)
-- AudioManager, AdaptiveAudioController, HapticManager
-- ScreenShakeController, ParticleManager, BrewAnimationController
-- TutorialController, TutorialOverlay
-- BoosterBarUI (updated: config-driven extra-moves amount), BoosterSlotUI, SettingsPanel
-- PotionShelfView, WorkshopView, DailyBrewUI
-- WalletUI, StoreUI, BoosterShopUI
-- WeeklyEventView
-
-### Tests — 31 files, ~400+ methods
-
-- New: AnalyticsManagerTests (12), FirebaseAuthManagerTests (9), TutorialLevelDataTests (20)
-- Updated: IAPManagerTests (+3 tests, catalog count assertion), LevelLoaderTests (+2 blocker tests)
-- Prior: BoardModelTests, ClusterDetectorTests, TokenSpawnerTests, FusionEngineTests, CascadeResolverTests, MoveTrackerTests, ScoreCalculatorTests, RecipeTrackerTests, WinLoseEvaluatorTests, BoosterManagerTests, CurrencyManagerTests, RewardCalculatorTests, AdManagerTests, PotionShelfManagerTests, WorkshopManagerTests, WinStreakTrackerTests, DailyBrewManagerTests, CloudSaveManagerTests, RemoteConfigManagerTests, WeeklyEventManagerTests, NotificationManagerTests, CurrencyFormatterTests, EventLevelLoaderTests, LevelConfigTests, BoardStateMachineTests, BoardPresenterTests
+- Soft-launch blockers are **stone-only**, cleared on **adjacent brew** (framework §12), not HP/fusion damage from older data-model draft
+- Shipped JSON `{type,row,col}` is canonical; `hp` / `x` / `y` deferred
+- Deadlock recovery does **not** add a new `BoardPhase`; it runs as CheckWin → Idle side path when outcome is still in progress
+- Adjacent stones in level 37 violated placement rules — content fixed rather than relaxing the rule
 
 ## ADR Summary
 
@@ -88,8 +44,43 @@
 | 0001 | Canonical Unity Version | accepted | 2026-04-09 |
 | 0002 | Offline-First Cloud Save | accepted | 2026-04-09 |
 | 0003 | Remote Config as Config Source | accepted | 2026-04-09 |
+| 0004 | Stone-Only Blockers for Soft Launch | accepted | 2026-09-11 |
 
 ## Changelog (Unreleased)
+
+### Session 7 — Gate 5 Code Sprint
+
+#### Added
+
+- **BlockerPlacement data**: `BlockerPlacement` struct and `BlockerPlacements` property on `LevelConfig`; `LevelLoader.ConvertToLevelConfig` now maps `blocker_placements` from level JSON (previously silently dropped)
+- **weekly_deal SKU**: Added to `IAPManager.Catalog` ($2.99 consumable — 150 gems + 500 essence + 1 booster) matching `monetization-plan.md`
+- **Weekly event economy fields**: `WeeklyEventConfigSO` gains `ThreeStarBonusEssence` (25), `CompletionGems` (30), `AllThreeStarGems` (20) per `economy-model.md` §3.3-3.4
+- **Level duration tracking**: `GameFlowController` records `_levelStartTimeUtc` on level/event start; passes real elapsed seconds to `LogLevelComplete` / `LogLevelFail` (was always 0)
+- **AnalyticsManagerTests**: 12 tests — all log methods, event accumulation, OnEventLogged callback, null parameter handling
+- **FirebaseAuthManagerTests**: 9 tests — auth lifecycle, GUID generation, event callbacks, sign-in/sign-out cycles
+- **TutorialLevelDataTests**: 20 tests — all 5 tutorial levels, board setup validation, step types, obsolete API
+- **LevelLoaderTests**: 2 new blocker-placement tests
+- **IAPManagerTests**: 3 new tests for weekly_deal SKU (catalog count, purchase grant, re-purchase)
+- **levels/README.md**: Marks `levels/` as the authoring mirror of `Resources/Levels/`
+- **level_001.json**: Copied to `Assets/_Project/Resources/Levels/` — was only present in authoring mirror, missing from Resources
+
+#### Fixed
+
+- **P1: BoardPresenter.ActivateExtraMoves hardcoded 5**: Removed default parameter — now requires explicit amount from caller
+- **P1: BoosterBarUI hardcoded extra-moves amount**: Now accepts `extraMovesAmount` via `Initialize()` instead of literal 5
+- **P1: NotificationManager.ScheduleStreakAtRisk `localHour` misnomer**: Renamed to `utcHour` with XML doc clarifying UTC semantics
+- **P1: Level duration always 0**: `GameFlowController` now tracks real elapsed seconds between level start and complete/fail
+- **P2: blocker_placements silently dropped**: `LevelLoader` now parses and preserves blocker data in `LevelConfig`
+- **Doc drift: monetization-plan.md**: Fail recovery updated from +3 to +5 moves (matching `EconomyConfigSO.ExtraMovesFromAd`)
+- **Doc drift: economy-model.md §3.3**: Weekly event per-level essence updated from 50 to 75 (matching `WeeklyEventConfigSO.EssencePerLevel`), event max from 1,275 to 1,450
+- **Doc drift: economy-model.md §7.1**: Non-payer recovery updated from +3 to +5 moves
+- **Doc drift: economy-model.md §9.2**: Tuning knobs event essence total updated from 1,275 to 1,450
+
+#### Changed
+
+- **IAPManagerTests**: `Catalog_HasSixEntries` renamed to `Catalog_HasSevenEntries` after weekly_deal addition
+- **BoosterBarUI**: `Initialize()` now takes config-driven extra-moves amount instead of using a constant
+- **GameFlowController**: Records `_levelStartTimeUtc` on level/event start for duration analytics
 
 ### Fixed — Week 10 Code Review Sprint
 
@@ -148,7 +139,7 @@
 - **Event Level Templates**: 7 event level templates in `levels/events/` (E1-E2 easy, E3-E5 medium, E6 hard, E7 boss) with 7x9 board, themed ingredient slot
 - **Analytics Expansion**: 6 new methods in `AnalyticsManager`: `LogEventStart`, `LogEventLevelComplete`, `LogEventComplete`, `LogEventRewardClaimed`, `LogNotificationScheduled`, `LogNotificationOpened`
 - **Remote Config**: 13 new keys for event system (event_active, event_id, event_name, event_end_timestamp, theme colors, ingredient ID, reward values)
-- **Tests**: `WeeklyEventManagerTests` (~18 methods), `NotificationManagerTests` (~15 methods), `CurrencyFormatterTests` (~12 methods)
+- **Tests**: `WeeklyEventManagerTests` (~~18 methods), `NotificationManagerTests` (~~15 methods), `CurrencyFormatterTests` (~12 methods)
 
 ### Changed — Content & Polish
 
@@ -219,7 +210,8 @@
 
 ## Recent Git Commits
 
-- (pending) 2026-04-09 Session 7 — Gate 5 code sprint: P1 bug fixes, blocker data, weekly_deal, test coverage, doc reconciliation
-- (pending) 2026-04-09 Week 10 code review sprint: fix P0/P1 bugs, rebalance levels 36-40, complete settings, soft launch prep
-- 3a197a9 2026-04-09 Wire event system integration, notification adapters, and harden test coverage for Gate 5
-- 722664d 2026-04-09 Add Week 9-10 systems: weekly events, notifications, CurrencyFormatter, event level templates
+- facfb69 2026-05-04 Merge pull request #5 from RipKDR/cursor/audio-config-interface-extraction
+- 7016c16 2026-05-04 Merge branch 'master' into cursor/audio-config-interface-extraction
+- 44e1992 2026-05-04 Merge pull request #4 from RipKDR/cursor/add-changelog-adr-session-handoff
+- 7ba19d6 2026-05-04 Merge branch 'master' into cursor/add-changelog-adr-session-handoff
+- 5e631ed 2026-05-04 ci: skip unity-tests when UNITY_LICENSE secret is absent

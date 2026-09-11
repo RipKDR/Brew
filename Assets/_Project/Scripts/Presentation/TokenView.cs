@@ -33,7 +33,7 @@ namespace Brew.Presentation
 
             _spriteRenderer.color = displayColor;
 
-            float scale = content.IsOrb ? cellSize * 1.3f : cellSize * 0.85f;
+            float scale = content.IsOrb ? cellSize * 1.3f : content.IsStone ? cellSize * 1.0f : cellSize * 0.85f;
             transform.localScale = new Vector3(scale, scale, 1f);
 
             if (_animator != null)
@@ -50,7 +50,7 @@ namespace Brew.Presentation
 
             _spriteRenderer.color = displayColor;
 
-            float scale = content.IsOrb ? _cellSize * 1.3f : _cellSize * 0.85f;
+            float scale = content.IsOrb ? _cellSize * 1.3f : content.IsStone ? _cellSize * 1.0f : _cellSize * 0.85f;
             transform.localScale = new Vector3(scale, scale, 1f);
         }
 

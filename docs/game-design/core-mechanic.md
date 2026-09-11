@@ -35,8 +35,9 @@ Each cell at `(col, row)` holds exactly one of:
 | `TOKEN` | A standard ingredient token with a `color` property. |
 | `ORB` | A Brew Orb with `color` and `token_count` properties. |
 | `EMPTY` | No content. Subject to gravity refill. |
+| `STONE` | Immovable soft-launch blocker. Occupies the cell; tokens/orbs cannot share it. Gravity falls around it within column segments. Cleared when an orthogonally adjacent brew resolves. |
 
-There are no blocked/wall cells in MVP. The grid is always a full rectangle.
+The grid remains a full rectangle for soft launch (no `grid_mask` holes). Permanent wall cells are still out of scope. Ice / lock overlays are deferred post soft-launch (see ADR 0004).
 
 ### 1.4 Adjacency
 
@@ -959,7 +960,7 @@ Grid {
 Cell {
     col: int
     row: int
-    content: TOKEN | ORB | EMPTY
+    content: TOKEN | ORB | EMPTY | STONE
     color: ColorID | null       // null if EMPTY
     token_count: int | null     // only for ORB
     state: CellState

@@ -22,8 +22,7 @@ namespace Brew.Core
 
     /// <summary>
     /// Blocker placement data parsed from level JSON.
-    /// Gameplay logic for blockers is not yet implemented in the board engine;
-    /// this preserves design intent from level data.
+    /// Soft-launch supports <c>stone</c> placements (ADR 0004); other types are ignored.
     /// </summary>
     public readonly struct BlockerPlacement
     {

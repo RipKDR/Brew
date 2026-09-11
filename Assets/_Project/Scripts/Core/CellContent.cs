@@ -1,7 +1,7 @@
 namespace Brew.Core
 {
     /// <summary>
-    /// Represents the content of a single grid cell: Token, Orb, or Empty.
+    /// Represents the content of a single grid cell: Token, Orb, Stone, or Empty.
     /// Immutable value type — create new instances via static factory methods.
     /// </summary>
     public readonly struct CellContent
@@ -20,8 +20,11 @@ namespace Brew.Core
         public bool IsEmpty => Type == CellContentType.Empty;
         public bool IsToken => Type == CellContentType.Token;
         public bool IsOrb => Type == CellContentType.Orb;
+        public bool IsStone => Type == CellContentType.Stone;
 
         public static readonly CellContent Empty = new(CellContentType.Empty, default, 0);
+
+        public static readonly CellContent Stone = new(CellContentType.Stone, default, 0);
 
         public static CellContent Token(IngredientColor color) =>
             new(CellContentType.Token, color, 0);
@@ -37,6 +40,7 @@ namespace Brew.Core
             CellContentType.Empty => "Empty",
             CellContentType.Token => $"Token({Color})",
             CellContentType.Orb => $"Orb({Color}, {TokenCount})",
+            CellContentType.Stone => "Stone",
             _ => "Unknown"
         };
     }
