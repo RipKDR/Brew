@@ -351,7 +351,7 @@ namespace Brew.Presentation
 
         private void HandleStorePurchaseRequested(string productId)
         {
-            _iapBridge?.PurchaseProduct(productId);
+            StorePurchaseRouter.OnBuyRequested(productId, _iapBridge);
         }
 
         private void HandlePurchaseInitiated(string productId)

@@ -17,6 +17,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), wit
 - **StoreCheckout**: Pure-C# request seam + USD display parser for `iap_purchase_start`
 - **LogIAPPurchaseStart**: Typed analytics method matching `event-tracking-plan.md` `iap_purchase_start`
 - **IapPendingOperations**: Queues Buy/Restore until Unity IAP finishes initializing
+- **StorePurchaseRouter**: Production Buy path (request → `UnityIAPBridge.PurchaseProduct`) used by GameFlow and EditMode tests
 - **DeadlockResolverTests**: empty-cluster reshuffle, orb/stone preservation, 10 failed shuffles then regen, win/lose skip
 
 #### Fixed

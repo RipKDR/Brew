@@ -7,6 +7,22 @@ namespace Brew.Tests.EditMode
     public class StoreCheckoutTests
     {
         [Test]
+        public void ProductionBuyPath_StoreCheckoutPlusBridge_DoesNotGrantCurrency()
+        {
+            var currency = new CurrencyManager();
+            var iap = new IAPManager(currency);
+            var bridge = new UnityIAPBridge(iap);
+
+            bool started = StorePurchaseRouter.OnBuyRequested("gem_50", bridge);
+
+            Assert.IsFalse(started);
+            Assert.AreEqual(0, currency.GetBalance(CurrencyType.Gems));
+            Assert.AreEqual(0, currency.GetBalance(CurrencyType.Essence));
+            Assert.IsFalse(iap.HasPurchased("gem_50"));
+            Assert.IsFalse(iap.HasPurchased("no_ads"));
+        }
+
+        [Test]
         public void RequestPurchase_InvokesInitiatorOnly_DoesNotFulfill()
         {
             var currency = new CurrencyManager();
